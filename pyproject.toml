@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hemiciclo-nlp"
+version = "0.1.0"
+description = "Análisis NLP longitudinal del discurso parlamentario del Congreso de los Diputados (tema + sentimiento + cambios de régimen)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "TBD" }
+
+dependencies = [
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "scikit-learn>=1.3",
+    "bertopic>=0.16",
+    "sentence-transformers>=2.2",
+    "transformers>=4.35",
+    "torch>=2.0",
+    "ruptures>=1.1",
+    "optuna>=3.4",
+    "gensim>=4.3",
+    "scipy>=1.11",
+    "fastapi>=0.104",
+    "uvicorn[standard]>=0.24",
+    "streamlit>=1.28",
+    "plotly>=5.18",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.1",
+    "mypy>=1.7",
+    "pre-commit>=3.5",
+]
+dvc = ["dvc>=3.0"]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
