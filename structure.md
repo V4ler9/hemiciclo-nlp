@@ -47,6 +47,8 @@ hemiciclo-nlp/
 │
 ├── tests/
 │   ├── __init__.py
+│   ├── fixtures/               # Mini-corpus sintético para los tests
+│   │   └── parlamint_es_mini/
 │   ├── test_corpus.py
 │   ├── test_preprocessing.py
 │   ├── test_nlp.py

@@ -15,6 +15,7 @@ dependencies = [
 corpus = [
     "requests>=2.32",
     "lxml>=5.2",
+    "pyarrow>=17.0",
 ]
 # Fase 3: modelado de tópicos y sentimiento
 nlp = [
@@ -43,6 +44,8 @@ dev = [
     "ruff>=0.6",
     "pyright>=1.1.380",
     "pre-commit>=3.8",
+    "pandera>=0.20",
+    "pandas-stubs>=2.2",
     "types-pyyaml>=6.0",
 ]
 
@@ -66,3 +69,6 @@ reportMissingTypeStubs = false
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q"
+markers = [
+    "integration: pruebas que requieren red o el corpus descargado",
+]
