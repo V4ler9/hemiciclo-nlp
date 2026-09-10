@@ -54,7 +54,9 @@ def build_rules(config: Mapping[str, Any]) -> CleaningRules:
     min_words = int(config["min_words"])
     greeting = rf"\b(?:{_alternation([str(item) for item in config['greetings']])})\b"
     honorific = rf"\b(?:{_alternation([str(item) for item in config['honorifics']])})\b"
-    proper_name = r"[A-ZÁÉÍÓÚÜÑ][^\s,.;:!?]*"
+    # ``(?-i:...)`` evita que IGNORECASE permita que los nombres propios casen con
+    # palabras corrientes; se añaden las grafías catalanas À È Ì Ò Ù Ç.
+    proper_name = r"(?-i:[A-ZÁÉÍÓÚÜÑÀÈÌÒÙÇ][^\s,.;:!?]*)"
 
     prefix_patterns = (
         re.compile(rf"^{greeting}\s*[,.:;]\s*", re.IGNORECASE),
@@ -63,7 +65,7 @@ def build_rules(config: Mapping[str, Any]) -> CleaningRules:
             re.IGNORECASE,
         ),
         re.compile(rf"^{honorific}(?:\s*,?\s*{honorific}){{0,3}}\s*[,.:;]\s*", re.IGNORECASE),
-        re.compile(rf"^{honorific}(?:\s+[^\s,.;:!?]+){{1,6}}\s*[,.:;]\s*", re.IGNORECASE),
+        re.compile(rf"^{honorific}(?:\s+{proper_name}){{1,6}}\s*[,.:;]\s*", re.IGNORECASE),
     )
     suffix_patterns = (
         re.compile(

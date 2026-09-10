@@ -105,6 +105,26 @@ def test_clean_text_quita_vocativo_con_nombre(rules: CleaningRules) -> None:
     )
 
 
+def test_clean_text_no_borra_oraciones_que_empiezan_con_tratamiento(rules: CleaningRules) -> None:
+    for texto in (
+        "Señora presidenta defendió la ley.",
+        "Presidente del Gobierno compareció ante el Congreso.",
+        "Señor Montoro compareció ante la comisión.",
+    ):
+        assert clean_text(texto, rules) == texto
+
+
+def test_clean_text_quita_vocativo_aislado_con_punto(rules: CleaningRules) -> None:
+    assert clean_text("Gracias, señor Montoro.", rules) == ""
+
+
+def test_clean_text_quita_vocativo_con_nombre_en_catalan(rules: CleaningRules) -> None:
+    assert clean_text("Moltes gràcies senyora Àngels.", rules) == ""
+    assert clean_text("Moltes gràcies, senyora Montserrat, comencem el debat.", rules) == (
+        "comencem el debat."
+    )
+
+
 def test_clean_text_quita_vocativo_compuesto(rules: CleaningRules) -> None:
     assert (
         clean_text("Señora presidenta, señorías, hoy debatimos los presupuestos.", rules)
