@@ -77,3 +77,13 @@ Cada fase termina con commit(s) significativos. Los mensajes van en inglés; la 
 Verificado sobre la release real: la presidencia supone ~57 % de las intervenciones (43.630 de 76.369) y sus metadatos son UNKNOWN por diseño del corpus original; entre las intervenciones regulares la cobertura de género, partido y fecha de nacimiento es del 100 %. El drop de la presidencia se aplica ya en `build_corpus` (Fase 1), de modo que el corpus consolidado queda en 32.739 intervenciones con metadatos completos.
 
 Concordancia de metadatos verificada el 2026-09-10: excluyendo la presidencia, ParlaMint y ParlaCAP coinciden al **100 %** en fecha, rol (mapeado ES→EN), partido, estatus, género, año de nacimiento y tópico (mapeado ES→EN), con κ = 1,000 sobre 32.721 discursos comparables. Las 18 intervenciones que ParlaCAP no anota son discursos cortos (23-97 palabras).
+
+### D-19 · Limpieza de la Fase 2: notas, fórmulas y umbral
+
+La Fase 2 elimina las notas no verbales (`[[...]]`), los saludos y vocativos de apertura y las fórmulas de cierre, normaliza los espacios y conserva solo las intervenciones con **≥ 20 palabras** tras la limpieza (decisión del 2026-09-10; el percentil 10 del corpus son 29 palabras). Las listas de fórmulas (español, catalán, gallego y euskera) están versionadas en `configs/default.yaml`, no en el código. No hay eliminación de stopwords ni lematización: los embeddings de la Fase 3 las aprovechan.
+
+Resultado sobre el corpus real: 32.739 → **30.018 intervenciones** (2.721 descartadas, 8,3 %), cero notas restantes, `n_words_clean` mínimo 20 y cobertura de ParlaCAP del 100 %. La limpieza es deliberadamente conservadora: no toca usos con contenido como «dar las gracias» ni los vocativos internos.
+
+### D-20 · Párrafos del TEI: no se recuperan por ahora
+
+El TXT plano de ParlaMint concatenó los párrafos (`<seg>`) del TEI sin separador y la Fase 1 se construyó desde el TXT. La unidad de análisis es la intervención (D-02) y ningún paso posterior consume párrafos, así que no se añade un parser TEI en v1; `src/preprocessing/segmenter.py` deja utilidades de segmentación. Si la Fase 3 necesita embeddings por tramos para las intervenciones largas, se reevaluará con el TEI que ya está en `data/raw`.

@@ -4,7 +4,7 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 ## Estado
 
-**Fase 1 completada**: 32.739 intervenciones consolidadas (presidencia excluida) en `data/processed/intervenciones.parquet`. Aún no hay análisis publicados.
+**Fase 2 completada**: 30.018 intervenciones limpias (≥ 20 palabras, sin notas ni fórmulas de cortesía) en `data/processed/intervenciones_limpias.parquet`, a partir de las 32.739 consolidadas en la Fase 1. Aún no hay análisis publicados.
 
 ## Objetivo
 
@@ -19,7 +19,7 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 |---|---|---|
 | 0 | Higiene del repo, contrato, entorno y documentación | Completada |
 | 1 | Descarga y parseo del corpus ParlaMint 5.0 ES | Completada |
-| 2 | Preprocesado y limpieza | Pendiente |
+| 2 | Preprocesado y limpieza | Completada |
 | 3 | BERTopic, sentimiento, series mensuales y PELT | Pendiente |
 | 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1) y contraste con eventos | Pendiente |
 | 5 | API FastAPI + dashboard Streamlit + Docker local | Pendiente |
@@ -56,6 +56,7 @@ El corpus de trabajo es **ParlaMint 5.0 ES** (texto y metadatos) junto con las a
 ```bash
 uv run python -m src.corpus.downloader  # descarga y extrae en data/raw/corpus (con verificación MD5)
 uv run python -m src.corpus.parser      # consolida data/processed/intervenciones.parquet
+uv run python -m src.preprocessing.cleaner  # limpia data/processed/intervenciones_limpias.parquet
 ```
 
 Todo queda en `data/`, ignorado por git.

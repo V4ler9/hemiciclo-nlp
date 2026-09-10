@@ -7,3 +7,43 @@ paths:
   intermediate: data/intermediate
   external: data/external
   reports: reports
+
+# Reglas de limpieza de la Fase 2, versionadas aquí y no en el código.
+preprocessing:
+  # Longitud mínima (en palabras) tras limpiar notas y fórmulas de cortesía.
+  min_words: 20
+  # Fórmulas de cortesía que abren o cierran muchas intervenciones.
+  greetings:
+    - muchísimas gracias
+    - muchas gracias
+    - gracias
+    - moltes gràcies
+    - grazas
+    - eskerrik asko
+    - buenos días
+    - buenas tardes
+    - bon dia
+    - bones tardes
+    - con la venia
+  # Tratamientos que acompañan a un saludo o abren un turno.
+  honorifics:
+    - señoras y señores
+    - señores y señoras
+    - vicepresidenta
+    - vicepresidente
+    - presidenta
+    - presidente
+    - señorías
+    - señoría
+    - diputadas
+    - diputados
+    - diputada
+    - diputado
+    - ministra
+    - ministro
+    - señoras
+    - señores
+    - señora
+    - señor
+    - senyora
+    - senyor

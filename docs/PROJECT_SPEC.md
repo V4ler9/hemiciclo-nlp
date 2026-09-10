@@ -34,14 +34,14 @@ La **intervención** (`<u>`), que es donde se adhieren orador, partido y fecha. 
 
 ### Metadatos
 
-Se conservan: `Date` (agregada a mes), `Term`, `Subcorpus` (reference/covid/war), `Speaker_role`, `Speaker_party`, `Speaker_party_name`, `Party_status` (gobierno/oposición), `Speaker_gender`, `Speaker_birth` (edad), `Speaker_minister`, `Session`, `topic` y `topic_prob` (categoría CAP de ParlaCAP y su probabilidad), `senti_n`, `senti_3`, `senti_6` y `n_words`.
+Se conservan: `Date` (agregada a mes), `Term`, `Subcorpus` (reference/covid/war), `Speaker_role`, `Speaker_party`, `Speaker_party_name`, `Party_status` (gobierno/oposición), `Speaker_gender`, `Speaker_birth` (edad), `Speaker_minister`, `Session`, `topic` y `topic_prob` (categoría CAP de ParlaCAP y su probabilidad), `senti_n`, `senti_3`, `senti_6`, `n_words` y `n_words_clean` (palabras tras la limpieza).
 
 Se excluyen: `Speaker_name`, `Speaker_ID` (solo muestreo y control de calidad), `Title`, `Body`, `Sitting`, `Lang` y `Speaker_MP` (redundante con el rol).
 
 ## 3. Pipeline
 
 1. **Corpus:** descarga de ParlaMint 5.0 plano y de ParlaCAP ES, consolidación en una tabla de intervenciones (excluida la presidencia) con metadatos, tópico CAP y sentimiento ParlaSent (`data/processed/intervenciones.parquet`).
-2. **Preprocesado:** eliminación de frases procedimentales, notas (`[[Aplausos]]`, `[[Pausa]]`), turnos de la presidencia; normalización y filtros de longitud. Reglas versionadas en `configs/`.
+2. **Preprocesado:** eliminación de las notas no verbales (`[[...]]`) y de las fórmulas de saludo, vocativo y despedida; normalización de espacios y filtro de longitud (≥ 20 palabras tras limpiar). Reglas versionadas en `configs/default.yaml`; salida en `data/processed/intervenciones_limpias.parquet`. Los turnos de presidencia ya se excluyeron en la Fase 1 y los párrafos del TEI no se recuperan (D-20).
 3. **Modelado:**
    - **Tópicos:** BERTopic propio (embeddings → UMAP → HDBSCAN → c-TF-IDF). La granularidad se elige con coherencia y diversidad.
    - **Sentimiento:** ParlaSent como modelo principal (3 y 6 clases); validación manual de una muestra estratificada de ~200 intervenciones. Robertuito solo como chequeo de robustez en anexo, si aporta.
