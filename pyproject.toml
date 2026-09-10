@@ -1,0 +1,68 @@
+[project]
+name = "hemiciclo-nlp"
+version = "0.0.1"
+description = "Evolución temática y tonal del Congreso de los Diputados (ParlaMint-ES, 2015-2023)"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Fase 1: descarga y parseo del corpus
+corpus = [
+    "requests>=2.32",
+    "lxml>=5.2",
+]
+# Fase 3: modelado de tópicos y sentimiento
+nlp = [
+    "bertopic>=0.17",
+    "sentence-transformers>=3.0",
+    "torch>=2.4",
+]
+# Fases 3-4: análisis temporal, PELT y evaluación
+analysis = [
+    "ruptures>=1.1",
+    "scipy>=1.14",
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+]
+# Fase 5: API y dashboard
+app = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "streamlit>=1.39",
+    "plotly>=5.24",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.6",
+    "pyright>=1.1.380",
+    "pre-commit>=3.8",
+    "types-pyyaml>=6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pyright]
+include = ["src", "tests"]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

@@ -1,0 +1,9 @@
+# Configuración por defecto del proyecto.
+seed: 42
+
+paths:
+  raw: data/raw
+  processed: data/processed
+  intermediate: data/intermediate
+  external: data/external
+  reports: reports
