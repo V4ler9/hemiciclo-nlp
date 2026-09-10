@@ -84,6 +84,8 @@ La Fase 2 elimina las notas no verbales (`[[...]]`), los saludos y vocativos de 
 
 Resultado sobre el corpus real: 32.739 → **30.018 intervenciones** (2.721 descartadas, 8,3 %), cero notas restantes, `n_words_clean` mínimo 20 y cobertura de ParlaCAP del 100 %. La limpieza es deliberadamente conservadora: no toca usos con contenido como «dar las gracias» ni los vocativos internos.
 
+El filtrado descarta las intervenciones cortas y las reglas de expresiones regulares intentan eliminar las expresiones de cortesía, pero al basarse en regex esta limpieza nunca es perfecta: puede dejar fórmulas residuales o recortar texto legítimo. Limitación asumida a cambio de limpiar la mayoría de los turnos sin intervención manual.
+
 ### D-20 · Párrafos del TEI: no se recuperan por ahora
 
 El TXT plano de ParlaMint concatenó los párrafos (`<seg>`) del TEI sin separador y la Fase 1 se construyó desde el TXT. La unidad de análisis es la intervención (D-02) y ningún paso posterior consume párrafos, así que no se añade un parser TEI en v1; `src/preprocessing/segmenter.py` deja utilidades de segmentación. Si la Fase 3 necesita embeddings por tramos para las intervenciones largas, se reevaluará con el TEI que ya está en `data/raw`.

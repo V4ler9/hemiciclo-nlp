@@ -41,7 +41,7 @@ Se excluyen: `Speaker_name`, `Speaker_ID` (solo muestreo y control de calidad), 
 ## 3. Pipeline
 
 1. **Corpus:** descarga de ParlaMint 5.0 plano y de ParlaCAP ES, consolidación en una tabla de intervenciones (excluida la presidencia) con metadatos, tópico CAP y sentimiento ParlaSent (`data/processed/intervenciones.parquet`).
-2. **Preprocesado:** eliminación de las notas no verbales (`[[...]]`) y de las fórmulas de saludo, vocativo y despedida; normalización de espacios y filtro de longitud (≥ 20 palabras tras limpiar). Reglas versionadas en `configs/default.yaml`; salida en `data/processed/intervenciones_limpias.parquet`. Los turnos de presidencia ya se excluyeron en la Fase 1 y los párrafos del TEI no se recuperan (D-20).
+2. **Preprocesado:** eliminación de las notas no verbales (`[[...]]`) y de las fórmulas de saludo, vocativo y despedida; normalización de espacios y filtro de longitud (≥ 20 palabras tras limpiar). El filtro descarta las intervenciones cortas y las reglas de expresiones regulares intentan eliminar las expresiones de cortesía, pero al basarse en regex esta limpieza nunca es perfecta. Reglas versionadas en `configs/default.yaml`; salida en `data/processed/intervenciones_limpias.parquet`. Los turnos de presidencia ya se excluyeron en la Fase 1 y los párrafos del TEI no se recuperan (D-20).
 3. **Modelado:**
    - **Tópicos:** BERTopic propio (embeddings → UMAP → HDBSCAN → c-TF-IDF). La granularidad se elige con coherencia y diversidad.
    - **Sentimiento:** ParlaSent como modelo principal (3 y 6 clases); validación manual de una muestra estratificada de ~200 intervenciones. Robertuito solo como chequeo de robustez en anexo, si aporta.
