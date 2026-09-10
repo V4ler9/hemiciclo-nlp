@@ -1,0 +1,75 @@
+# Especificación del proyecto: hemiciclo-nlp
+
+Documento canónico del proyecto. El canvas [`resumen.canvas`](resumen.canvas) es el mapa visual del plan; en caso de conflicto, manda este documento.
+
+- **Tipo:** investigación personal.
+- **Última actualización:** 2026-09-10.
+
+## 1. Pregunta de investigación
+
+Sobre las intervenciones del Pleno del Congreso de los Diputados entre el 01/01/2015 y el 23/02/2023:
+
+1. ¿Cómo evolucionan los temas y el tono del discurso?
+2. ¿En qué momentos se detectan cambios de régimen temático o tonal, y cómo se relacionan con eventos políticos (elecciones, investiduras, moción de censura, COVID-19, guerra de Ucrania)?
+
+Queda **fuera de alcance** un capítulo de comparación metodológica entre modelos.
+
+## 2. Corpus
+
+| Aspecto | Decisión |
+|---|---|
+| Fuente | ParlaMint 5.0 ES (CLARIN ERIC) |
+| Cobertura | 01/01/2015 - 23/02/2023 (X-XIV legislaturas) |
+| Cámara | Congreso de los Diputados (no Senado) |
+| Licencia | CC BY 4.0; atribución obligatoria |
+| Formatos | TEI XML, TXT (intervención por línea) y TSV de metadatos |
+| Versiones | Corpus plano (11356/2004) + anotado (11356/2005) para el sentimiento ParlaSent |
+| Scraping | Aplazado: congreso.es queda fuera de v1 |
+
+### Unidad de análisis
+
+La **intervención** (`<u>`), que es donde se adhieren orador, partido y fecha. El párrafo es solo una unidad interna de limpieza. El texto de trabajo es el plano; la versión anotada se usa para el sentimiento ParlaSent a nivel de frase.
+
+### Metadatos
+
+Se conservan: `Date` (agregada a mes), `Term`, `Subcorpus` (reference/covid/war), `Speaker_role`, `Speaker_party`, `Speaker_party_name`, `Party_status` (gobierno/oposición), `Speaker_gender`, `Speaker_birth` (edad), `Speaker_minister`, `Session` y `Topic` (contraste con ParlaMint).
+
+Se excluyen: `Speaker_name`, `Speaker_ID` (solo muestreo y control de calidad), `Title`, `Body`, `Sitting`, `Lang` y `Speaker_MP` (redundante con el rol).
+
+## 3. Pipeline
+
+1. **Corpus:** descarga de ParlaMint 5.0 ES y consolidación en una tabla de intervenciones con metadatos, `Topic` de ParlaMint y sentimiento ParlaSent.
+2. **Preprocesado:** eliminación de frases procedimentales, notas (`[[Aplausos]]`, `[[Pausa]]`), turnos de la presidencia; normalización y filtros de longitud. Reglas versionadas en `configs/`.
+3. **Modelado:**
+   - **Tópicos:** BERTopic propio (embeddings → UMAP → HDBSCAN → c-TF-IDF). La granularidad se elige con coherencia y diversidad.
+   - **Sentimiento:** ParlaSent como modelo principal (3 y 6 clases); validación manual de una muestra estratificada de ~200 intervenciones. Robertuito solo como chequeo de robustez en anexo, si aporta.
+   - **Series temporales:** agregación mensual de cuota relativa por tópico y tono medio.
+   - **Cambios de régimen:** PELT sobre las series mensuales (coste l2; penalización elegida por BIC y análisis de sensibilidad).
+4. **Evaluación:** coherencia y diversidad de tópicos; ARI/NMI contra los 23 tópicos de ParlaMint; accuracy/F1 del sentimiento sobre la muestra manual; Spearman exploratorio con eventos, con corrección por comparaciones múltiples y redacción no causal.
+5. **Producto:** API FastAPI (JSON precalculado) + dashboard Streamlit + Docker local.
+6. **Cierre:** tests end-to-end, pre-commit y reproducibilidad documentada.
+
+## 4. Eventos externos
+
+CSV editable a mano en `data/external/eventos.csv` (diseño deliberadamente sencillo para poder modificarlo después): elecciones de 2015, 2016 y 2019 (abril y noviembre), moción de censura de 2018, investidura de 2020, COVID-19 (2020-03) y guerra de Ucrania (2022-02), con fuente citada.
+
+## 5. Reproducibilidad
+
+- Semilla global `SEED = 42` en `src/utils/config.py`.
+- Entorno `uv` + `pyproject.toml` + `uv.lock`; Python 3.12.
+- Configuración en `configs/*.yaml`; nada de constantes mágicas en el código.
+- Desarrollo en CPU; ejecuciones pesadas en un dispositivo con NVIDIA (CUDA) sincronizado por git.
+- Un commit al cerrar cada fase.
+
+## 6. Gobernanza
+
+- `structure.md` es el contrato de estructura; toda modificación requiere confirmación del usuario.
+- `docs/DECISIONS.md` registra las decisiones y su porqué.
+- Documentación en español; identificadores y mensajes de commit en inglés.
+
+## 7. Referencias
+
+- ParlaMint 5.0, corpus plano: <http://hdl.handle.net/11356/2004>
+- ParlaMint 5.0, corpus anotado: <http://hdl.handle.net/11356/2005>
+- ParlaSent 1.0: <http://hdl.handle.net/11356/1868>
+- Documentación de la iniciativa: <https://clarin-eric.github.io/ParlaMint/>
