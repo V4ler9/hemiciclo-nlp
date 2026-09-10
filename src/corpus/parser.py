@@ -1,11 +1,12 @@
-"""Parseo del corpus ParlaMint-ES: metadatos, texto plano y sentimiento."""
+"""Parseo del corpus: ParlaMint-ES (texto y metadatos) + ParlaCAP (anotaciones)."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
+
+from src.utils.config import PROJECT_ROOT
 
 MISSING = "-"
 
@@ -36,18 +37,30 @@ META_COLUMNS = [
     "Topic",
 ]
 
-ANA_META_COLUMNS = [
-    "ID",
-    "Parent_ID",
-    "Element",
-    "Language",
-    "Senti_3",
-    "Senti_6",
-    "Senti_n",
-    "Sents",
-    "Words",
-    "Tokens",
-    "Names",
+PARLACAP_COLUMNS = [
+    "id",
+    "date",
+    "lang_code",
+    "lang",
+    "vdem_country_id",
+    "speaker_role",
+    "speaker_MP",
+    "speaker_minister",
+    "speaker_party",
+    "speaker_party_name",
+    "party_status",
+    "party_orientation",
+    "partyfacts_id",
+    "speaker_id",
+    "speaker_name",
+    "speaker_gender",
+    "speaker_birth",
+    "word_count",
+    "CAP_category",
+    "CAP_prob",
+    "sent_logit",
+    "sent3_category",
+    "sent6_category",
 ]
 
 INTERVENTION_COLUMNS = [
@@ -68,29 +81,15 @@ INTERVENTION_COLUMNS = [
     "speaker_birth",
     "speaker_minister",
     "topic",
+    "topic_prob",
     "text",
-    "senti_n_mean",
+    "senti_n",
     "senti_3",
     "senti_6",
-    "n_sents",
     "n_words",
-    "n_tokens",
-    "n_names",
 ]
 
-_SENTIMENT_COLUMNS = [
-    "senti_n_mean",
-    "senti_3",
-    "senti_6",
-    "n_sents",
-    "n_words",
-    "n_tokens",
-    "n_names",
-]
-
-_COUNT_COLUMNS = ["n_sents", "n_words", "n_tokens", "n_names"]
-
-_RENAMES = {
+_META_RENAMES = {
     "ID": "utterance_id",
     "Text_ID": "component_id",
     "Date": "date",
@@ -105,8 +104,19 @@ _RENAMES = {
     "Speaker_gender": "speaker_gender",
     "Speaker_birth": "speaker_birth",
     "Speaker_minister": "speaker_minister",
-    "Topic": "topic",
 }
+
+_PARLACAP_RENAMES = {
+    "id": "utterance_id",
+    "sent_logit": "senti_n",
+    "sent3_category": "senti_3",
+    "sent6_category": "senti_6",
+    "CAP_category": "topic",
+    "CAP_prob": "topic_prob",
+    "word_count": "n_words",
+}
+
+_ANNOTATION_COLUMNS = ["senti_n", "senti_3", "senti_6", "topic", "topic_prob", "n_words"]
 
 
 def _read_tsv(path: Path) -> pd.DataFrame:
@@ -130,7 +140,7 @@ def _require_columns(frame: pd.DataFrame, columns: list[str], path: Path) -> Non
 
 
 def read_meta_tsv(path: Path) -> pd.DataFrame:
-    """Lee el TSV de metadatos por intervención."""
+    """Lee el TSV de metadatos por intervención de ParlaMint-ES."""
     frame = _read_tsv(path)
     _require_columns(frame, META_COLUMNS, path)
     frame = frame.loc[:, META_COLUMNS].copy()
@@ -139,7 +149,7 @@ def read_meta_tsv(path: Path) -> pd.DataFrame:
 
 
 def read_plain_text(path: Path) -> pd.DataFrame:
-    """Lee el fichero ``.txt`` (``ID<TAB>texto`` por intervención)."""
+    """Lee el fichero ``.txt`` de ParlaMint (``ID<TAB>texto`` por intervención)."""
     ids: list[str] = []
     texts: list[str] = []
     seen: set[str] = set()
@@ -160,60 +170,24 @@ def read_plain_text(path: Path) -> pd.DataFrame:
     return pd.DataFrame({"ID": ids, "text": texts})
 
 
-def read_ana_meta(path: Path) -> pd.DataFrame:
-    """Lee el TSV de anotación y normaliza ``Senti_n`` a numérico."""
+def read_parlacap_speeches(path: Path) -> pd.DataFrame:
+    """Lee el TSV de ParlaCAP a nivel de discurso (sentimiento y tópico)."""
     frame = _read_tsv(path)
-    _require_columns(frame, ANA_META_COLUMNS, path)
-    frame = frame.loc[:, ANA_META_COLUMNS].copy()
-    frame["Senti_n"] = pd.to_numeric(frame["Senti_n"])
+    _require_columns(frame, PARLACAP_COLUMNS, path)
+    frame = frame.loc[:, PARLACAP_COLUMNS].copy()
+    frame["date"] = pd.to_datetime(frame["date"])
+    frame["CAP_prob"] = pd.to_numeric(frame["CAP_prob"])
+    frame["sent_logit"] = pd.to_numeric(frame["sent_logit"])
+    frame["word_count"] = pd.to_numeric(frame["word_count"]).astype("Int64")
     return frame
-
-
-def _majority(values: pd.Series[Any]) -> str | None:
-    modes = values.dropna().mode()
-    if modes.empty:
-        return None
-    return str(modes.iloc[0])
-
-
-def aggregate_sentiment(ana_meta: pd.DataFrame) -> pd.DataFrame:
-    """Agrega el sentimiento por frase al nivel de intervención.
-
-    ``senti_n_mean`` es la media de las frases, ``senti_3`` y ``senti_6`` la clase
-    mayoritaria, y los conteos se toman de las filas ``u`` del corpus anotado.
-    """
-    sentences = ana_meta.loc[ana_meta["Element"] == "s", :]
-    utterances = ana_meta.loc[ana_meta["Element"] == "u", :]
-
-    grouped = sentences.groupby("Parent_ID", sort=False)
-    sentiment = pd.DataFrame(
-        {
-            "senti_n_mean": grouped["Senti_n"].mean(),
-            "senti_3": grouped["Senti_3"].agg(_majority),
-            "senti_6": grouped["Senti_6"].agg(_majority),
-        }
-    )
-
-    counts = utterances.assign(
-        n_sents=pd.to_numeric(utterances["Sents"]),
-        n_words=pd.to_numeric(utterances["Words"]),
-        n_tokens=pd.to_numeric(utterances["Tokens"]),
-        n_names=pd.to_numeric(utterances["Names"]),
-    ).set_index("ID")
-
-    result = counts.loc[:, _COUNT_COLUMNS].join(sentiment, how="left")
-    for column in _COUNT_COLUMNS:
-        result[column] = result[column].fillna(0).astype("int64")
-    result = result.loc[:, _SENTIMENT_COLUMNS]
-    return result.reset_index()
 
 
 def build_interventions(
     meta: pd.DataFrame,
     text: pd.DataFrame,
-    sentiment: pd.DataFrame,
+    parlacap: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Consolida metadatos, texto y sentimiento en una tabla por intervención."""
+    """Consolida metadatos, texto y anotaciones en una tabla por intervención."""
     ids_meta = set(meta["ID"])
     ids_text = set(text["ID"])
     sin_texto = ids_meta - ids_text
@@ -227,15 +201,21 @@ def build_interventions(
             f"{len(sin_metadatos)} textos sin metadatos, p. ej. {sorted(sin_metadatos)[0]}"
         )
 
-    frame = meta.merge(text, on="ID", how="left", validate="one_to_one")
-    frame = frame.merge(sentiment, on="ID", how="left", validate="one_to_one")
-    frame = frame.rename(columns=_RENAMES)
+    text_frame = text.rename(columns={"ID": "utterance_id"})
+    annotations = parlacap.rename(columns=_PARLACAP_RENAMES).loc[
+        :, ["utterance_id", *_ANNOTATION_COLUMNS]
+    ]
+    annotations = annotations.loc[annotations["utterance_id"].isin(ids_meta), :]
+    frame = meta.rename(columns=_META_RENAMES)
+    frame = frame.merge(text_frame, on="utterance_id", how="left", validate="one_to_one")
+    frame = frame.merge(annotations, on="utterance_id", how="left", validate="one_to_one")
+
     frame["speaker_birth"] = pd.to_datetime(frame["speaker_birth"], errors="coerce", format="mixed")
     frame["year"] = frame["date"].dt.year.astype("int64")
     frame["month"] = frame["date"].dt.month.astype("int64")
-    frame["senti_n_mean"] = pd.to_numeric(frame["senti_n_mean"], errors="coerce").astype("float64")
-    for column in _COUNT_COLUMNS:
-        frame[column] = frame[column].fillna(0).astype("int64")
+    frame["senti_n"] = pd.to_numeric(frame["senti_n"], errors="coerce").astype("float64")
+    frame["topic_prob"] = pd.to_numeric(frame["topic_prob"], errors="coerce").astype("float64")
+    frame["n_words"] = pd.to_numeric(frame["n_words"], errors="coerce").astype("Int64")
     return frame.loc[:, INTERVENTION_COLUMNS].copy()
 
 
@@ -249,37 +229,32 @@ def find_component_bases(raw_dir: Path) -> list[Path]:
     return bases
 
 
-def _empty_sentiment() -> pd.DataFrame:
-    return pd.DataFrame(
-        {
-            "ID": pd.Series(dtype="object"),
-            "senti_n_mean": pd.Series(dtype="float64"),
-            "senti_3": pd.Series(dtype="object"),
-            "senti_6": pd.Series(dtype="object"),
-            "n_sents": pd.Series(dtype="int64"),
-            "n_words": pd.Series(dtype="int64"),
-            "n_tokens": pd.Series(dtype="int64"),
-            "n_names": pd.Series(dtype="int64"),
-        }
-    )
-
-
-def build_corpus(raw_dir: Path, output_path: Path) -> pd.DataFrame:
-    """Construye la tabla consolidada de todo el corpus y la guarda en parquet."""
+def build_corpus(raw_dir: Path, parlacap_path: Path, output_path: Path) -> pd.DataFrame:
+    """Construye la tabla consolidada del corpus y la guarda en parquet."""
+    parlacap = read_parlacap_speeches(parlacap_path)
     frames: list[pd.DataFrame] = []
     for base in find_component_bases(raw_dir):
         meta = read_meta_tsv(base.with_name(base.name + "-meta.tsv"))
         text = read_plain_text(base.with_name(base.name + ".txt"))
-        ana_path = base.with_name(base.name + "-ana-meta.tsv")
-        sentiment = (
-            aggregate_sentiment(read_ana_meta(ana_path))
-            if ana_path.exists()
-            else _empty_sentiment()
-        )
-        frames.append(build_interventions(meta, text, sentiment))
+        frames.append(build_interventions(meta, text, parlacap))
     if not frames:
         raise ValueError(f"No se han encontrado componentes en {raw_dir}")
     corpus = pd.concat(frames, ignore_index=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     corpus.to_parquet(output_path, index=False)
     return corpus
+
+
+def main() -> None:
+    """CLI: construye ``data/processed/intervenciones.parquet`` desde ``data/raw``."""
+    raw_dir = PROJECT_ROOT / "data" / "raw" / "corpus" / "ParlaMint-ES.txt"
+    parlacap_path = (
+        PROJECT_ROOT / "data" / "raw" / "corpus" / "cda1055_dat_ParlaCAP-ES_speeches_no_text.tsv"
+    )
+    output_path = PROJECT_ROOT / "data" / "processed" / "intervenciones.parquet"
+    frame = build_corpus(raw_dir, parlacap_path, output_path)
+    print(f"{len(frame)} intervenciones -> {output_path}")
+
+
+if __name__ == "__main__":
+    main()

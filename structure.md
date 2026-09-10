@@ -18,8 +18,8 @@ hemiciclo-nlp/
 │   ├── __init__.py
 │   ├── corpus/                 # Fase 1: descarga y parseo del corpus
 │   │   ├── __init__.py
-│   │   ├── downloader.py       # Descarga de la release ParlaMint 5.0 (CLARIN)
-│   │   └── parser.py           # Parseo TEI/TXT/TSV a tabla de intervenciones
+│   │   ├── downloader.py       # Descarga ParlaMint-ES 5.0 y ParlaCAP ES (con MD5)
+│   │   └── parser.py           # Parseo TXT/TSV (ParlaMint + ParlaCAP) a tabla
 │   ├── preprocessing/          # Fase 2: limpieza y segmentación
 │   │   ├── __init__.py
 │   │   ├── cleaner.py          # Limpieza (frases procedimentales, notas, ruido)

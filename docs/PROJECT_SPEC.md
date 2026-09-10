@@ -18,27 +18,29 @@ Queda **fuera de alcance** un capítulo de comparación metodológica entre mode
 
 | Aspecto | Decisión |
 |---|---|
-| Fuente | ParlaMint 5.0 ES (CLARIN ERIC) |
+| Fuente | ParlaMint 5.0 ES (texto y metadatos) + ParlaCAP 1.0 ES (sentimiento ParlaSent y tópico CAP) |
 | Cobertura | 01/01/2015 - 23/02/2023 (X-XIV legislaturas) |
 | Cámara | Congreso de los Diputados (no Senado) |
 | Licencia | CC BY 4.0; atribución obligatoria |
-| Formatos | TEI XML, TXT (intervención por línea) y TSV de metadatos |
-| Versiones | Corpus plano (11356/2004) + anotado (11356/2005) para el sentimiento ParlaSent |
+| Formatos | ParlaMint: TXT (intervención por línea) y TSV de metadatos por componente; ParlaCAP: TSV por discurso |
+| Versiones | ParlaMint plano (11356/2004) + ParlaCAP (10.23669/1ZTELP) |
 | Scraping | Aplazado: congreso.es queda fuera de v1 |
+
+Notas verificadas sobre el corpus: la presidencia (metadatos UNKNOWN por diseño del corpus original) supone ~57 % de las intervenciones; el sentimiento y el tópico de ParlaCAP cubren 76.351 de las 76.369 intervenciones (18 quedan a NaN, 0,02 %).
 
 ### Unidad de análisis
 
-La **intervención** (`<u>`), que es donde se adhieren orador, partido y fecha. El párrafo es solo una unidad interna de limpieza. El texto de trabajo es el plano; la versión anotada se usa para el sentimiento ParlaSent a nivel de frase.
+La **intervención** (`<u>`), que es donde se adhieren orador, partido y fecha. El párrafo es solo una unidad interna de limpieza. El sentimiento llega ya agregado a nivel de discurso por ParlaCAP (media ponderada por longitud, escala 0-6) y el tópico es la categoría CAP con su probabilidad.
 
 ### Metadatos
 
-Se conservan: `Date` (agregada a mes), `Term`, `Subcorpus` (reference/covid/war), `Speaker_role`, `Speaker_party`, `Speaker_party_name`, `Party_status` (gobierno/oposición), `Speaker_gender`, `Speaker_birth` (edad), `Speaker_minister`, `Session` y `Topic` (contraste con ParlaMint).
+Se conservan: `Date` (agregada a mes), `Term`, `Subcorpus` (reference/covid/war), `Speaker_role`, `Speaker_party`, `Speaker_party_name`, `Party_status` (gobierno/oposición), `Speaker_gender`, `Speaker_birth` (edad), `Speaker_minister`, `Session`, `topic` y `topic_prob` (categoría CAP de ParlaCAP y su probabilidad), `senti_n`, `senti_3`, `senti_6` y `n_words`.
 
 Se excluyen: `Speaker_name`, `Speaker_ID` (solo muestreo y control de calidad), `Title`, `Body`, `Sitting`, `Lang` y `Speaker_MP` (redundante con el rol).
 
 ## 3. Pipeline
 
-1. **Corpus:** descarga de ParlaMint 5.0 ES y consolidación en una tabla de intervenciones con metadatos, `Topic` de ParlaMint y sentimiento ParlaSent.
+1. **Corpus:** descarga de ParlaMint 5.0 plano y de ParlaCAP ES, y consolidación en una tabla de intervenciones con metadatos, tópico CAP y sentimiento ParlaSent (`data/processed/intervenciones.parquet`).
 2. **Preprocesado:** eliminación de frases procedimentales, notas (`[[Aplausos]]`, `[[Pausa]]`), turnos de la presidencia; normalización y filtros de longitud. Reglas versionadas en `configs/`.
 3. **Modelado:**
    - **Tópicos:** BERTopic propio (embeddings → UMAP → HDBSCAN → c-TF-IDF). La granularidad se elige con coherencia y diversidad.
@@ -70,6 +72,6 @@ CSV editable a mano en `data/external/eventos.csv` (diseño deliberadamente senc
 ## 7. Referencias
 
 - ParlaMint 5.0, corpus plano: <http://hdl.handle.net/11356/2004>
-- ParlaMint 5.0, corpus anotado: <http://hdl.handle.net/11356/2005>
+- ParlaCAP 1.0, anotaciones (sentimiento y tópico): <https://doi.org/10.23669/1ZTELP>
 - ParlaSent 1.0: <http://hdl.handle.net/11356/1868>
 - Documentación de la iniciativa: <https://clarin-eric.github.io/ParlaMint/>

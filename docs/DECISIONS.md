@@ -12,13 +12,13 @@ La nota inicial del vault decía "2015-2022" y el canvas "2015-2023". El README 
 
 El canvas hablaba de párrafos y `structure.md` de intervenciones/sesiones. Se elige la intervención porque es donde se adhieren orador, partido y fecha, imprescindibles para series temporales y metadatos. El párrafo queda como unidad interna de limpieza.
 
-### D-03 · Corpus plano + metadatos; anotado solo para sentimiento
+### D-03 · Texto y metadatos de ParlaMint; anotaciones de ParlaCAP
 
-El texto de trabajo es el plano (TXT/TSV). La versión anotada se usa para el sentimiento ParlaSent por frase. Evita cargar la anotación lingüística completa, que no se necesita.
+El texto y los metadatos salen de ParlaMint 5.0 plano (TXT/TSV). El sentimiento ParlaSent y el tópico CAP se toman de ParlaCAP 1.0 ES, extensión oficial de ParlaMint 5.0 en formato tabular: mismos discursos, mismos IDs (76.351 de 76.369, 99,98 %) y los mismos modelos, sin necesidad de descargar el corpus anotado completo (1 GB). Revisada el 2026-09-10 tras verificar la release real.
 
 ### D-04 · Metadatos conservados
 
-Se conservan los metadatos con valor analítico (fecha, legislatura, subcorpus, rol, partido, gobierno/oposición, género, edad, tipo de intervención) y se excluyen los identificativos (nombre, ID) salvo para muestreo y control de calidad.
+Se conservan los metadatos con valor analítico (fecha, legislatura, subcorpus, rol, partido, gobierno/oposición, género, edad, tipo de intervención) y las anotaciones de ParlaCAP (`topic` y `topic_prob`, `senti_n`, `senti_3`, `senti_6`, `n_words`). Se excluyen los identificativos (nombre, ID) salvo para muestreo y control de calidad.
 
 ### D-05 · Objetivo: descripción + cambios de régimen, sin comparación de modelos
 
@@ -30,7 +30,7 @@ BERTopic es el núcleo técnico del plan y aporta granularidad que los 23 tópic
 
 ### D-07 · Sentimiento: ParlaSent + validación manual
 
-ParlaSent está entrenado sobre debates parlamentarios (ParlaSent 1.0) y es el mismo modelo que anota ParlaMint 5.0, lo que da afinidad de dominio y comparabilidad. Se valida con una muestra estratificada de ~200 intervenciones anotadas a mano (accuracy/F1). Robertuito queda como chequeo de robustez opcional en anexo. Descartado el fine-tuning: no hay etiquetas propias suficientes.
+ParlaSent está entrenado sobre debates parlamentarios (ParlaSent 1.0) y es el mismo modelo que anotó ParlaMint 5.0 y ParlaCAP; afinidad de dominio y comparabilidad garantizadas. ParlaCAP entrega `sent_logit` ya agregado por discurso (media ponderada por longitud, escala 0-6) más las clases de 3 y 6 categorías. Se valida con una muestra estratificada de ~200 intervenciones anotadas a mano (accuracy/F1). Robertuito queda como chequeo de robustez opcional en anexo. Descartado el fine-tuning: no hay etiquetas propias suficientes.
 
 ### D-08 · Agregación mensual y PELT
 
@@ -71,3 +71,7 @@ La estructura es un contrato: toda modificación se confirma con el usuario ante
 ### D-17 · Commits por fase
 
 Cada fase termina con commit(s) significativos. Los mensajes van en inglés; la documentación, en español.
+
+### D-18 · Hechos del corpus que condicionan el análisis
+
+Verificado sobre la release real: la presidencia supone ~57 % de las intervenciones (43.630 de 76.369) y sus metadatos son UNKNOWN por diseño del corpus original; entre las intervenciones regulares la cobertura de género, partido y fecha de nacimiento es del 100 %. La Fase 2 excluye los turnos de presidencia, de modo que el análisis trabajará sobre ~32.500 intervenciones con metadatos completos.

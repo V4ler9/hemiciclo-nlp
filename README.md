@@ -4,7 +4,7 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 ## Estado
 
-**Fase 0 completada** (preparación del repo). Aún no hay análisis publicados.
+**Fase 1 completada** (corpus descargado, consolidado y validado en `data/processed/intervenciones.parquet`). Aún no hay análisis publicados.
 
 ## Objetivo
 
@@ -18,7 +18,7 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 | Fase | Contenido | Estado |
 |---|---|---|
 | 0 | Higiene del repo, contrato, entorno y documentación | Completada |
-| 1 | Descarga y parseo del corpus ParlaMint 5.0 ES | Pendiente |
+| 1 | Descarga y parseo del corpus ParlaMint 5.0 ES | Completada |
 | 2 | Preprocesado y limpieza | Pendiente |
 | 3 | BERTopic, sentimiento, series mensuales y PELT | Pendiente |
 | 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1) y contraste con eventos | Pendiente |
@@ -51,7 +51,14 @@ Las decisiones técnicas tomadas durante el diseño están registradas en [`docs
 
 ## Datos
 
-El corpus de trabajo es **ParlaMint 5.0 ES** (CLARIN ERIC), distribuido bajo licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Este repositorio no redistribuye los datos: se descargan con los scripts de `src/corpus/` y quedan en `data/`, ignorados por git.
+El corpus de trabajo es **ParlaMint 5.0 ES** (texto y metadatos) junto con las anotaciones de **ParlaCAP 1.0 ES** (sentimiento ParlaSent y tópico CAP), ambos bajo licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Este repositorio no redistribuye los datos:
+
+```bash
+uv run python -m src.corpus.downloader  # descarga y extrae en data/raw/corpus (con verificación MD5)
+uv run python -m src.corpus.parser      # consolida data/processed/intervenciones.parquet
+```
+
+Todo queda en `data/`, ignorado por git.
 
 ## Licencia
 
