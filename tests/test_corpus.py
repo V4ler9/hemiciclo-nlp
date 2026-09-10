@@ -248,11 +248,13 @@ def test_find_component_bases_encuentra_el_componente() -> None:
     assert find_component_bases(FIXTURES_DIR) == [COMPONENT_DIR / BASE_NAME]
 
 
-def test_build_corpus_escribe_parquet_reproducible(tmp_path: Path) -> None:
+def test_build_corpus_excluye_presidencia_y_escribe_parquet(tmp_path: Path) -> None:
     out = tmp_path / "intervenciones.parquet"
     df = build_corpus(FIXTURES_DIR, PARLACAP_FIXTURE, out)
     assert out.exists()
-    assert len(df) == 4
+    assert len(df) == 3
+    assert (df["speaker_role"] != "Presidencia").all()
+    assert f"{U}1" not in set(df["utterance_id"])
     recovered = pd.read_parquet(out)
     pd.testing.assert_frame_equal(df, recovered)
 
@@ -479,12 +481,9 @@ def test_corpus_real_calidad(tmp_path: Path) -> None:
     df = build_corpus(PARLAMINT_TXT_DIR, PARLACAP_REAL_PATH, out)
     assert df["utterance_id"].is_unique
     assert df["date"].between(pd.Timestamp("2015-01-01"), pd.Timestamp("2023-02-23")).all()
-    assert len(df) > 10_000
+    assert len(df) > 30_000
+    assert (df["speaker_role"] != "Presidencia").all()
     _assert_schema(df)
-    # La presidencia (UNKNOWN por diseño del corpus) no tiene metadatos; entre
-    # los intervinientes regulares la cobertura es completa.
-    regulares = df[df["speaker_role"] != "Presidencia"]
-    assert regulares["speaker_gender"].notna().mean() >= 0.99
-    assert df["speaker_gender"].notna().mean() >= 0.55
+    assert df["speaker_gender"].notna().mean() >= 0.99
     assert df["senti_n"].notna().mean() >= 0.99
     assert df["topic"].notna().mean() >= 0.99

@@ -26,7 +26,7 @@ Queda **fuera de alcance** un capítulo de comparación metodológica entre mode
 | Versiones | ParlaMint plano (11356/2004) + ParlaCAP (10.23669/1ZTELP) |
 | Scraping | Aplazado: congreso.es queda fuera de v1 |
 
-Notas verificadas sobre el corpus: la presidencia (metadatos UNKNOWN por diseño del corpus original) supone ~57 % de las intervenciones; el sentimiento y el tópico de ParlaCAP cubren 76.351 de las 76.369 intervenciones (18 quedan a NaN, 0,02 %). La concordancia entre los metadatos de ParlaMint y ParlaCAP es del 100 % en los campos comparables (fecha, rol, partido, estatus, género, año de nacimiento y tópico), excluyendo la presidencia.
+Notas verificadas sobre el corpus: la presidencia (metadatos UNKNOWN por diseño del corpus original) supone ~57 % de las intervenciones y se excluye en la consolidación; el corpus resultante tiene 32.739 intervenciones, de las que 32.721 (99,94 %) tienen sentimiento y tópico de ParlaCAP. Las 18 restantes son discursos cortos. La concordancia entre los metadatos de ParlaMint y ParlaCAP es del 100 % en los campos comparables (fecha, rol, partido, estatus, género, año de nacimiento y tópico).
 
 ### Unidad de análisis
 
@@ -40,7 +40,7 @@ Se excluyen: `Speaker_name`, `Speaker_ID` (solo muestreo y control de calidad), 
 
 ## 3. Pipeline
 
-1. **Corpus:** descarga de ParlaMint 5.0 plano y de ParlaCAP ES, y consolidación en una tabla de intervenciones con metadatos, tópico CAP y sentimiento ParlaSent (`data/processed/intervenciones.parquet`).
+1. **Corpus:** descarga de ParlaMint 5.0 plano y de ParlaCAP ES, consolidación en una tabla de intervenciones (excluida la presidencia) con metadatos, tópico CAP y sentimiento ParlaSent (`data/processed/intervenciones.parquet`).
 2. **Preprocesado:** eliminación de frases procedimentales, notas (`[[Aplausos]]`, `[[Pausa]]`), turnos de la presidencia; normalización y filtros de longitud. Reglas versionadas en `configs/`.
 3. **Modelado:**
    - **Tópicos:** BERTopic propio (embeddings → UMAP → HDBSCAN → c-TF-IDF). La granularidad se elige con coherencia y diversidad.

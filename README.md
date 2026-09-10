@@ -4,7 +4,7 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 ## Estado
 
-**Fase 1 completada** (corpus descargado, consolidado y validado en `data/processed/intervenciones.parquet`). Aún no hay análisis publicados.
+**Fase 1 completada**: 32.739 intervenciones consolidadas (presidencia excluida) en `data/processed/intervenciones.parquet`. Aún no hay análisis publicados.
 
 ## Objetivo
 

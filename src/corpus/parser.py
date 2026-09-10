@@ -10,6 +10,8 @@ from src.utils.config import PROJECT_ROOT
 
 MISSING = "-"
 
+CHAIR_ROLE = "Presidencia"
+
 META_COLUMNS = [
     "Text_ID",
     "ID",
@@ -230,13 +232,18 @@ def find_component_bases(raw_dir: Path) -> list[Path]:
 
 
 def build_corpus(raw_dir: Path, parlacap_path: Path, output_path: Path) -> pd.DataFrame:
-    """Construye la tabla consolidada del corpus y la guarda en parquet."""
+    """Construye la tabla consolidada del corpus y la guarda en parquet.
+
+    Excluye los turnos de la presidencia, cuyos metadatos son UNKNOWN por diseño
+    del corpus original y que no forman parte de la población de análisis.
+    """
     parlacap = read_parlacap_speeches(parlacap_path)
     frames: list[pd.DataFrame] = []
     for base in find_component_bases(raw_dir):
         meta = read_meta_tsv(base.with_name(base.name + "-meta.tsv"))
         text = read_plain_text(base.with_name(base.name + ".txt"))
-        frames.append(build_interventions(meta, text, parlacap))
+        frame = build_interventions(meta, text, parlacap)
+        frames.append(frame.loc[frame["speaker_role"] != CHAIR_ROLE])
     if not frames:
         raise ValueError(f"No se han encontrado componentes en {raw_dir}")
     corpus = pd.concat(frames, ignore_index=True)
