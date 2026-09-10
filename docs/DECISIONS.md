@@ -89,3 +89,56 @@ El filtrado descarta las intervenciones cortas y las reglas de expresiones regul
 ### D-20 · Párrafos del TEI: no se recuperan por ahora
 
 El TXT plano de ParlaMint concatenó los párrafos (`<seg>`) del TEI sin separador y la Fase 1 se construyó desde el TXT. La unidad de análisis es la intervención (D-02) y ningún paso posterior consume párrafos, así que no se añade un parser TEI en v1; `src/preprocessing/segmenter.py` deja utilidades de segmentación. Si la Fase 3 necesita embeddings por tramos para las intervenciones largas, se reevaluará con el TEI que ya está en `data/raw`.
+
+## 2026-09-10 — Planificación de la Fase 3
+
+### D-21 · Fase 3 dividida en 3a y 3b
+
+La Fase 3 se divide en **3a (representación, tópicos y sentimiento)** y **3b (series mensuales, regímenes y eventos)**, cada una con su commit de cierre (extiende D-17). Motivo: 3a concentra las ejecuciones pesadas (embeddings y BERTopic) y 3b el análisis temporal, con dependencias y tiempos distintos.
+
+La «Fase 4: Métricas» del canvas queda absorbida: coherencia, diversidad, ARI/NMI y F1 se calculan en 3a (en `src/nlp/topic_model.py` y `src/nlp/sentiment.py`); Spearman con eventos, en 3b (`src/analysis/regime_change.py`). No se añaden módulos nuevos al contrato para la evaluación.
+
+### D-22 · Enfoque multilingüe: sin traducción ni filtrado
+
+El corpus conserva catalán, gallego y euskera mezclados con español (~1.999 intervenciones, 6,1 % como cota superior). Se decide **no traducir y no filtrar**: filtrar introduciría un sesgo sistemático contra ERC, JxCat, Compromís, PNV, EH Bildu y BNG en un análisis del Congreso, y traducir añadiría ruido de traducción automática y dependencias. Se usan embeddings multilingües (D-24).
+
+Limitaciones asumidas: ParlaSent anota el texto original mezclado, y parte del material no español ya se perdió dentro de notas `[[...]]` eliminadas en la Fase 2 (D-19).
+
+### D-23 · Chunking y embedding a nivel de intervención
+
+Los chunks se construyen desde las frases del texto limpio: hasta 384 tokens con paso de 320 (solape de 64), usando el tokenizer del modelo de embeddings. El embedding de la intervención es la media de los embeddings de sus chunks normalizados en L2, renormalizada. La unidad de análisis sigue siendo la intervención (D-02); el chunk existe para no truncar las intervenciones largas (hasta ~17.000 palabras). Parámetros en `configs/experiment_01.yaml`.
+
+### D-24 · Modelos de embeddings: e5-large principal, bge-m3 sensibilidad
+
+`intfloat/multilingual-e5-large` es el modelo principal (1024 dimensiones, 512 tokens, prefijo `passage: `) y `BAAI/bge-m3` el de sensibilidad (`configs/experiment_02.yaml`, 1024 dimensiones, 8192 tokens). La sensibilidad se reporta como anexo de robustez, no como comparación de modelos (D-05). Si el smoke test en la máquina NVIDIA muestra problemas, se revisa antes de fijar la rejilla definitiva. Fuentes y comandos en `SOURCES.md`.
+
+### D-25 · Etiquetado de tópicos: asistente DeepSeek V4.1 Flash con evidencia
+
+El asistente **DeepSeek V4.1 Flash** (según la UI de OpenCode) propone etiqueta y descripción para cada tópico a partir de la evidencia exportada por `topic_model.py`: top-15 términos c-TF-IDF y 8 intervenciones representativas por tópico (`reports/tables/topics_evidence.csv`). El autor revisa y aprueba.
+
+`reports/tables/topics_labels.csv` guarda `label`, `description`, `model`, `prompt_version`, `date` y `reviewed_by`. Las etiquetas son un artefacto de anotación versionado: la exportación de evidencia es determinista, la generación de etiquetas no, así que se documentan modelo y prompt. Fuente del modelo en `SOURCES.md`.
+
+### D-26 · Validación de sentimiento: pre-anotación por LLM y revisión humana
+
+Muestra de ~200 intervenciones estratificada de forma proporcional por clase `senti_3` y legislatura (`term`), con `SEED=42`. El asistente DeepSeek V4.1 Flash hace una pre-anotación y el autor la revisa y corrige; la documentación indicará «pre-anotado por <modelo>, revisado por el autor». Métricas: accuracy y F1 macro con matriz de confusión para 3 y 6 clases.
+
+Archivos versionados en `reports/tables/validacion_sentimiento_*.csv`. Limitación: no es anotación humana ciega ni hay doble anotador, así que no se reporta acuerdo inter-anotador.
+
+### D-27 · Flujo de dispositivos: ejecución en la máquina NVIDIA (opción A)
+
+La máquina NVIDIA clona el repositorio, ejecuta `uv sync --extra corpus --extra nlp --extra analysis`, descarga el corpus y lanza las ejecuciones pesadas. Git transporta código y `reports/` versionados; `data/` y `models/` permanecen locales y se regeneran con comandos y `SEED` (D-13).
+
+El portátil instala también los extras (torch CPU) para que ruff, pyright y los tests unitarios funcionen sin descargar modelos; los tests que requieren modelos reales van marcados como integración.
+
+### D-28 · Series mensuales, PELT y eventos: parámetros de partida
+
+- **Cuotas:** cuota del tópico = intervenciones asignadas al tópico / intervenciones asignadas ese mes; los outliers de BERTopic se excluyen y se reporta su tasa.
+- **Tono:** media mensual de `senti_n` (simple); la ponderada por `n_words` se reporta como sensibilidad.
+- **PELT:** una serie por tópico y una para el tono; coste l2, `min_size=6`, `jump=1`; penalización elegida por criterio tipo BIC (`n·log(RSS/n) + k·log n`) sobre rejilla logarítmica, con análisis de sensibilidad de 5 penalizaciones.
+- **Eventos:** ventana de ±3 meses, Spearman + corrección de Benjamini-Hochberg y redacción no causal (D-09).
+- **Alcance v1:** series solo agregadas, sin desglose por partido.
+- `data/external/eventos.csv` queda fuera de git según D-13; la tabla exacta usada se copia a `reports/tables/eventos.csv` para que el análisis sea reproducible.
+
+### D-29 · Política de fuentes: `docs/SOURCES.md`
+
+Todo recurso externo (corpus, modelos, software, eventos y asistente de etiquetado) se registra en `docs/SOURCES.md` con identificador, origen, fecha y forma de descarga. Cualquier dependencia nueva se añade al documento en el mismo commit en que se incorpora. `docs/SOURCES.md` pasa a formar parte del contrato de estructura.

@@ -72,7 +72,8 @@ hemiciclo-nlp/
 ├── docs/
 │   ├── resumen.canvas          # Mapa visual del plan (Obsidian Canvas)
 │   ├── PROJECT_SPEC.md         # Especificación canónica del proyecto
-│   └── DECISIONS.md            # Registro de decisiones técnicas
+│   ├── DECISIONS.md            # Registro de decisiones técnicas
+│   └── SOURCES.md              # Fuentes externas y descargas reproducibles
 │
 ├── Dockerfile                  # Fase 5: imagen de API/dashboard
 ├── compose.yaml                # Fase 5: ejecución local

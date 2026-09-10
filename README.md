@@ -4,7 +4,9 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 ## Estado
 
-**Fase 2 completada**: 30.018 intervenciones limpias (≥ 20 palabras, sin notas ni fórmulas de cortesía) en `data/processed/intervenciones_limpias.parquet`, a partir de las 32.739 consolidadas en la Fase 1. Aún no hay análisis publicados.
+**Fase 2 completada**: 30.018 intervenciones limpias (≥ 20 palabras, sin notas ni fórmulas de cortesía) en `data/processed/intervenciones_limpias.parquet`, a partir de las 32.739 consolidadas en la Fase 1.
+
+**Fase 3 planificada y documentada**, dividida en 3a (representación, tópicos y sentimiento) y 3b (series, regímenes y eventos). Aún no hay implementación ni análisis publicados. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## Objetivo
 
@@ -20,8 +22,9 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 | 0 | Higiene del repo, contrato, entorno y documentación | Completada |
 | 1 | Descarga y parseo del corpus ParlaMint 5.0 ES | Completada |
 | 2 | Preprocesado y limpieza | Completada |
-| 3 | BERTopic, sentimiento, series mensuales y PELT | Pendiente |
-| 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1) y contraste con eventos | Pendiente |
+| 3a | Representación, BERTopic, etiquetado y sentimiento | Planificada |
+| 3b | Series mensuales, PELT y eventos | Planificada |
+| 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1, Spearman) | Absorbida en 3a y 3b (D-21) |
 | 5 | API FastAPI + dashboard Streamlit + Docker local | Pendiente |
 | 6 | Pasada final de calidad y reproducibilidad end-to-end | Pendiente |
 
@@ -35,19 +38,21 @@ El detalle de cada fase está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md).
 ```bash
 uv sync                 # núcleo + dev (pytest, ruff, pyright, pre-commit)
 uv sync --extra corpus  # Fase 1
-uv sync --extra nlp     # Fase 3 (recomendado en el dispositivo con NVIDIA)
-uv sync --all-extras    # todo
+uv sync --extra nlp --extra analysis  # Fases 3a y 3b
+uv sync --all-extras                  # todo
 ```
 
 - Hooks locales: `uv run pre-commit install` una sola vez.
 - Comprobaciones: `uv run pytest`, `uv run pre-commit run --all-files`.
-- Las ejecuciones pesadas (embeddings, inferencia, BERTopic) se lanzan en el dispositivo con NVIDIA; el código detecta CUDA en runtime.
+- Las ejecuciones pesadas (embeddings, BERTopic) se lanzan en la máquina NVIDIA, que clona el repositorio, descarga el corpus y ejecuta; git solo transporta código y `reports/` (decisión D-27). El portátil instala igualmente los extras (torch CPU) para que los chequeos estáticos y los tests unitarios funcionen sin descargar modelos.
 
 ## Estructura
 
 La estructura de carpetas es un contrato: [`structure.md`](structure.md). Su modificación requiere confirmación explícita.
 
 Las decisiones técnicas tomadas durante el diseño están registradas en [`docs/DECISIONS.md`](docs/DECISIONS.md).
+
+Las fuentes externas (corpus, modelos, software y eventos) y sus comandos de descarga están en [`docs/SOURCES.md`](docs/SOURCES.md).
 
 ## Datos
 
@@ -59,7 +64,7 @@ uv run python -m src.corpus.parser      # consolida data/processed/intervencione
 uv run python -m src.preprocessing.cleaner  # limpia data/processed/intervenciones_limpias.parquet
 ```
 
-Todo queda en `data/`, ignorado por git.
+Todo queda en `data/`, ignorado por git. Las URLs exactas, los MD5 de la release y las fuentes de los modelos están en [`docs/SOURCES.md`](docs/SOURCES.md).
 
 ## Licencia
 
