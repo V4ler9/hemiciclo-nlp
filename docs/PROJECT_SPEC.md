@@ -26,7 +26,7 @@ Queda **fuera de alcance** un capítulo de comparación metodológica entre mode
 | Versiones | ParlaMint plano (11356/2004) + ParlaCAP (10.23669/1ZTELP) |
 | Scraping | Aplazado: congreso.es queda fuera de v1 |
 
-Notas verificadas sobre el corpus: la presidencia (metadatos UNKNOWN por diseño del corpus original) supone ~57 % de las intervenciones; el sentimiento y el tópico de ParlaCAP cubren 76.351 de las 76.369 intervenciones (18 quedan a NaN, 0,02 %).
+Notas verificadas sobre el corpus: la presidencia (metadatos UNKNOWN por diseño del corpus original) supone ~57 % de las intervenciones; el sentimiento y el tópico de ParlaCAP cubren 76.351 de las 76.369 intervenciones (18 quedan a NaN, 0,02 %). La concordancia entre los metadatos de ParlaMint y ParlaCAP es del 100 % en los campos comparables (fecha, rol, partido, estatus, género, año de nacimiento y tópico), excluyendo la presidencia.
 
 ### Unidad de análisis
 

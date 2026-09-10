@@ -75,3 +75,5 @@ Cada fase termina con commit(s) significativos. Los mensajes van en inglés; la 
 ### D-18 · Hechos del corpus que condicionan el análisis
 
 Verificado sobre la release real: la presidencia supone ~57 % de las intervenciones (43.630 de 76.369) y sus metadatos son UNKNOWN por diseño del corpus original; entre las intervenciones regulares la cobertura de género, partido y fecha de nacimiento es del 100 %. La Fase 2 excluye los turnos de presidencia, de modo que el análisis trabajará sobre ~32.500 intervenciones con metadatos completos.
+
+Concordancia de metadatos verificada el 2026-09-10: excluyendo la presidencia, ParlaMint y ParlaCAP coinciden al **100 %** en fecha, rol (mapeado ES→EN), partido, estatus, género, año de nacimiento y tópico (mapeado ES→EN), con κ = 1,000 sobre 32.721 discursos comparables. Las 18 intervenciones que ParlaCAP no anota son discursos cortos (23-97 palabras).
