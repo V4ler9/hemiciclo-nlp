@@ -1,0 +1,27 @@
+# Entorno y cachés
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.pyright/
+.mypy_cache/
+.ipynb_checkpoints/
+*.egg-info/
+dist/
+build/
+
+# Datos y modelos: el contenido no se versiona nunca (copyright, tamaño).
+# La estructura de carpetas se documenta en structure.md.
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+
+# Skills locales de OpenCode: viven en la configuración global del usuario
+skills/
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
