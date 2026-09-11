@@ -1,0 +1,33 @@
+# Fase 3a: configuración principal.
+phase: "3a"
+seed: 42
+
+embeddings:
+  # Modelo multilingüe principal (D-22, D-24).
+  model: "intfloat/multilingual-e5-large"
+  prefix: "passage: "
+  batch_size: 32
+  device: "auto"          # auto | cpu | cuda
+  chunk_tokens: 384       # tamaño máximo de ventana
+  chunk_stride: 320       # paso entre ventanas (solape de 64)
+  min_chunk_tokens: 8
+
+topics:
+  language: "multilingual"
+  min_topic_size: [15, 30, 50]
+  n_neighbors: [10, 15, 30]
+  n_components: 5
+  min_dist: 0.0
+  metric: "cosine"
+  min_samples: [5, 10]
+  ngram_range: [1, 2]
+  min_df: 5
+  max_df: 0.9
+  top_n_words: 15
+  coherence: "umass"
+  outlier_strategy: "exclude"
+
+sentiment:
+  sample_size: 200
+  strata: ["senti_3", "term"]
+  seed: 42

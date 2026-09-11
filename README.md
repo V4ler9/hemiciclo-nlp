@@ -44,6 +44,7 @@ uv sync --all-extras                  # todo
 
 - Hooks locales: `uv run pre-commit install` una sola vez.
 - Comprobaciones: `uv run pytest`, `uv run pre-commit run --all-files`.
+- Los tests que descargan o ejecutan modelos van marcados `heavy` y se saltan por defecto; solo se ejecutan con `HEMICICLO_HEAVY=1` en una máquina con capacidad suficiente (D-30).
 - Las ejecuciones pesadas (embeddings, BERTopic) se lanzan en la máquina NVIDIA, que clona el repositorio, descarga el corpus y ejecuta; git solo transporta código y `reports/` (decisión D-27). El portátil instala igualmente los extras (torch CPU) para que los chequeos estáticos y los tests unitarios funcionen sin descargar modelos.
 
 ## Estructura

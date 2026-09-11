@@ -1,0 +1,32 @@
+# Fase 3a: sensibilidad con un segundo modelo de embeddings (D-24).
+phase: "3a"
+seed: 42
+
+embeddings:
+  model: "BAAI/bge-m3"
+  prefix: ""
+  batch_size: 16
+  device: "auto"
+  chunk_tokens: 384
+  chunk_stride: 320
+  min_chunk_tokens: 8
+
+topics:
+  language: "multilingual"
+  min_topic_size: [15, 30, 50]
+  n_neighbors: [10, 15, 30]
+  n_components: 5
+  min_dist: 0.0
+  metric: "cosine"
+  min_samples: [5, 10]
+  ngram_range: [1, 2]
+  min_df: 5
+  max_df: 0.9
+  top_n_words: 15
+  coherence: "umass"
+  outlier_strategy: "exclude"
+
+sentiment:
+  sample_size: 200
+  strata: ["senti_3", "term"]
+  seed: 42

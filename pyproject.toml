@@ -71,4 +71,5 @@ pythonpath = ["."]
 addopts = "-q"
 markers = [
     "integration: pruebas que requieren red o el corpus descargado",
+    "heavy: pruebas que descargan o ejecutan modelos; saltadas por defecto (D-30)",
 ]

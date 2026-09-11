@@ -106,7 +106,7 @@ Limitaciones asumidas: ParlaSent anota el texto original mezclado, y parte del m
 
 ### D-23 · Chunking y embedding a nivel de intervención
 
-Los chunks se construyen desde las frases del texto limpio: hasta 384 tokens con paso de 320 (solape de 64), usando el tokenizer del modelo de embeddings. El embedding de la intervención es la media de los embeddings de sus chunks normalizados en L2, renormalizada. La unidad de análisis sigue siendo la intervención (D-02); el chunk existe para no truncar las intervenciones largas (hasta ~17.000 palabras). Parámetros en `configs/experiment_01.yaml`.
+Los chunks se construyen con ventanas de tokens: hasta 384 tokens con paso de 320 (solape de 64), usando el tokenizer del modelo de embeddings (no se fuerza la frontera de frase; el solape conserva el contexto entre ventanas). El embedding de la intervención es la media de los embeddings de sus chunks normalizados en L2, renormalizada. La unidad de análisis sigue siendo la intervención (D-02); el chunk existe para no truncar las intervenciones largas (hasta ~17.000 palabras). Parámetros en `configs/experiment_01.yaml`.
 
 ### D-24 · Modelos de embeddings: e5-large principal, bge-m3 sensibilidad
 
@@ -128,7 +128,18 @@ Archivos versionados en `reports/tables/validacion_sentimiento_*.csv`. Limitaci�
 
 La máquina NVIDIA clona el repositorio, ejecuta `uv sync --extra corpus --extra nlp --extra analysis`, descarga el corpus y lanza las ejecuciones pesadas. Git transporta código y `reports/` versionados; `data/` y `models/` permanecen locales y se regeneran con comandos y `SEED` (D-13).
 
-El portátil instala también los extras (torch CPU) para que ruff, pyright y los tests unitarios funcionen sin descargar modelos; los tests que requieren modelos reales van marcados como integración.
+El portátil no instala los extras pesados: el código los carga solo al ejecutar (D-30) y los tests unitarios usan dobles. Los tests que requieren modelos reales van marcados `heavy` y se saltan por defecto.
+
+### D-30 · Sin cómputo local: los modelos y sus tests no se ejecutan en el portátil
+
+El portátil no tiene capacidad para descargar y ejecutar los modelos de embeddings ni BERTopic, así que la Fase 3a se implementa con estas reglas:
+
+- Las dependencias pesadas siguen en los extras `nlp`/`analysis` y se cargan en tiempo de ejecución con `import_optional` (`src/utils/helpers.py`); importar `src/nlp/` no exige torch ni transformers.
+- Los tests unitarios usan dobles (tokenizadores y codificadores falsos) y se ejecutan en local.
+- Los tests que descargan o ejecutan modelos van marcados `heavy` y se saltan salvo que se defina `HEMICICLO_HEAVY=1`.
+- La ejecución real y los tests `heavy` se harán en la máquina NVIDIA (D-27) al cerrar la fase.
+
+Consecuencia: los caminos pesados quedan escritos y tipados, pero no verificados por ejecución hasta que se disponga de la máquina; se asume como limitación conocida.
 
 ### D-28 · Series mensuales, PELT y eventos: parámetros de partida
 

@@ -45,7 +45,7 @@ Se excluyen: `Speaker_name`, `Speaker_ID` (solo muestreo y control de calidad), 
 1. **Corpus:** descarga de ParlaMint 5.0 plano y de ParlaCAP ES, consolidación en una tabla de intervenciones (excluida la presidencia) con metadatos, tópico CAP y sentimiento ParlaSent (`data/processed/intervenciones.parquet`).
 2. **Preprocesado:** eliminación de las notas no verbales (`[[...]]`) y de las fórmulas de saludo, vocativo y despedida; normalización de espacios y filtro de longitud (≥ 20 palabras tras limpiar). El filtro descarta las intervenciones cortas y las reglas de expresiones regulares intentan eliminar las expresiones de cortesía, pero al basarse en regex esta limpieza nunca es perfecta. Reglas versionadas en `configs/default.yaml`; salida en `data/processed/intervenciones_limpias.parquet`. Los turnos de presidencia ya se excluyeron en la Fase 1 y los párrafos del TEI no se recuperan (D-20).
 3. **Fase 3a · Representación, tópicos y sentimiento (planificada):**
-   - **Texto:** chunks construidos desde frases (hasta 384 tokens con paso de 320) sobre el texto limpio; enfoque multilingüe, sin traducir ni filtrar (D-22).
+   - **Texto:** ventanas de hasta 384 tokens con paso de 320 (solape de 64) sobre el texto limpio; enfoque multilingüe, sin traducir ni filtrar (D-22, D-23).
    - **Embeddings:** `intfloat/multilingual-e5-large` como principal y `BAAI/bge-m3` como sensibilidad; embedding de intervención por media de chunks normalizados (D-23, D-24).
    - **Tópicos:** BERTopic propio (UMAP → HDBSCAN → c-TF-IDF) con rejilla de hiperparámetros; granularidad elegida por coherencia c_v y diversidad; outliers excluidos de las cuotas reportando su tasa.
    - **Etiquetado:** propuesta automática a partir de la evidencia (términos c-TF-IDF e intervenciones representativas) con revisión del autor y trazabilidad del modelo (D-25).
@@ -89,6 +89,7 @@ CSV editable a mano en `data/external/eventos.csv` (diseño deliberadamente senc
 - Configuración en `configs/*.yaml`; nada de constantes mágicas en el código.
 - Desarrollo en CPU; ejecuciones pesadas en la máquina con NVIDIA (D-27): clona el repositorio, descarga el corpus y ejecuta; git solo transporta código y `reports/`.
 - Fuentes externas, modelos y comandos de descarga: [`SOURCES.md`](SOURCES.md).
+- Los modelos pesados se cargan en tiempo de ejecución y sus tests van marcados `heavy`, saltados por defecto hasta disponer de cómputo (D-30).
 - Un commit al cerrar cada fase (3a y 3b incluidas, D-21).
 
 ## 6. Gobernanza
