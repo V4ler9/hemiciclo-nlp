@@ -138,6 +138,13 @@ def test_token_windows_descarta_ventana_demasiado_corta() -> None:
     assert len(windows[0].split()) == 384
 
 
+def test_token_windows_no_repite_la_cola_final() -> None:
+    windows = token_windows(
+        _token_text(1000), fake_encode, fake_decode, max_tokens=384, stride=320, min_tokens=8
+    )
+    assert [len(window.split()) for window in windows] == [384, 384, 360]
+
+
 def test_chunk_interventions_reinicia_indice_por_intervencion() -> None:
     frame = pd.DataFrame(
         {

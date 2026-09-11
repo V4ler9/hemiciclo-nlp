@@ -76,20 +76,28 @@ def token_windows(
     stride: int,
     min_tokens: int,
 ) -> list[str]:
-    """Divide el texto en ventanas de tokens con solape (D-23)."""
+    """Divide el texto en ventanas de tokens con solape (D-23).
+
+    Las posiciones de inicio y los tamaños se calculan vectorizados: se emiten
+    ventanas completas cada ``stride`` tokens y se conserva la primera ventana
+    que alcanza el final (puede ser parcial), descartando las colas redundantes.
+    """
     token_ids = encode(text)
-    if not token_ids:
+    total = len(token_ids)
+    if total == 0:
         return []
-    windows: list[str] = []
-    start = 0
-    while start < len(token_ids):
-        window = token_ids[start : start + max_tokens]
-        if len(window) >= min_tokens:
-            windows.append(decode(window))
-        if start + max_tokens >= len(token_ids):
-            break
-        start += stride
-    return windows
+    if total <= max_tokens:
+        return [decode(token_ids)] if total >= min_tokens else []
+
+    starts = np.arange(0, total, stride)
+    last = int(np.searchsorted(starts + max_tokens, total, side="left"))
+    starts = starts[: last + 1]
+    sizes = np.minimum(total - starts, max_tokens)
+    return [
+        decode(token_ids[start : start + max_tokens])
+        for start, size in zip(starts.tolist(), sizes.tolist(), strict=True)
+        if size >= min_tokens
+    ]
 
 
 def chunk_interventions(
