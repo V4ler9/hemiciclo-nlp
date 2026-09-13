@@ -153,3 +153,17 @@ Consecuencia: los caminos pesados quedan escritos y tipados, pero no verificados
 ### D-29 · Política de fuentes: `docs/SOURCES.md`
 
 Todo recurso externo (corpus, modelos, software, eventos y asistente de etiquetado) se registra en `docs/SOURCES.md` con identificador, origen, fecha y forma de descarga. Cualquier dependencia nueva se añade al documento en el mismo commit en que se incorpora. `docs/SOURCES.md` pasa a formar parte del contrato de estructura.
+
+## 2026-09-13 — Ejecución real de la Fase 3a en la máquina NVIDIA
+
+### D-31 · Rueda CUDA de PyTorch en Windows
+
+Detectado al ejecutar la Fase 3a real (D-27): en Windows, `uv sync --extra nlp` instala la rueda **CPU** de `torch` publicada en PyPI (`2.14.0+cpu`), de modo que la máquina NVIDIA se quedaba sin aceleración pese a que el código detecta CUDA en runtime (D-11). Las ejecuciones pesadas requieren instalar la rueda CUDA correspondiente al driver:
+
+```bash
+uv pip install "torch==2.14.0+cu130" --index-url https://download.pytorch.org/whl/cu130
+```
+
+Verificado con la RTX 3060 Ti (driver 591.86 / CUDA 13.1): `torch.cuda.is_available()` pasa a `True` y los embeddings reales del corpus limpio (88.141 chunks) se codifican en GPU con un pico de ~4,4 GB de VRAM.
+
+Consecuencias: la sustitución afecta solo al venv local y `uv sync` la revierte; por ahora es un paso manual documentado en `docs/SOURCES.md` (§3 y §5). Hacerlo permanente implicaría declarar el índice CUDA de PyTorch en `pyproject.toml`/`uv.lock` (decisión futura). El flujo del portátil (D-30) no cambia: las ruedas CUDA son específicas de plataforma y allí no se instalan.

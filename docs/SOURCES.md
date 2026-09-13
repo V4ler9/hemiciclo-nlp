@@ -61,6 +61,7 @@ La lista exacta y las versiones están en [`pyproject.toml`](../pyproject.toml) 
 - Extra `nlp` (Fase 3a): `bertopic`, `sentence-transformers`, `torch`; al implementar la fase se añadirán `py3langid` para la caracterización lingüística y la librería de coherencia que se elija.
 - Extra `analysis` (Fase 3b): `ruptures`, `scipy`, `matplotlib`, `seaborn`.
 - Extra `app` (Fase 5): `fastapi`, `uvicorn`, `streamlit`, `plotly`.
+- **Nota Windows/NVIDIA:** la rueda `torch` que publica PyPI para Windows es solo CPU, así que las ejecuciones con GPU requieren instalar la rueda CUDA del índice oficial de PyTorch (D-31). Comando en la sección 5.
 
 ## 4. Eventos
 
@@ -84,6 +85,9 @@ Las fechas se verificarán contra el expediente o la publicación oficial corres
 ```bash
 uv sync --extra corpus --extra nlp --extra analysis
 
+# Máquina NVIDIA en Windows: habilitar CUDA antes de las ejecuciones pesadas (D-31)
+uv pip install "torch==2.14.0+cu130" --index-url https://download.pytorch.org/whl/cu130
+
 # Fase 1
 uv run python -m src.corpus.downloader
 uv run python -m src.corpus.parser
@@ -105,3 +109,4 @@ uv run python -m src.preprocessing.cleaner
 | Fecha | Cambio |
 |---|---|
 | 2026-09-10 | Creación: corpus, modelos de embeddings, asistente de etiquetado, software, eventos candidatos y comandos de reproducción. |
+| 2026-09-13 | Nota Windows/NVIDIA: instalación de la rueda CUDA de `torch` desde el índice de PyTorch (D-31) y comando en la reproducción por fase. |
