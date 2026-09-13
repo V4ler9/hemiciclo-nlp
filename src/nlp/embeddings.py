@@ -20,7 +20,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
-from src.utils.config import PROJECT_ROOT, load_config
+from src.utils.config import CONFIG_DIR, PROJECT_ROOT, load_config
 from src.utils.helpers import import_optional
 
 Array = npt.NDArray[np.float64]
@@ -229,7 +229,7 @@ def build_embeddings(
 
 def main() -> None:
     """CLI: genera chunks y embeddings en ``data/intermediate``."""
-    config = load_config()
+    config = load_config(CONFIG_DIR / "experiment_01.yaml")
     embedding_config = build_embedding_config(config)
     input_path = PROJECT_ROOT / "data" / "processed" / "intervenciones_limpias.parquet"
     output_dir = PROJECT_ROOT / "data" / "intermediate"
