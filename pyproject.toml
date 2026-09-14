@@ -20,6 +20,8 @@ corpus = [
 # Fase 3: modelado de tópicos y sentimiento
 nlp = [
     "bertopic>=0.17",
+    "gensim>=4.3",
+    "scikit-learn>=1.5",
     "sentence-transformers>=3.0",
     "torch>=2.4",
 ]

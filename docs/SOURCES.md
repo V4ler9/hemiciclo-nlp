@@ -58,7 +58,7 @@ La lista exacta y las versiones están en [`pyproject.toml`](../pyproject.toml) 
 
 - Núcleo y calidad: `numpy`, `pandas`, `pyyaml`; `pytest`, `ruff`, `pyright`, `pre-commit`.
 - Extra `corpus` (Fase 1): `requests`, `lxml`, `pyarrow`.
-- Extra `nlp` (Fase 3a): `bertopic`, `sentence-transformers`, `torch`; al implementar la fase se añadirán `py3langid` para la caracterización lingüística y la librería de coherencia que se elija.
+- Extra `nlp` (Fase 3a): `bertopic`, `sentence-transformers`, `torch`, `scikit-learn` (ARI/NMI) y `gensim` (coherencia c_v, D-32). `py3langid` queda pendiente para la caracterización lingüística.
 - Extra `analysis` (Fase 3b): `ruptures`, `scipy`, `matplotlib`, `seaborn`.
 - Extra `app` (Fase 5): `fastapi`, `uvicorn`, `streamlit`, `plotly`.
 - **Nota Windows/NVIDIA:** la rueda `torch` que publica PyPI para Windows es solo CPU, así que las ejecuciones con GPU requieren instalar la rueda CUDA del índice oficial de PyTorch (D-31). Comando en la sección 5.
