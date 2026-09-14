@@ -117,8 +117,9 @@ def proportional_sample(frame: pd.DataFrame, config: SentimentConfig) -> pd.Data
 
 def confusion_frame(y_true: pd.Series, y_pred: pd.Series, labels: Sequence[str]) -> pd.DataFrame:
     """Matriz de confusión con todas las clases, indexada por etiqueta real."""
-    index = pd.Index(labels)
-    table = pd.crosstab(y_true, y_pred).reindex(index=index, columns=index, fill_value=0)
+    table = pd.crosstab(y_true, y_pred).reindex(
+        index=pd.Index(labels), columns=pd.Index(labels), fill_value=0
+    )
     table.index.name = "real"
     table.columns.name = "anotado"
     return table

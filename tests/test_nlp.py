@@ -505,6 +505,8 @@ def test_evaluate_sentiment_calcula_accuracy_f1_y_confusion() -> None:
     assert summary.loc["senti_6", "accuracy"] == 1.0
     assert summary.loc["senti_6", "f1_macro"] == 1.0
     assert report.confusions["senti_3"].loc["Negative", "Neutral"] == 1
+    assert report.confusions["senti_3"].index.name == "real"
+    assert report.confusions["senti_3"].columns.name == "anotado"
     assert len(report.per_class) == 3 + 4
 
 
