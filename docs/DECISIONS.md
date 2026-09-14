@@ -167,3 +167,24 @@ uv pip install "torch==2.14.0+cu130" --index-url https://download.pytorch.org/wh
 Verificado con la RTX 3060 Ti (driver 591.86 / CUDA 13.1): `torch.cuda.is_available()` pasa a `True` y los embeddings reales del corpus limpio (88.141 chunks) se codifican en GPU con un pico de ~4,4 GB de VRAM.
 
 Consecuencias: la sustitución afecta solo al venv local y `uv sync` la revierte; por ahora es un paso manual documentado en `docs/SOURCES.md` (§3 y §5). Hacerlo permanente implicaría declarar el índice CUDA de PyTorch en `pyproject.toml`/`uv.lock` (decisión futura). El flujo del portátil (D-30) no cambia: las ruedas CUDA son específicas de plataforma y allí no se instalan.
+
+## 2026-09-13 — Implementación de `topic_model` (Fase 3a)
+
+### D-32 · Granularidad de BERTopic: c_v, diversidad y regla de selección
+
+Decisiones confirmadas al implementar `src/nlp/topic_model.py`:
+
+- **Métrica de coherencia:** c_v, como fija la spec (y no `umass` como ponían los configs); `experiment_01.yaml` y `experiment_02.yaml` se alinean. c_v requiere `gensim`, que pasa a ser dependencia del extra `nlp` junto con `scikit-learn` explícito (ARI/NMI); registrado en `SOURCES.md` en este mismo commit (D-29).
+- **Diversidad:** proporción de palabras únicas en el top-10 de cada tópico (definición tipo OCTIS), calculada en `src/nlp/topic_model.py`; BERTopic 0.17.4 no trae métrica de diversidad.
+- **Selección:** de las 18 combinaciones de la rejilla se descartan las que superan una tasa de outliers del 40 % o quedan fuera del rango [20, 60] tópicos; entre las restantes se elige el máximo c_v y se desempata por mayor diversidad. Los umbrales viven en `configs/experiment_01.yaml` (`topics.selection`).
+- **Outliers:** estrategia de proyecto (D-28): se conservan con tópico -1, se excluyen de cuotas y su tasa se reporta. BERTopic 0.17.4 no expone `outlier_strategy` en el constructor, así que la configuración homónima de los YAML se aplica en el código del proyecto.
+
+### D-33 · Ampliación de la rejilla de `min_topic_size`
+
+Primer barrido de la rejilla (2026-09-14, 18 combinaciones sobre 30.027 intervenciones): ninguna combinación cae en el rango [20, 60] tópicos de D-32; todas producen entre 90 y 314 tópicos, con tasas de outliers del 30–41 % y c_v entre 0,70 y 0,76. Para comprobar si la coherencia y la diversidad siguen subiendo al reducir la granularidad (y para poder alcanzar el rango de D-32), se amplía la rejilla con `min_topic_size` 100, 150 y 200: 36 combinaciones en total, reutilizando el checkpoint de las 18 ya evaluadas. El filtro [20, 60] de D-32 se mantiene; los resultados (D-34) muestran que el rango es alcanzable a partir de `min_topic_size` 100.
+
+### D-34 · Selección final de granularidad y tendencia de las métricas
+
+Segundo barrido (2026-09-14, 36 combinaciones en total) y selección según D-32: la combinación elegida es `min_topic_size=100`, `n_neighbors=30`, `min_samples=10` → **58 tópicos**, tasa de outliers 32,0 %, c_v 0,7546 y diversidad 0,9414. Queda a 0,009 del máximo global de coherencia (`50/15/5`, 0,7632, 109 tópicos), pero dentro del rango [20, 60] que D-32 fija para que las series mensuales de 3b sean analizables.
+
+Tendencia observada: la coherencia c_v sube hasta `min_topic_size≈50` y decae a partir de ahí (medias de 0,752 → 0,741 → 0,721 → 0,680 en 50/100/150/200); la diversidad sube de forma monótona al reducir el número de tópicos, en parte mecánicamente. La rejilla completa (36 filas) queda en `reports/tables/topics_selection.csv` y la evidencia para etiquetado en `reports/tables/topics_evidence.csv`.

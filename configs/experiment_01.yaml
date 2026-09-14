@@ -14,7 +14,7 @@ embeddings:
 
 topics:
   language: "multilingual"
-  min_topic_size: [15, 30, 50]
+  min_topic_size: [15, 30, 50, 100, 150, 200]
   n_neighbors: [10, 15, 30]
   n_components: 5
   min_dist: 0.0
@@ -24,8 +24,14 @@ topics:
   min_df: 5
   max_df: 0.9
   top_n_words: 15
-  coherence: "umass"
+  coherence: "c_v"
+  diversity_top_n: 10
+  representative_docs: 8
   outlier_strategy: "exclude"
+  selection:
+    max_outlier_rate: 0.4
+    min_topics: 20
+    max_topics: 60
 
 sentiment:
   sample_size: 200

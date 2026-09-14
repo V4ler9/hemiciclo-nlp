@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Sequence
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -22,6 +23,20 @@ from src.nlp.embeddings import (
     embed_chunks,
     embed_interventions,
     token_windows,
+)
+from src.nlp.topic_model import (
+    OUTLIER_TOPIC,
+    TopicConfig,
+    build_assignments,
+    build_evidence,
+    build_topic_config,
+    coherence_score,
+    diversity_score,
+    grid_combinations,
+    outlier_rate,
+    select_best_run,
+    tokenize_texts,
+    topic_count,
 )
 from src.utils.config import CONFIG_DIR, load_config
 from src.utils.helpers import import_optional
@@ -241,6 +256,158 @@ def test_import_optional_falla_si_no_existe() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Fase 3a: configuración, métricas y artefactos de tópicos
+# ---------------------------------------------------------------------------
+
+
+def _topic_config() -> TopicConfig:
+    return build_topic_config(load_config(CONFIG_DIR / "experiment_01.yaml"))
+
+
+def test_build_topic_config_alineado_con_experimento_01() -> None:
+    config = _topic_config()
+    assert config.coherence == "c_v"
+    assert config.min_topic_size == (15, 30, 50, 100, 150, 200)
+    assert config.n_neighbors == (10, 15, 30)
+    assert config.min_samples == (5, 10)
+    assert config.representative_docs == 8
+    assert config.diversity_top_n == 10
+    assert (config.min_topics, config.max_topics) == (20, 60)
+    assert config.max_outlier_rate == 0.4
+    assert config.seed == 42
+
+
+def test_build_topic_config_rechaza_outlier_strategy() -> None:
+    with pytest.raises(ValueError, match="outliers"):
+        build_topic_config({"topics": {"outlier_strategy": "distributions"}})
+
+
+def test_grid_combinations_producto_cartesiano() -> None:
+    grid = grid_combinations(_topic_config())
+    assert len(grid) == 36
+    assert grid[0] == {"min_topic_size": 15, "n_neighbors": 10, "min_samples": 5}
+    assert grid[-1] == {"min_topic_size": 200, "n_neighbors": 30, "min_samples": 10}
+
+
+def test_tokenize_texts_normaliza_minusculas() -> None:
+    assert tokenize_texts(["Hola   Mundo"]) == [["hola", "mundo"]]
+
+
+def test_outlier_rate() -> None:
+    assert outlier_rate([OUTLIER_TOPIC, 0, 1, OUTLIER_TOPIC]) == 0.5
+    assert np.isnan(outlier_rate([]))
+
+
+def test_topic_count_excluye_outliers() -> None:
+    assert topic_count([OUTLIER_TOPIC, 0, 0, 2]) == 2
+
+
+def test_diversity_score_palabras_unicas() -> None:
+    topics = [["a", "b", "c"], ["b", "c", "d"]]
+    assert diversity_score(topics, top_n=3) == 4 / 6
+    assert np.isnan(diversity_score([], top_n=10))
+    assert diversity_score(topics, top_n=1) == 1.0
+
+
+def _selection_table() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "min_topic_size": 15,
+                "n_neighbors": 10,
+                "min_samples": 5,
+                "n_topics": 30,
+                "outlier_rate": 0.30,
+                "coherence": 0.55,
+                "diversity": 0.80,
+            },
+            {
+                "min_topic_size": 30,
+                "n_neighbors": 15,
+                "min_samples": 5,
+                "n_topics": 25,
+                "outlier_rate": 0.50,
+                "coherence": 0.70,
+                "diversity": 0.90,
+            },
+            {
+                "min_topic_size": 50,
+                "n_neighbors": 30,
+                "min_samples": 10,
+                "n_topics": 80,
+                "outlier_rate": 0.20,
+                "coherence": 0.80,
+                "diversity": 0.90,
+            },
+            {
+                "min_topic_size": 30,
+                "n_neighbors": 30,
+                "min_samples": 10,
+                "n_topics": 40,
+                "outlier_rate": 0.25,
+                "coherence": 0.50,
+                "diversity": 0.70,
+            },
+        ]
+    )
+
+
+def test_select_best_run_filtra_y_maximiza_coherencia() -> None:
+    best = select_best_run(_selection_table(), _topic_config())
+    assert best["n_neighbors"] == 10
+    assert best["coherence"] == 0.55
+
+
+def test_select_best_run_desempata_por_diversidad() -> None:
+    table = _selection_table()
+    table.loc[0, "coherence"] = 0.60
+    table.loc[0, "diversity"] = 0.50
+    table.loc[3, "coherence"] = 0.60
+    best = select_best_run(table, _topic_config())
+    assert best["min_topic_size"] == 30
+    assert best["diversity"] == 0.70
+
+
+def test_select_best_run_falla_sin_candidatos() -> None:
+    table = _selection_table()
+    table.loc[:, "outlier_rate"] = 0.9
+    with pytest.raises(ValueError, match="filtros"):
+        select_best_run(table, _topic_config())
+
+
+def test_build_assignments() -> None:
+    frame = build_assignments(["u1", "u2", "u3"], [0, OUTLIER_TOPIC, 2])
+    assert list(frame.columns) == ["utterance_id", "bertopic_topic", "is_outlier"]
+    assert frame["is_outlier"].tolist() == [False, True, False]
+
+
+def test_build_evidence_mapea_representativas() -> None:
+    evidence = build_evidence(
+        ["u1", "u2", "u3"],
+        ["texto uno", "texto dos", "texto tres"],
+        [0, 0, OUTLIER_TOPIC],
+        {0: ["economía", "empleo"]},
+        {0: ["texto dos"]},
+    )
+    assert list(evidence.columns) == [
+        "topic",
+        "size",
+        "share",
+        "top_terms",
+        "representative_utterance_ids",
+        "representative_texts",
+    ]
+    assert len(evidence) == 1
+    row = evidence.iloc[0]
+    assert row["topic"] == 0
+    assert row["size"] == 2
+    assert row["share"] == round(2 / 3, 6)
+    assert row["top_terms"] == "economía; empleo"
+    assert row["representative_utterance_ids"] == "u2"
+    assert row["representative_texts"] == "texto dos"
+
+
+# ---------------------------------------------------------------------------
 # Integración pesada (no se ejecuta en el portátil, D-30)
 # ---------------------------------------------------------------------------
 
@@ -259,3 +426,61 @@ def test_encoder_real_produce_vectores() -> None:
         batch_size=2,
     )
     assert vectors.shape == (2, 1024)
+
+
+@pytest.mark.heavy
+@heavy
+def test_coherence_c_v_real() -> None:
+    economy = ["economía", "empleo", "inversión"]
+    health = ["sanidad", "hospital", "vacuna"]
+    texts: list[str] = []
+    for index in range(20):
+        base = economy if index % 2 == 0 else health
+        texts.append(" ".join([*base, f"documento{index}"]))
+    value = coherence_score([economy, health], tokenize_texts(texts), "c_v")
+    assert np.isfinite(value)
+
+
+@pytest.mark.heavy
+@heavy
+def test_bertopic_real_encuentra_topicos_sinteticos(tmp_path: Path) -> None:
+    from dataclasses import replace
+
+    from src.nlp.topic_model import evaluate_run, fit_topics
+
+    bertopic_module = import_optional("bertopic")
+
+    rng = np.random.default_rng(42)
+    centers = rng.normal(size=(3, 16))
+    vectors = np.vstack(
+        [center + rng.normal(scale=0.05, size=(30, 16)) for center in centers]
+    ).astype(np.float32)
+    vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
+    vocabulary = {
+        0: ["economía", "empleo", "inversión"],
+        1: ["sanidad", "hospital", "vacuna"],
+        2: ["educación", "escuela", "profesorado"],
+    }
+    texts = [" ".join([*vocabulary[index // 30], f"documento{index}"]) for index in range(90)]
+    # El c-TF-IDF ajusta el vectorizador sobre un documento por tópico: con
+    # min_df=5 harían falta >=6 tópicos, así que la prueba relaja esos valores.
+    config = replace(_topic_config(), min_df=1, max_df=1.0)
+    model, topics, topic_words = fit_topics(
+        texts,
+        vectors,
+        config,
+        {"min_topic_size": 5, "n_neighbors": 5, "min_samples": 2},
+    )
+    assert model is not None
+    metrics = evaluate_run(topics, topic_words, tokenize_texts(texts), config)
+    assert metrics["n_topics"] >= 2
+    assert metrics["outlier_rate"] < 0.5
+    assert np.isfinite(metrics["diversity"])
+    assert np.isfinite(metrics["coherence"])
+
+    saved = tmp_path / "bertopic"
+    model.save(
+        str(saved), serialization="safetensors", save_embedding_model=False, save_ctfidf=True
+    )
+    loaded = bertopic_module.BERTopic.load(str(saved))
+    assert len(loaded.get_topic_info()) == len(model.get_topic_info())
