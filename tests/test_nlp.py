@@ -24,6 +24,13 @@ from src.nlp.embeddings import (
     embed_interventions,
     token_windows,
 )
+from src.nlp.sentiment import (
+    SentimentConfig,
+    build_sentiment_config,
+    evaluate_sentiment,
+    proportional_sample,
+    write_reports,
+)
 from src.nlp.topic_model import (
     OUTLIER_TOPIC,
     TopicConfig,
@@ -405,6 +412,132 @@ def test_build_evidence_mapea_representativas() -> None:
     assert row["top_terms"] == "economía; empleo"
     assert row["representative_utterance_ids"] == "u2"
     assert row["representative_texts"] == "texto dos"
+
+
+# ---------------------------------------------------------------------------
+# Fase 3a: validación de sentimiento (D-26)
+# ---------------------------------------------------------------------------
+
+
+def _sentiment_config() -> SentimentConfig:
+    return build_sentiment_config(load_config(CONFIG_DIR / "experiment_01.yaml"))
+
+
+def _validation_corpus() -> pd.DataFrame:
+    combos = [
+        ("A", "T1", 300),
+        ("A", "T2", 100),
+        ("B", "T1", 100),
+        ("B", "T2", 50),
+        ("C", "T1", 50),
+        ("C", "T2", 20),
+    ]
+    rows: list[dict[str, object]] = []
+    index = 0
+    for senti, term, count in combos:
+        for _ in range(count):
+            rows.append(
+                {
+                    "utterance_id": f"u{index:04d}",
+                    "text": f"texto {index}",
+                    "date": pd.Timestamp("2020-01-01"),
+                    "term": term,
+                    "senti_3": senti,
+                    "senti_6": f"{senti}-6",
+                }
+            )
+            index += 1
+    return pd.DataFrame(rows)
+
+
+def test_build_sentiment_config_alineado_con_experimento_01() -> None:
+    config = _sentiment_config()
+    assert config.sample_size == 200
+    assert config.strata == ("senti_3", "term")
+    assert config.seed == 42
+
+
+def test_proportional_sample_determinista_y_proporcional() -> None:
+    corpus = _validation_corpus()
+    config = _sentiment_config()
+    first = proportional_sample(corpus, config)
+    second = proportional_sample(corpus, config)
+    assert len(first) == config.sample_size
+    assert first["utterance_id"].is_unique
+    assert first["utterance_id"].tolist() == second["utterance_id"].tolist()
+    assert list(first.columns) == ["utterance_id", "date", "term", "text"]
+
+    joined = first.merge(corpus.loc[:, ["utterance_id", "senti_3"]], on="utterance_id")
+    population_shares = pd.crosstab(corpus["senti_3"], corpus["term"], normalize="all")
+    sample_shares = pd.crosstab(joined["senti_3"], joined["term"], normalize="all")
+    difference = (sample_shares - population_shares).abs()
+    assert float(difference.to_numpy().max()) < 0.01
+
+
+def _validation_frames() -> tuple[pd.DataFrame, pd.DataFrame]:
+    reference = pd.DataFrame(
+        {
+            "utterance_id": ["u1", "u2", "u3", "u4"],
+            "senti_3": ["Positive", "Neutral", "Negative", "Negative"],
+            "senti_6": ["Positive", "Neutral Negative", "Negative", "Mixed Negative"],
+        }
+    )
+    annotations = pd.DataFrame(
+        {
+            "utterance_id": ["u1", "u2", "u3", "u4"],
+            "senti_3_final": ["Positive", "Neutral", "Negative", "Neutral"],
+            "senti_6_final": ["Positive", "Neutral Negative", "Negative", "Mixed Negative"],
+            "model": ["asistente"] * 4,
+            "prompt_version": ["v1"] * 4,
+            "date": ["2026-09-14"] * 4,
+            "reviewed_by": ["autor"] * 4,
+        }
+    )
+    return annotations, reference
+
+
+def test_evaluate_sentiment_calcula_accuracy_f1_y_confusion() -> None:
+    annotations, reference = _validation_frames()
+    report = evaluate_sentiment(annotations, reference)
+    assert list(report.summary["nivel"]) == ["senti_3", "senti_6"]
+    summary = report.summary.set_index("nivel")
+    assert summary.loc["senti_3", "accuracy"] == 0.75
+    assert summary.loc["senti_6", "accuracy"] == 1.0
+    assert summary.loc["senti_6", "f1_macro"] == 1.0
+    assert report.confusions["senti_3"].loc["Negative", "Neutral"] == 1
+    assert len(report.per_class) == 3 + 4
+
+
+def test_evaluate_sentiment_falla_sin_columnas() -> None:
+    annotations, reference = _validation_frames()
+    with pytest.raises(ValueError, match="columnas"):
+        evaluate_sentiment(annotations.drop(columns=["senti_3_final"]), reference)
+
+
+def test_evaluate_sentiment_falla_con_ids_desconocidos() -> None:
+    annotations, reference = _validation_frames()
+    unknown = pd.DataFrame(
+        {
+            "utterance_id": ["u9"],
+            "senti_3_final": ["Neutral"],
+            "senti_6_final": ["Neutral"],
+        }
+    )
+    with pytest.raises(ValueError, match="sin referencia"):
+        evaluate_sentiment(pd.concat([annotations, unknown], ignore_index=True), reference)
+
+
+def test_write_reports_escribe_artefactos(tmp_path: Path) -> None:
+    annotations, reference = _validation_frames()
+    paths = write_reports(evaluate_sentiment(annotations, reference), tmp_path)
+    names = {path.name for path in paths}
+    assert names == {
+        "validacion_sentimiento_metricas.csv",
+        "validacion_sentimiento_por_clase.csv",
+        "validacion_sentimiento_confusion_senti_3.csv",
+        "validacion_sentimiento_confusion_senti_6.csv",
+    }
+    assert all(path.exists() for path in paths)
 
 
 # ---------------------------------------------------------------------------
