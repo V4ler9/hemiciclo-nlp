@@ -6,7 +6,7 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 **Fase 2 completada**: 30.018 intervenciones limpias (≥ 20 palabras, sin notas ni fórmulas de cortesía) en `data/processed/intervenciones_limpias.parquet`, a partir de las 32.739 consolidadas en la Fase 1.
 
-**Fase 3 planificada y documentada**, dividida en 3a (representación, tópicos y sentimiento) y 3b (series, regímenes y eventos). Aún no hay implementación ni análisis publicados. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
+**Fase 3a en curso**: embeddings multilingües del corpus limpio y modelo BERTopic con 58 tópicos (granularidad elegida por coherencia c_v y diversidad, D-32 y D-34) en `data/processed/intervenciones_topicos.parquet`, con la evidencia de etiquetado en `reports/tables/topics_evidence.csv` y la trazabilidad de la rejilla en `reports/tables/topics_selection.csv`. Pendientes de 3a: etiquetado de tópicos (D-25) y validación de sentimiento (D-26). El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## Objetivo
 
@@ -22,7 +22,7 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 | 0 | Higiene del repo, contrato, entorno y documentación | Completada |
 | 1 | Descarga y parseo del corpus ParlaMint 5.0 ES | Completada |
 | 2 | Preprocesado y limpieza | Completada |
-| 3a | Representación, BERTopic, etiquetado y sentimiento | Planificada |
+| 3a | Representación, BERTopic, etiquetado y sentimiento | En curso |
 | 3b | Series mensuales, PELT y eventos | Planificada |
 | 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1, Spearman) | Absorbida en 3a y 3b (D-21) |
 | 5 | API FastAPI + dashboard Streamlit + Docker local | Pendiente |

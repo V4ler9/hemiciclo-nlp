@@ -71,6 +71,7 @@ La «Fase 4: Métricas» del canvas queda absorbida por 3a (coherencia, diversid
 | `data/processed/intervenciones_topicos.parquet` | 3a | `src/nlp/topic_model.py` | Fase 3b y dashboard |
 | `models/` (modelo BERTopic) | 3a | `src/nlp/topic_model.py` | reutilización y dashboard; no versionado |
 | `reports/tables/topics_evidence.csv` | 3a | `src/nlp/topic_model.py` | etiquetado (D-25) |
+| `reports/tables/topics_selection.csv` | 3a | `src/nlp/topic_model.py` | trazabilidad de la rejilla y la selección (D-32) |
 | `reports/tables/topics_labels.csv` | 3a | etiquetado asistido con revisión | figuras y dashboard |
 | `reports/tables/validacion_sentimiento_*.csv` | 3a | `src/nlp/sentiment.py` | métricas de sentimiento |
 | `data/intermediate/series_mensuales.parquet` | 3b | `src/analysis/temporal.py` | PELT y figuras |
