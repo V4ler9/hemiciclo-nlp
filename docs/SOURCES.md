@@ -95,9 +95,10 @@ uv run python -m src.corpus.parser
 # Fase 2
 uv run python -m src.preprocessing.cleaner
 
-# Fase 3a (pendiente de implementación)
-# uv run python -m src.nlp.embeddings
-# uv run python -m src.nlp.topic_model
+# Fase 3a
+uv run python -m src.nlp.embeddings
+uv run python -m src.nlp.topic_model
+uv run python -m src.nlp.sentiment
 
 # Fase 3b (pendiente de implementación)
 # uv run python -m src.analysis.temporal
@@ -110,3 +111,4 @@ uv run python -m src.preprocessing.cleaner
 |---|---|
 | 2026-09-10 | Creación: corpus, modelos de embeddings, asistente de etiquetado, software, eventos candidatos y comandos de reproducción. |
 | 2026-09-13 | Nota Windows/NVIDIA: instalación de la rueda CUDA de `torch` desde el índice de PyTorch (D-31) y comando en la reproducción por fase. |
+| 2026-09-15 | Cierre de la Fase 3a: comandos reales de embeddings, tópicos y sentimiento (D-35). |

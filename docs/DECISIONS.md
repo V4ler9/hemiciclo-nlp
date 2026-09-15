@@ -188,3 +188,14 @@ Primer barrido de la rejilla (2026-09-14, 18 combinaciones sobre 30.027 interven
 Segundo barrido (2026-09-14, 36 combinaciones en total) y selección según D-32: la combinación elegida es `min_topic_size=100`, `n_neighbors=30`, `min_samples=10` → **58 tópicos**, tasa de outliers 32,0 %, c_v 0,7546 y diversidad 0,9414. Queda a 0,009 del máximo global de coherencia (`50/15/5`, 0,7632, 109 tópicos), pero dentro del rango [20, 60] que D-32 fija para que las series mensuales de 3b sean analizables.
 
 Tendencia observada: la coherencia c_v sube hasta `min_topic_size≈50` y decae a partir de ahí (medias de 0,752 → 0,741 → 0,721 → 0,680 en 50/100/150/200); la diversidad sube de forma monótona al reducir el número de tópicos, en parte mecánicamente. La rejilla completa (36 filas) queda en `reports/tables/topics_selection.csv` y la evidencia para etiquetado en `reports/tables/topics_evidence.csv`.
+
+### D-35 · Cierre de la Fase 3a
+
+Cerrada el 2026-09-15 con estos entregables:
+
+- Embeddings multilingües de las 30.027 intervenciones (`data/intermediate/`, local, no versionado).
+- Modelo BERTopic de 58 tópicos seleccionado por c_v y diversidad (D-32, D-34); asignaciones en `data/processed/intervenciones_topicos.parquet` (local) y modelo en `models/` (local).
+- Etiquetas propuestas para los 58 tópicos (`reports/tables/topics_labels.csv`).
+- Validación de sentimiento sobre la muestra estratificada de 200 intervenciones: pre-anotación asistida (`reports/tables/validacion_sentimiento_anotaciones.csv`) y métricas (`validacion_sentimiento_metricas.csv`, `..._por_clase.csv`, `..._confusion_senti_*.csv`): accuracy 0,60 y F1 macro 0,51 en 3 clases; 0,38 y 0,29 en 6 clases.
+
+Limitación registrada: la revisión humana de etiquetas y anotaciones (campos `reviewed_by`) queda pendiente, así que las métricas de sentimiento son provisionales sobre la pre-anotación. Si se revisan más adelante, basta con editar los CSV, re-ejecutar `src.nlp.sentiment` y recommitear los artefactos. Se acepta como limitación conocida para no bloquear el arranque de 3b.
