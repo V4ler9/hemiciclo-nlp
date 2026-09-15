@@ -30,11 +30,23 @@ from src.utils.config import CONFIG_DIR, PROJECT_ROOT, SEED, load_config
 
 SAMPLE_FILENAME = "validacion_sentimiento_muestra.csv"
 ANNOTATIONS_FILENAME = "validacion_sentimiento_anotaciones.csv"
+REVISION_FILENAME = "validacion_sentimiento_revision.csv"
+CONCORDANCE_FILENAME = "validacion_sentimiento_concordancia_llm.csv"
 METRICS_FILENAME = "validacion_sentimiento_metricas.csv"
 PER_CLASS_FILENAME = "validacion_sentimiento_por_clase.csv"
 CONFUSION_TEMPLATE = "validacion_sentimiento_confusion_{level}.csv"
 
 SAMPLE_COLUMNS = ["utterance_id", "date", "term", "text"]
+REVISION_COLUMNS = [
+    "utterance_id",
+    "date",
+    "term",
+    "text",
+    "senti_3_final",
+    "senti_6_final",
+    "revisado_por",
+    "fecha",
+]
 REFERENCE_COLUMNS = {"senti_3": "senti_3_final", "senti_6": "senti_6_final"}
 SENTIMENT_LEVELS = ("senti_3", "senti_6")
 
@@ -113,6 +125,50 @@ def proportional_sample(frame: pd.DataFrame, config: SentimentConfig) -> pd.Data
         .sort_values("utterance_id", kind="stable")
         .reset_index(drop=True)
     )
+
+
+def build_revision_subsample(
+    sample: pd.DataFrame,
+    reference: pd.DataFrame,
+    per_class: Mapping[str, int],
+    seed: int,
+) -> pd.DataFrame:
+    """Submuestra de revisión equilibrada por clase, barajada y sin etiquetas.
+
+    La selección usa la clase real (``senti_3``) para balancear, pero el CSV
+    resultante queda ciego: identificador, fecha, legislatura, texto y las
+    columnas vacías que rellenará el revisor.
+    """
+    merged = sample.merge(
+        reference.loc[:, ["utterance_id", "senti_3"]],
+        on="utterance_id",
+        how="left",
+        validate="one_to_one",
+    )
+    if merged["senti_3"].isna().any():
+        raise ValueError("Hay intervenciones de la muestra sin clase de referencia")
+    missing = sorted(set(per_class) - set(merged["senti_3"]))
+    if missing:
+        raise ValueError(f"Clases solicitadas sin datos en la muestra: {missing}")
+    rng = np.random.default_rng(seed)
+    parts: list[pd.DataFrame] = []
+    for label in sorted(per_class):
+        group = merged.loc[merged["senti_3"] == label]
+        quota = min(int(per_class[label]), len(group))
+        if quota <= 0:
+            continue
+        chosen = np.sort(rng.choice(group.index.to_numpy(), size=quota, replace=False))
+        parts.append(group.loc[chosen])
+    if not parts:
+        raise ValueError("La submuestra de revisión quedó vacía")
+    subsample = pd.concat(parts, axis=0)
+    subsample = subsample.iloc[rng.permutation(len(subsample))]
+    revision = subsample.loc[:, SAMPLE_COLUMNS].copy()
+    revision["senti_3_final"] = ""
+    revision["senti_6_final"] = ""
+    revision["revisado_por"] = ""
+    revision["fecha"] = ""
+    return revision.loc[:, REVISION_COLUMNS].reset_index(drop=True)
 
 
 def confusion_frame(y_true: pd.Series, y_pred: pd.Series, labels: Sequence[str]) -> pd.DataFrame:

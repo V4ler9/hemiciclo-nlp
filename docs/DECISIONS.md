@@ -32,6 +32,8 @@ BERTopic es el núcleo técnico del plan y aporta granularidad que los 23 tópic
 
 ParlaSent está entrenado sobre debates parlamentarios (ParlaSent 1.0) y es el mismo modelo que anotó ParlaMint 5.0 y ParlaCAP; afinidad de dominio y comparabilidad garantizadas. ParlaCAP entrega `sent_logit` ya agregado por discurso (media ponderada por longitud, escala 0-6) más las clases de 3 y 6 categorías. Se valida con una muestra estratificada de ~200 intervenciones anotadas a mano (accuracy/F1). Robertuito queda como chequeo de robustez opcional en anexo. Descartado el fine-tuning: no hay etiquetas propias suficientes.
 
+*Matizada por D-36 (2026-09-15): ParlaSent no se entrenó con español; la revisión humana pasa a ser la referencia y el anexo de Robertuito se descarta.*
+
 ### D-08 · Agregación mensual y PELT
 
 Las frecuencias relativas mensuales absorben el parón estival y la irregularidad del calendario. PELT con coste l2 sobre cuota relativa por tópico y tono medio; la penalización se elige por BIC y se reporta análisis de sensibilidad.
@@ -124,6 +126,8 @@ Muestra de ~200 intervenciones estratificada de forma proporcional por clase `se
 
 Archivos versionados en `reports/tables/validacion_sentimiento_*.csv`. Limitación: no es anotación humana ciega ni hay doble anotador, así que no se reporta acuerdo inter-anotador.
 
+*Marco de validación sustituido por D-36 (2026-09-15): la referencia es la revisión humana de una submuestra equilibrada y se estima la calidad de ParlaSent-ES.*
+
 ### D-27 · Flujo de dispositivos: ejecución en la máquina NVIDIA (opción A)
 
 La máquina NVIDIA clona el repositorio, ejecuta `uv sync --extra corpus --extra nlp --extra analysis`, descarga el corpus y lanza las ejecuciones pesadas. Git transporta código y `reports/` versionados; `data/` y `models/` permanecen locales y se regeneran con comandos y `SEED` (D-13).
@@ -199,3 +203,21 @@ Cerrada el 2026-09-15 con estos entregables:
 - Validación de sentimiento sobre la muestra estratificada de 200 intervenciones: pre-anotación asistida (`reports/tables/validacion_sentimiento_anotaciones.csv`) y métricas (`validacion_sentimiento_metricas.csv`, `..._por_clase.csv`, `..._confusion_senti_*.csv`): accuracy 0,60 y F1 macro 0,51 en 3 clases; 0,38 y 0,29 en 6 clases.
 
 Limitación registrada: la revisión humana de etiquetas y anotaciones (campos `reviewed_by`) queda pendiente, así que las métricas de sentimiento son provisionales sobre la pre-anotación. Si se revisan más adelante, basta con editar los CSV, re-ejecutar `src.nlp.sentiment` y recommitear los artefactos. Se acepta como limitación conocida para no bloquear el arranque de 3b.
+
+## 2026-09-15 — Enmienda del marco de sentimiento (Fase 3a)
+
+### D-36 · La validación de sentimiento se reencuadra sobre revisión humana
+
+Verificado el 2026-09-15 contra la release de ParlaSent 1.0 (handle 11356/1868) y el TSV de ParlaCAP (`sent_logit`, `sent3_category`, `sent6_category`):
+
+- Las etiquetas de ParlaCAP son **predicciones de ParlaSent** (XLM-R), no anotación humana de este corpus.
+- La release de ParlaSent 1.0 se anotó con dos anotadores y reconciliación, pero solo cubre parlamentos BCS, Chequia, Eslovaquia, Eslovenia y Reino Unido: **el español no está ni en entrenamiento ni en test**, así que su calidad en español es transferencia cross-lingual no medida.
+- Por tanto, la comparación pre-anotación ↔ ParlaCAP que produjo las métricas de `validacion_sentimiento_metricas.csv` es **concordancia modelo–modelo**, no accuracy contra un oro; pasa a dato secundario.
+
+Nuevo marco (sustituye a D-26 en lo relativo a la validación y matiza D-07):
+
+- La **revisión humana** de una submuestra pasa a ser la referencia; el objetivo es **estimar la calidad de ParlaSent-ES/ParlaCAP** en este corpus con accuracy (cruda, re-ponderada y balanceada), F1 macro, kappa lineal y cuadrática e IC bootstrap.
+- Submuestra **equilibrada** por clase ParlaCAP de la muestra de 200: 30 Negative, 30 Neutral y 20 Positive (el máximo disponible en la muestra es 17, así que serán 77), aleatoria con SEED fijo, barajada y **sin etiquetas de referencia** → `reports/tables/validacion_sentimiento_revision.csv`.
+- La concordancia LLM ↔ ParlaCAP de los 200 queda en `validacion_sentimiento_concordancia_llm.csv`; las intervenciones no revisadas no se usan para estimar calidad.
+- Se descarta el anexo de Robertuito (ya opcional en D-07).
+- El tono mensual de 3b (`senti_n`) hereda como limitación explícita la calidad estimada de ParlaSent-ES.
