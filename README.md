@@ -6,7 +6,7 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 **Fase 2 completada**: 30.018 intervenciones limpias (≥ 20 palabras, sin notas ni fórmulas de cortesía) en `data/processed/intervenciones_limpias.parquet`, a partir de las 32.739 consolidadas en la Fase 1.
 
-**Fase 3a completada (revisión humana pendiente)**: embeddings multilingües del corpus limpio, modelo BERTopic de 58 tópicos elegido por coherencia c_v y diversidad (D-32 y D-34) en `data/processed/intervenciones_topicos.parquet`, etiquetas propuestas en `reports/tables/topics_labels.csv`, evidencia en `reports/tables/topics_evidence.csv` y trazabilidad de la rejilla en `reports/tables/topics_selection.csv`. Validación de sentimiento sobre la muestra de 200 intervenciones (`reports/tables/validacion_sentimiento_*.csv`), con métricas provisionales sobre la pre-anotación. La revisión humana de etiquetas y anotaciones queda pendiente (D-35). Siguiente: Fase 3b. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
+**Fase 3a completada**: embeddings multilingües del corpus limpio, modelo BERTopic de 58 tópicos elegido por coherencia c_v y diversidad (D-32 y D-34) en `data/processed/intervenciones_topicos.parquet`, etiquetas propuestas en `reports/tables/topics_labels.csv` (pendientes de revisión) y trazabilidad de la rejilla en `reports/tables/topics_selection.csv`. La validación de sentimiento está revisada por el autor y medida contra ParlaSent-ES: 0,675 de accuracy re-ponderada en 3 clases (kappa cuadrática 0,656) y 0,374 en 6 (kappa cuadrática 0,701), con acuerdo a tres bandas en `reports/tables/validacion_sentimiento_acuerdo_3bandas.csv` e informe en `reports/validacion_sentimiento_revision.html` (D-36 y D-37). Siguiente: Fase 3b. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## Objetivo
 
@@ -22,7 +22,7 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 | 0 | Higiene del repo, contrato, entorno y documentación | Completada |
 | 1 | Descarga y parseo del corpus ParlaMint 5.0 ES | Completada |
 | 2 | Preprocesado y limpieza | Completada |
-| 3a | Representación, BERTopic, etiquetado y sentimiento | Completada (revisión pendiente) |
+| 3a | Representación, BERTopic, etiquetado y sentimiento | Completada (etiquetas pendientes) |
 | 3b | Series mensuales, PELT y eventos | Planificada |
 | 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1, Spearman) | Absorbida en 3a y 3b (D-21) |
 | 5 | API FastAPI + dashboard Streamlit + Docker local | Pendiente |
