@@ -1,0 +1,3 @@
+nivel,n,accuracy,balanced_accuracy,reweighted_accuracy,f1_macro,kappa_linear,kappa_quadratic
+senti_3,200,0.6,0.595585,0.597819,0.507593,0.470138,0.607565
+senti_6,200,0.38,0.37561,0.368757,0.292385,0.493536,0.704292

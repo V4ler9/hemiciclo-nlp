@@ -37,6 +37,9 @@ sentiment:
   sample_size: 200
   strata: ["senti_3", "term"]
   seed: 42
+  bootstrap:
+    n: 10000
+    alpha: 0.05
   revision:
     per_class:
       Negative: 30

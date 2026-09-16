@@ -98,7 +98,7 @@ uv run python -m src.preprocessing.cleaner
 # Fase 3a
 uv run python -m src.nlp.embeddings
 uv run python -m src.nlp.topic_model
-uv run python -m src.nlp.sentiment
+uv run --extra corpus python -m src.nlp.sentiment
 
 # Fase 3b (pendiente de implementación)
 # uv run python -m src.analysis.temporal

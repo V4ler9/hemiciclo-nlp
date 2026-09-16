@@ -200,7 +200,7 @@ Cerrada el 2026-09-15 con estos entregables:
 - Embeddings multilingües de las 30.027 intervenciones (`data/intermediate/`, local, no versionado).
 - Modelo BERTopic de 58 tópicos seleccionado por c_v y diversidad (D-32, D-34); asignaciones en `data/processed/intervenciones_topicos.parquet` (local) y modelo en `models/` (local).
 - Etiquetas propuestas para los 58 tópicos (`reports/tables/topics_labels.csv`).
-- Validación de sentimiento sobre la muestra estratificada de 200 intervenciones: pre-anotación asistida (`reports/tables/validacion_sentimiento_anotaciones.csv`) y métricas (`validacion_sentimiento_metricas.csv`, `..._por_clase.csv`, `..._confusion_senti_*.csv`): accuracy 0,60 y F1 macro 0,51 en 3 clases; 0,38 y 0,29 en 6 clases.
+- Validación de sentimiento sobre la muestra estratificada de 200 intervenciones: pre-anotación asistida (`reports/tables/validacion_sentimiento_anotaciones.csv`) y métricas (`validacion_sentimiento_metricas.csv`, `..._por_clase.csv`, `..._confusion_senti_*.csv`): accuracy 0,60 y F1 macro 0,51 en 3 clases; 0,38 y 0,29 en 6 clases. (Artefactos retirados en D-37.)
 
 Limitación registrada: la revisión humana de etiquetas y anotaciones (campos `reviewed_by`) queda pendiente, así que las métricas de sentimiento son provisionales sobre la pre-anotación. Si se revisan más adelante, basta con editar los CSV, re-ejecutar `src.nlp.sentiment` y recommitear los artefactos. Se acepta como limitación conocida para no bloquear el arranque de 3b.
 
@@ -212,7 +212,7 @@ Verificado el 2026-09-15 contra la release de ParlaSent 1.0 (handle 11356/1868) 
 
 - Las etiquetas de ParlaCAP son **predicciones de ParlaSent** (XLM-R), no anotación humana de este corpus.
 - La release de ParlaSent 1.0 se anotó con dos anotadores y reconciliación, pero solo cubre parlamentos BCS, Chequia, Eslovaquia, Eslovenia y Reino Unido: **el español no está ni en entrenamiento ni en test**, así que su calidad en español es transferencia cross-lingual no medida.
-- Por tanto, la comparación pre-anotación ↔ ParlaCAP que produjo las métricas de `validacion_sentimiento_metricas.csv` es **concordancia modelo–modelo**, no accuracy contra un oro; pasa a dato secundario.
+- Por tanto, la comparación pre-anotación ↔ ParlaCAP que produjo las métricas de `validacion_sentimiento_metricas.csv` es **concordancia modelo–modelo**, no accuracy contra un oro; pasa a dato secundario. (Fichero retirado en D-37; ahora en `validacion_sentimiento_concordancia_llm*.csv`.)
 
 Nuevo marco (sustituye a D-26 en lo relativo a la validación y matiza D-07):
 
@@ -221,3 +221,38 @@ Nuevo marco (sustituye a D-26 en lo relativo a la validación y matiza D-07):
 - La concordancia LLM ↔ ParlaCAP de los 200 queda en `validacion_sentimiento_concordancia_llm.csv`; las intervenciones no revisadas no se usan para estimar calidad.
 - Se descarta el anexo de Robertuito (ya opcional en D-07).
 - El tono mensual de 3b (`senti_n`) hereda como limitación explícita la calidad estimada de ParlaSent-ES.
+- **Implementado en D-37** (funciones, artefactos y resultados).
+
+## 2026-09-16 — Implementación de la validación de sentimiento (Fase 3a)
+
+### D-37 · Métricas humanas, IC bootstrap, acuerdo a 3 bandas y concordancia LLM
+
+Implementa D‑36 en `src/nlp/sentiment.py` y materializa sus artefactos. Comando: `uv run --extra corpus python -m src.nlp.sentiment` (`main` idempotente: genera cada artefacto cuyo insumo exista). Duración ≈ 22 s con `n_boot=10000`.
+
+**Método**
+
+- Referencia: ParlaCAP 1.0 (`senti_3`/`senti_6` = predicciones de ParlaSent 1.0). ParlaMint solo aporta texto y metadatos.
+- Oro: revisión humana de la submuestra de 77 (`validacion_sentimiento_revision.csv`; `Valero`, 2026‑09‑16), equilibrada 30/30/20 por clase ParlaCAP, reutilizando la muestra de 200.
+- Métricas por nivel: accuracy **cruda**, **balanceada** (macro‑recall) y **re‑ponderada** por probabilidad inversa a la prevalencia del corpus (`intervenciones_limpias.parquet`), F1 macro y kappa de Cohen **lineal** y **cuadrática** sobre taxonomía fija y ordenada.
+- IC: bootstrap percentil, 10 000 réplicas, SEED=42; remuestreo i.i.d. por fila para cruda/re‑ponderada/F1/kappa y **estratificado por `senti_3`** para la balanceada. Sin agrupamiento por sesión (limitación registrada).
+- Acuerdo a 3 bandas sobre las 77: pareado ParlaCAP↔humano, LLM↔humano y ParlaCAP↔LLM, más Fleiss nominal.
+- Casos límite: rejilla fija con `support=0` marcado; kappa indefinida → `NaN`; se avisa y continúa.
+
+**Resultados (n=77)**
+
+| Nivel | accuracy (IC 95 %) | balanceada (IC) | re‑ponderada (IC) | F1 macro (IC) | kappa lineal (IC) | kappa cuadrática (IC) |
+|---|---|---|---|---|---|---|
+| `senti_3` | 0,662 [0,545; 0,766] | 0,652 [0,540; 0,758] | **0,675** [0,552; 0,776] | 0,646 [0,528; 0,747] | 0,565 [0,407; 0,699] | 0,656 [0,497; 0,781] |
+| `senti_6` | 0,364 [0,260; 0,468] | 0,383 [0,308; 0,498] | **0,374** [0,281; 0,596] | 0,329 [0,228; 0,417] | 0,511 [0,401; 0,607] | 0,701 [0,586; 0,791] |
+
+- Acuerdo a 3 bandas (acuerdo / kappa cuadrática): `senti_3` ParlaCAP↔humano 0,662/0,656; LLM↔humano 0,675/0,559; ParlaCAP↔LLM 0,623/0,685. `senti_6`: 0,364/0,701; 0,468/0,661; 0,429/0,762. Fleiss (nominal): 0,458 (`senti_3`) y 0,285 (`senti_6`).
+- La revisión humana **no** es copia del pre‑anotado LLM (acuerdo 67,5 %/46,8 %).
+- Concordancia LLM↔ParlaCAP de los 200 (secundaria, modelo–modelo): accuracy 0,600 (`senti_3`) y 0,380 (`senti_6`); kappa cuadrática 0,608 y 0,704.
+
+**Artefactos**
+
+- Primarios: `validacion_sentimiento_revision_metricas.csv`, `..._revision_por_clase.csv`, `..._revision_ic.csv`, `..._revision_confusion_senti_{3,6}.csv`, `..._acuerdo_3bandas.csv` y `reports/validacion_sentimiento_revision.html` (autocontenido, tablas con sombreado; sin `matplotlib`).
+- Secundarios: `validacion_sentimiento_concordancia_llm.csv` (200, pareado) y `..._concordancia_llm_metricas.csv`.
+- Se **retiran** los artefactos de D‑35/D‑26 (`validacion_sentimiento_metricas.csv`, `..._por_clase.csv`, `..._confusion_senti_*.csv`), que mezclaban pre‑anotación LLM con ParlaCAP.
+
+**Consecuencia**: la cifra de calidad de ParlaSent‑ES en este corpus es la **re‑ponderada** (0,675 en 3 clases; 0,374 en 6). El tono mensual de 3b (`senti_n`) hereda esa calidad, con la advertencia de que en 6 clases `Positive` solo tiene `support=2` en la submuestra y su F1 es 0.

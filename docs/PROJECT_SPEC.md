@@ -74,6 +74,7 @@ La «Fase 4: Métricas» del canvas queda absorbida por 3a (coherencia, diversid
 | `reports/tables/topics_selection.csv` | 3a | `src/nlp/topic_model.py` | trazabilidad de la rejilla y la selección (D-32) |
 | `reports/tables/topics_labels.csv` | 3a | etiquetado asistido con revisión | figuras y dashboard |
 | `reports/tables/validacion_sentimiento_*.csv` | 3a | `src/nlp/sentiment.py` | métricas de sentimiento |
+| `reports/validacion_sentimiento_revision.html` | 3a | `src/nlp/sentiment.py` | informe HTML de la revisión humana (D-37) |
 | `data/intermediate/series_mensuales.parquet` | 3b | `src/analysis/temporal.py` | PELT y figuras |
 | `reports/tables/cambios_regimen.csv` | 3b | `src/analysis/regime_change.py` | figuras y memoria |
 | `reports/tables/eventos.csv` | 3b | espejo versionado de `data/external/eventos.csv` | trazabilidad del contraste |

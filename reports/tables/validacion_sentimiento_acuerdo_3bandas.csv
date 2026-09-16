@@ -1,0 +1,9 @@
+par,nivel,n,acuerdo,kappa_linear,kappa_quadratic,fleiss_kappa
+parlacap_humano,senti_3,77,0.662338,0.564796,0.655674,
+llm_humano,senti_3,77,0.675325,0.525241,0.558794,
+parlacap_llm,senti_3,77,0.623377,0.554398,0.68491,
+fleiss_3anotadores,senti_3,77,,,,0.458001
+parlacap_humano,senti_6,77,0.363636,0.511294,0.70092,
+llm_humano,senti_6,77,0.467532,0.546493,0.660957,
+parlacap_llm,senti_6,77,0.428571,0.570347,0.76231,
+fleiss_3anotadores,senti_6,77,,,,0.285094

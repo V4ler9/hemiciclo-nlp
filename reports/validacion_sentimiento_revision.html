@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Validación de sentimiento (revisión humana)</title>
+<style>
+    body { font-family: system-ui, Segoe UI, Helvetica, Arial, sans-serif;
+           margin: 2rem auto; max-width: 1080px; color: #1c1c1c;
+           line-height: 1.45; padding: 0 1rem; }
+    h1 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+    h2 { font-size: 1.15rem; margin-top: 2rem; border-bottom: 1px solid #ddd;
+         padding-bottom: 0.2rem; }
+    table.tabla { border-collapse: collapse; font-size: 0.86rem; margin: 0.6rem 0; }
+    table.tabla th, table.tabla td { border: 1px solid #ddd;
+         padding: 0.25rem 0.5rem; text-align: right; }
+    table.tabla th { background: #f4f6f8; }
+    table.confusion { border-collapse: collapse; font-size: 0.86rem;
+         margin: 0.6rem 1.5rem 0.6rem 0; }
+    table.confusion th, table.confusion td { border: 1px solid #ccc;
+         padding: 0.3rem 0.55rem; text-align: center; }
+    table.confusion thead th, table.confusion tbody th { background: #f4f6f8; }
+    .meta { color: #555; font-size: 0.85rem; }
+    .nota { background: #fff8e1; border-left: 3px solid #f0ad4e;
+         padding: 0.5rem 0.8rem; font-size: 0.88rem; }
+    .vacio { color: #777; font-style: italic; }
+    footer { margin-top: 2.5rem; color: #666; font-size: 0.8rem;
+         border-top: 1px solid #ddd; padding-top: 0.6rem; }
+    </style></head><body>
+<h1>Validación de sentimiento ParlaCAP/ParlaSent contra revisión humana</h1>
+<p class="meta">Revisión humana de la submuestra equilibrada (n=77) por <strong>Valero</strong>, fecha 2026-09-16. Referencia: ParlaCAP 1.0 (predicciones de ParlaSent 1.0). ParlaMint aporta texto y metadatos, no sentimiento.</p>
+<h2>Métricas principales (por nivel)</h2>
+<table class="dataframe tabla">
+  <thead>
+    <tr style="text-align: right;">
+      <th>nivel</th>
+      <th>n</th>
+      <th>accuracy</th>
+      <th>balanced_accuracy</th>
+      <th>reweighted_accuracy</th>
+      <th>f1_macro</th>
+      <th>kappa_linear</th>
+      <th>kappa_quadratic</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>senti_3</td>
+      <td>77</td>
+      <td>0.662338</td>
+      <td>0.651634</td>
+      <td>0.674567</td>
+      <td>0.645503</td>
+      <td>0.564796</td>
+      <td>0.655674</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>77</td>
+      <td>0.363636</td>
+      <td>0.383090</td>
+      <td>0.373686</td>
+      <td>0.329293</td>
+      <td>0.511294</td>
+      <td>0.700920</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Intervalos de confianza (bootstrap percentil)</h2>
+<table class="dataframe tabla">
+  <thead>
+    <tr style="text-align: right;">
+      <th>nivel</th>
+      <th>metrica</th>
+      <th>variante</th>
+      <th>estimador</th>
+      <th>ic_inf</th>
+      <th>ic_sup</th>
+      <th>n_boot</th>
+      <th>alpha</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>senti_3</td>
+      <td>accuracy</td>
+      <td>cruda</td>
+      <td>0.662338</td>
+      <td>0.545455</td>
+      <td>0.766234</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>accuracy</td>
+      <td>balanceada</td>
+      <td>0.651634</td>
+      <td>0.539869</td>
+      <td>0.757516</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>accuracy</td>
+      <td>re-ponderada</td>
+      <td>0.674567</td>
+      <td>0.551607</td>
+      <td>0.776327</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>f1_macro</td>
+      <td></td>
+      <td>0.645503</td>
+      <td>0.527746</td>
+      <td>0.746700</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>kappa</td>
+      <td>lineal</td>
+      <td>0.564796</td>
+      <td>0.406689</td>
+      <td>0.699223</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>kappa</td>
+      <td>cuadratica</td>
+      <td>0.655674</td>
+      <td>0.497102</td>
+      <td>0.781022</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>accuracy</td>
+      <td>cruda</td>
+      <td>0.363636</td>
+      <td>0.259740</td>
+      <td>0.467532</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>accuracy</td>
+      <td>balanceada</td>
+      <td>0.383090</td>
+      <td>0.308370</td>
+      <td>0.498009</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>accuracy</td>
+      <td>re-ponderada</td>
+      <td>0.373686</td>
+      <td>0.281171</td>
+      <td>0.596164</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>f1_macro</td>
+      <td></td>
+      <td>0.329293</td>
+      <td>0.227823</td>
+      <td>0.416883</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>kappa</td>
+      <td>lineal</td>
+      <td>0.511294</td>
+      <td>0.400834</td>
+      <td>0.606967</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>kappa</td>
+      <td>cuadratica</td>
+      <td>0.700920</td>
+      <td>0.586099</td>
+      <td>0.790589</td>
+      <td>10000</td>
+      <td>0.050000</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Métricas por clase</h2>
+<table class="dataframe tabla">
+  <thead>
+    <tr style="text-align: right;">
+      <th>nivel</th>
+      <th>clase</th>
+      <th>precision</th>
+      <th>recall</th>
+      <th>f1</th>
+      <th>support</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>senti_3</td>
+      <td>Negative</td>
+      <td>0.757576</td>
+      <td>0.833333</td>
+      <td>0.793651</td>
+      <td>30</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>Neutral</td>
+      <td>0.615385</td>
+      <td>0.533333</td>
+      <td>0.571429</td>
+      <td>30</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>Positive</td>
+      <td>0.555556</td>
+      <td>0.588235</td>
+      <td>0.571429</td>
+      <td>17</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>Negative</td>
+      <td>0.304348</td>
+      <td>1.000000</td>
+      <td>0.466667</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>Mixed Negative</td>
+      <td>0.500000</td>
+      <td>0.217391</td>
+      <td>0.303030</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>Neutral Negative</td>
+      <td>0.428571</td>
+      <td>0.461538</td>
+      <td>0.444444</td>
+      <td>13</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>Neutral Positive</td>
+      <td>0.500000</td>
+      <td>0.352941</td>
+      <td>0.413793</td>
+      <td>17</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>Mixed Positive</td>
+      <td>0.500000</td>
+      <td>0.266667</td>
+      <td>0.347826</td>
+      <td>15</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>Positive</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Matrices de confusión (real x anotado)</h2>
+<h3>senti_3</h3>
+<table class="confusion"><thead><tr><th></th><th>Negative</th><th>Neutral</th><th>Positive</th></tr></thead><tbody><tr><th>Negative</th><td style="background-color:rgba(31,119,180,0.677);color:#ffffff;">25</td><td style="background-color:rgba(31,119,180,0.159);">4</td><td style="background-color:rgba(31,119,180,0.085);">1</td></tr><tr><th>Neutral</th><td style="background-color:rgba(31,119,180,0.233);">7</td><td style="background-color:rgba(31,119,180,0.455);">16</td><td style="background-color:rgba(31,119,180,0.233);">7</td></tr><tr><th>Positive</th><td style="background-color:rgba(31,119,180,0.104);">1</td><td style="background-color:rgba(31,119,180,0.321);">6</td><td style="background-color:rgba(31,119,180,0.495);color:#ffffff;">10</td></tr></tbody></table>
+<h3>senti_6</h3>
+<table class="confusion"><thead><tr><th></th><th>Negative</th><th>Mixed Negative</th><th>Neutral Negative</th><th>Neutral Positive</th><th>Mixed Positive</th><th>Positive</th></tr></thead><tbody><tr><th>Negative</th><td style="background-color:rgba(31,119,180,0.800);color:#ffffff;">7</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.060);">0</td></tr><tr><th>Mixed Negative</th><td style="background-color:rgba(31,119,180,0.478);color:#ffffff;">13</td><td style="background-color:rgba(31,119,180,0.221);">5</td><td style="background-color:rgba(31,119,180,0.189);">4</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.092);">1</td><td style="background-color:rgba(31,119,180,0.060);">0</td></tr><tr><th>Neutral Negative</th><td style="background-color:rgba(31,119,180,0.231);">3</td><td style="background-color:rgba(31,119,180,0.117);">1</td><td style="background-color:rgba(31,119,180,0.402);">6</td><td style="background-color:rgba(31,119,180,0.117);">1</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.174);">2</td></tr><tr><th>Neutral Positive</th><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.191);">3</td><td style="background-color:rgba(31,119,180,0.191);">3</td><td style="background-color:rgba(31,119,180,0.321);">6</td><td style="background-color:rgba(31,119,180,0.191);">3</td><td style="background-color:rgba(31,119,180,0.147);">2</td></tr><tr><th>Mixed Positive</th><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.109);">1</td><td style="background-color:rgba(31,119,180,0.109);">1</td><td style="background-color:rgba(31,119,180,0.208);">3</td><td style="background-color:rgba(31,119,180,0.257);">4</td><td style="background-color:rgba(31,119,180,0.356);">6</td></tr><tr><th>Positive</th><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.800);color:#ffffff;">2</td><td style="background-color:rgba(31,119,180,0.060);">0</td><td style="background-color:rgba(31,119,180,0.060);">0</td></tr></tbody></table>
+<h2>Acuerdo a tres bandas (ParlaCAP · LLM · humano)</h2>
+<table class="dataframe tabla">
+  <thead>
+    <tr style="text-align: right;">
+      <th>par</th>
+      <th>nivel</th>
+      <th>n</th>
+      <th>acuerdo</th>
+      <th>kappa_linear</th>
+      <th>kappa_quadratic</th>
+      <th>fleiss_kappa</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>parlacap_humano</td>
+      <td>senti_3</td>
+      <td>77</td>
+      <td>0.662338</td>
+      <td>0.564796</td>
+      <td>0.655674</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>llm_humano</td>
+      <td>senti_3</td>
+      <td>77</td>
+      <td>0.675325</td>
+      <td>0.525241</td>
+      <td>0.558794</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>parlacap_llm</td>
+      <td>senti_3</td>
+      <td>77</td>
+      <td>0.623377</td>
+      <td>0.554398</td>
+      <td>0.684910</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>fleiss_3anotadores</td>
+      <td>senti_3</td>
+      <td>77</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.458001</td>
+    </tr>
+    <tr>
+      <td>parlacap_humano</td>
+      <td>senti_6</td>
+      <td>77</td>
+      <td>0.363636</td>
+      <td>0.511294</td>
+      <td>0.700920</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>llm_humano</td>
+      <td>senti_6</td>
+      <td>77</td>
+      <td>0.467532</td>
+      <td>0.546493</td>
+      <td>0.660957</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>parlacap_llm</td>
+      <td>senti_6</td>
+      <td>77</td>
+      <td>0.428571</td>
+      <td>0.570347</td>
+      <td>0.762310</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>fleiss_3anotadores</td>
+      <td>senti_6</td>
+      <td>77</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.285094</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Concordancia LLM vs ParlaCAP (secundaria, modelo-modelo)</h2>
+<p class="nota">No es calidad contra un oro humano: mide acuerdo entre modelos (D-36). Se incluye solo como referencia.</p>
+<table class="dataframe tabla">
+  <thead>
+    <tr style="text-align: right;">
+      <th>nivel</th>
+      <th>n</th>
+      <th>accuracy</th>
+      <th>balanced_accuracy</th>
+      <th>reweighted_accuracy</th>
+      <th>f1_macro</th>
+      <th>kappa_linear</th>
+      <th>kappa_quadratic</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>senti_3</td>
+      <td>200</td>
+      <td>0.600000</td>
+      <td>0.595585</td>
+      <td>0.597819</td>
+      <td>0.507593</td>
+      <td>0.470138</td>
+      <td>0.607565</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>200</td>
+      <td>0.380000</td>
+      <td>0.375610</td>
+      <td>0.368757</td>
+      <td>0.292385</td>
+      <td>0.493536</td>
+      <td>0.704292</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Limitaciones</h2>
+<ul>
+<li>n = 77 con diseño equilibrado 30/30/20; la accuracy cruda no estima la prevalencia del corpus: usa la re-ponderada.</li>
+<li>Bootstrap i.i.d. por fila (la balanceada se remuestrea por estrato <code>senti_3</code>); no modela la dependencia entre intervenciones de una misma sesión.</li>
+<li>Las etiquetas de referencia son predicciones de ParlaSent, no anotación humana.</li>
+</ul>
+<h2>Reproducir</h2>
+<pre>uv run --extra corpus python -m src.nlp.sentiment</pre>
+<footer>pandas 3.0.5 · SEED=42 · n_boot=10000 · alpha=0.05 · generado por <code>src/nlp/sentiment.py</code></footer>
+</body></html>

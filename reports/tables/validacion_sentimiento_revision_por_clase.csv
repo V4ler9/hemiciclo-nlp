@@ -1,0 +1,10 @@
+nivel,clase,precision,recall,f1,support
+senti_3,Negative,0.757576,0.833333,0.793651,30
+senti_3,Neutral,0.615385,0.533333,0.571429,30
+senti_3,Positive,0.555556,0.588235,0.571429,17
+senti_6,Negative,0.304348,1.0,0.466667,7
+senti_6,Mixed Negative,0.5,0.217391,0.30303,23
+senti_6,Neutral Negative,0.428571,0.461538,0.444444,13
+senti_6,Neutral Positive,0.5,0.352941,0.413793,17
+senti_6,Mixed Positive,0.5,0.266667,0.347826,15
+senti_6,Positive,0.0,0.0,0.0,2

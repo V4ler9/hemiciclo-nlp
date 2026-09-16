@@ -25,11 +25,16 @@ from src.nlp.embeddings import (
     token_windows,
 )
 from src.nlp.sentiment import (
+    SENTI6_LABELS,
     SentimentConfig,
+    accuracy,
+    balanced_accuracy,
     build_sentiment_config,
+    cohen_kappa,
     evaluate_sentiment,
     proportional_sample,
-    write_reports,
+    reweighted_accuracy,
+    write_revision_tables,
 )
 from src.nlp.topic_model import (
     OUTLIER_TOPIC,
@@ -455,6 +460,8 @@ def test_build_sentiment_config_alineado_con_experimento_01() -> None:
     assert config.sample_size == 200
     assert config.strata == ("senti_3", "term")
     assert config.seed == 42
+    assert config.bootstrap_n == 10000
+    assert config.alpha == 0.05
 
 
 def test_proportional_sample_determinista_y_proporcional() -> None:
@@ -504,10 +511,13 @@ def test_evaluate_sentiment_calcula_accuracy_f1_y_confusion() -> None:
     assert summary.loc["senti_3", "accuracy"] == 0.75
     assert summary.loc["senti_6", "accuracy"] == 1.0
     assert summary.loc["senti_6", "f1_macro"] == 1.0
+    assert summary.loc["senti_6", "kappa_quadratic"] == 1.0
     assert report.confusions["senti_3"].loc["Negative", "Neutral"] == 1
     assert report.confusions["senti_3"].index.name == "real"
     assert report.confusions["senti_3"].columns.name == "anotado"
-    assert len(report.per_class) == 3 + 4
+    assert list(report.confusions["senti_6"].index) == list(SENTI6_LABELS)
+    assert len(report.per_class) == 3 + 6
+    assert report.ic.empty
 
 
 def test_evaluate_sentiment_falla_sin_columnas() -> None:
@@ -529,17 +539,58 @@ def test_evaluate_sentiment_falla_con_ids_desconocidos() -> None:
         evaluate_sentiment(pd.concat([annotations, unknown], ignore_index=True), reference)
 
 
-def test_write_reports_escribe_artefactos(tmp_path: Path) -> None:
+def test_evaluate_sentiment_falla_con_etiqueta_fuera_de_taxonomia() -> None:
     annotations, reference = _validation_frames()
-    paths = write_reports(evaluate_sentiment(annotations, reference), tmp_path)
+    broken = annotations.copy()
+    broken.loc[0, "senti_3_final"] = "Positivo"
+    with pytest.raises(ValueError, match="taxonom"):
+        evaluate_sentiment(broken, reference)
+
+
+def test_evaluate_sentiment_bootstrap_determinista() -> None:
+    annotations, reference = _validation_frames()
+    first = evaluate_sentiment(annotations, reference, n_boot=25, seed=7)
+    second = evaluate_sentiment(annotations, reference, n_boot=25, seed=7)
+    assert first.ic.equals(second.ic)
+    assert not first.ic.empty
+    assert (first.ic["ic_inf"] <= first.ic["ic_sup"]).all()
+
+
+def test_write_revision_tables_escribe_artefactos(tmp_path: Path) -> None:
+    annotations, reference = _validation_frames()
+    report = evaluate_sentiment(annotations, reference)
+    paths = write_revision_tables(report, tmp_path)
     names = {path.name for path in paths}
     assert names == {
-        "validacion_sentimiento_metricas.csv",
-        "validacion_sentimiento_por_clase.csv",
-        "validacion_sentimiento_confusion_senti_3.csv",
-        "validacion_sentimiento_confusion_senti_6.csv",
+        "validacion_sentimiento_revision_metricas.csv",
+        "validacion_sentimiento_revision_por_clase.csv",
+        "validacion_sentimiento_revision_ic.csv",
+        "validacion_sentimiento_revision_confusion_senti_3.csv",
+        "validacion_sentimiento_revision_confusion_senti_6.csv",
     }
     assert all(path.exists() for path in paths)
+
+
+def test_accuracy_balanceada_y_repoderada() -> None:
+    y_true = ["A", "A", "B", "B"]
+    y_pred = ["A", "B", "B", "B"]
+    assert accuracy(y_true, y_pred) == 0.75
+    assert balanced_accuracy(y_true, y_pred, ["A", "B"]) == 0.75
+    weighted = reweighted_accuracy(y_true, y_pred, {"A": 0.9, "B": 0.1})
+    assert weighted == pytest.approx(2.2 / 4.0)
+    assert weighted != pytest.approx(accuracy(y_true, y_pred))
+
+
+def test_cohen_kappa_perfecto_y_entre_el_azar() -> None:
+    labels = ["Negative", "Neutral", "Positive"]
+    perfect = ["Negative", "Neutral", "Positive"]
+    assert cohen_kappa(perfect, perfect, labels, "quadratic") == 1.0
+    chance = cohen_kappa(
+        ["Negative", "Negative", "Neutral", "Neutral"],
+        ["Negative", "Neutral", "Negative", "Neutral"],
+        labels,
+    )
+    assert chance == pytest.approx(0.0)
 
 
 # ---------------------------------------------------------------------------
