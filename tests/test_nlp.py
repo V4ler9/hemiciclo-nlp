@@ -39,6 +39,7 @@ from src.nlp.sentiment import (
 from src.nlp.topic_model import (
     OUTLIER_TOPIC,
     TopicConfig,
+    agreement_scores,
     build_assignments,
     build_evidence,
     build_topic_config,
@@ -49,6 +50,7 @@ from src.nlp.topic_model import (
     select_best_run,
     tokenize_texts,
     topic_count,
+    topic_output_paths,
 )
 from src.utils.config import CONFIG_DIR, load_config
 from src.utils.helpers import import_optional
@@ -401,6 +403,28 @@ def test_build_assignments() -> None:
     frame = build_assignments(["u1", "u2", "u3"], [0, OUTLIER_TOPIC, 2])
     assert list(frame.columns) == ["utterance_id", "bertopic_topic", "is_outlier"]
     assert frame["is_outlier"].tolist() == [False, True, False]
+
+
+def test_topic_output_paths_respeta_los_nombres_principales() -> None:
+    default = topic_output_paths("experiment_01")
+    assert default["selection"].name == "topics_selection.csv"
+    assert default["assignments"].name == "intervenciones_topicos.parquet"
+    assert default["evidence"].name == "topics_evidence.csv"
+    assert default["model"].name == "bertopic_experiment_01"
+    other = topic_output_paths("experiment_02")
+    assert other["selection"].name == "topics_selection_experiment_02.csv"
+    assert other["assignments"].name == "intervenciones_topicos_experiment_02.parquet"
+    assert other["evidence"].name == "topics_evidence_experiment_02.csv"
+    assert other["model"].name == "bertopic_experiment_02"
+
+
+def test_agreement_scores_identicas_y_distintas() -> None:
+    identical = np.array([0, 0, 1, 1, 2, 2])
+    assert agreement_scores(identical, identical) == (1.0, 1.0)
+    different = np.array([0, 1, 0, 1, 2, 2])
+    ari, nmi = agreement_scores(identical, different)
+    assert ari < 1.0
+    assert 0.0 <= nmi < 1.0
 
 
 def test_build_evidence_mapea_representativas() -> None:

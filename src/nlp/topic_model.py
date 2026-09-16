@@ -18,6 +18,7 @@ exige (D-30).
 
 from __future__ import annotations
 
+import argparse
 import gc
 import time
 from collections.abc import Mapping, Sequence
@@ -29,6 +30,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
+from src.nlp.embeddings import output_paths as embedding_output_paths
 from src.utils.config import CONFIG_DIR, PROJECT_ROOT, SEED, load_config
 from src.utils.helpers import import_optional
 
@@ -55,6 +57,17 @@ SELECTION_COLUMNS = [
     "coherence",
     "diversity",
     "selected",
+]
+SENSITIVITY_FILENAME = "sensibilidad_embeddings.csv"
+SENSITIVITY_COLUMNS = [
+    "modelo",
+    "n_topicos",
+    "outlier_rate",
+    "coherencia_cv",
+    "diversidad",
+    "ari_vs_e5",
+    "nmi_vs_e5",
+    "n_comparables",
 ]
 
 TopicsArray = npt.NDArray[np.int64]
@@ -384,8 +397,8 @@ def _load_previous_results(path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def _load_inputs() -> tuple[pd.DataFrame, list[str], EmbeddingMatrix]:
-    embeddings = pd.read_parquet(PROJECT_ROOT / "data" / "intermediate" / "embeddings.parquet")
+def _load_inputs(embeddings_path: Path) -> tuple[pd.DataFrame, list[str], EmbeddingMatrix]:
+    embeddings = pd.read_parquet(embeddings_path)
     corpus = pd.read_parquet(PROJECT_ROOT / "data" / "processed" / "intervenciones_limpias.parquet")
     merged = embeddings.merge(
         corpus.loc[:, ["utterance_id", "text"]],
@@ -400,16 +413,41 @@ def _load_inputs() -> tuple[pd.DataFrame, list[str], EmbeddingMatrix]:
     return merged, texts, matrix
 
 
-def main() -> None:
-    """CLI: rejilla de BERTopic, selección (D-32) y artefactos de la Fase 3a."""
-    raw_config = load_config(CONFIG_DIR / "experiment_01.yaml")
+def topic_output_paths(config_stem: str) -> dict[str, Path]:
+    """Rutas de los artefactos del modelado; la config principal conserva nombres."""
+    suffix = "" if config_stem == "experiment_01" else f"_{config_stem}"
+    model_name = "bertopic_experiment_01" if config_stem == "experiment_01" else f"bertopic_{config_stem}"
+    return {
+        "selection": PROJECT_ROOT / "reports" / "tables" / f"topics_selection{suffix}.csv",
+        "assignments": PROJECT_ROOT
+        / "data"
+        / "processed"
+        / f"intervenciones_topicos{suffix}.parquet",
+        "evidence": PROJECT_ROOT / "reports" / "tables" / f"topics_evidence{suffix}.csv",
+        "model": PROJECT_ROOT / "models" / model_name,
+    }
+
+
+def agreement_scores(left: npt.ArrayLike, right: npt.ArrayLike) -> tuple[float, float]:
+    """ARI y NMI entre dos asignaciones de tópicos (anexo de sensibilidad)."""
+    metrics = import_optional("sklearn.metrics")
+    return (
+        float(metrics.adjusted_rand_score(left, right)),
+        float(metrics.normalized_mutual_info_score(left, right)),
+    )
+
+
+def run_grid(config_path: Path) -> None:
+    """Rejilla de BERTopic, selección (D-32) y artefactos de la Fase 3a."""
+    raw_config = load_config(config_path)
     config = build_topic_config(raw_config)
-    merged, texts, matrix = _load_inputs()
+    merged, texts, matrix = _load_inputs(embedding_output_paths(config_path)[1])
     tokenized = tokenize_texts(texts)
     dictionary = build_dictionary(tokenized)
 
     grid = grid_combinations(config)
-    selection_path = PROJECT_ROOT / "reports" / "tables" / "topics_selection.csv"
+    paths = topic_output_paths(config_path.stem)
+    selection_path = paths["selection"]
     selection_path.parent.mkdir(parents=True, exist_ok=True)
     results: list[dict[str, Any]] = _load_previous_results(selection_path)
     completed = {_grid_key(row) for row in results}
@@ -450,13 +488,13 @@ def main() -> None:
         collect_representative_docs(model, list(topic_words)),
     )
 
-    assignments_path = PROJECT_ROOT / "data" / "processed" / "intervenciones_topicos.parquet"
+    assignments_path = paths["assignments"]
     assignments_path.parent.mkdir(parents=True, exist_ok=True)
     assignments.to_parquet(assignments_path, index=False)
-    evidence_path = PROJECT_ROOT / "reports" / "tables" / "topics_evidence.csv"
+    evidence_path = paths["evidence"]
     evidence_path.parent.mkdir(parents=True, exist_ok=True)
     evidence.to_csv(evidence_path, index=False)
-    model_dir = PROJECT_ROOT / "models" / "bertopic_experiment_01"
+    model_dir = paths["model"]
     model.save(
         str(model_dir),
         serialization="safetensors",
@@ -468,6 +506,81 @@ def main() -> None:
         f"{len(evidence)} tópicos -> {assignments_path} | modelo: {model_dir}\n"
         f"Evidencia -> {evidence_path}"
     )
+
+
+def sensitivity_main() -> None:
+    """Anexo de sensibilidad (D-24): bge-m3 con el troceado y la granularidad del principal."""
+    e5_config_path = CONFIG_DIR / "experiment_01.yaml"
+    bge_config_path = CONFIG_DIR / "experiment_02.yaml"
+    e5_paths = topic_output_paths(e5_config_path.stem)
+    selection = pd.read_csv(e5_paths["selection"])
+    selected = selection.loc[selection["selected"]]
+    if selected.empty:
+        raise ValueError("La rejilla principal no tiene combinación seleccionada")
+    best = selected.iloc[0]
+    params = {key: int(best[key]) for key in GRID_PARAMS}
+    e5_assignments = pd.read_parquet(e5_paths["assignments"])
+
+    bge_embeddings_path = embedding_output_paths(bge_config_path)[1]
+    bge_config = build_topic_config(load_config(bge_config_path))
+    merged, texts, matrix = _load_inputs(bge_embeddings_path)
+    tokenized = tokenize_texts(texts)
+    dictionary = build_dictionary(tokenized)
+    model, topics, topic_words = fit_topics(texts, matrix, bge_config, params)
+    metrics = evaluate_run(topics, topic_words, tokenized, bge_config, dictionary)
+    del model
+    gc.collect()
+
+    joined = pd.DataFrame(
+        {"utterance_id": merged["utterance_id"], "topic_bge": topics}
+    ).merge(e5_assignments, on="utterance_id", how="left", validate="one_to_one")
+    mask = (~joined["is_outlier"].astype(bool)) & (joined["topic_bge"] != OUTLIER_TOPIC)
+    ari, nmi = agreement_scores(
+        joined.loc[mask, "bertopic_topic"].to_numpy(),
+        joined.loc[mask, "topic_bge"].to_numpy(),
+    )
+    table = pd.DataFrame(
+        [
+            {
+                "modelo": "multilingual-e5-large",
+                "n_topicos": int(best["n_topics"]),
+                "outlier_rate": float(best["outlier_rate"]),
+                "coherencia_cv": float(best["coherence"]),
+                "diversidad": float(best["diversity"]),
+                "ari_vs_e5": 1.0,
+                "nmi_vs_e5": 1.0,
+                "n_comparables": int(mask.sum()),
+            },
+            {
+                "modelo": "bge-m3",
+                "n_topicos": int(metrics["n_topics"]),
+                "outlier_rate": float(metrics["outlier_rate"]),
+                "coherencia_cv": float(metrics["coherence"]),
+                "diversidad": float(metrics["diversity"]),
+                "ari_vs_e5": round(ari, 6),
+                "nmi_vs_e5": round(nmi, 6),
+                "n_comparables": int(mask.sum()),
+            },
+        ],
+        columns=SENSITIVITY_COLUMNS,
+    )
+    output_path = PROJECT_ROOT / "reports" / "tables" / SENSITIVITY_FILENAME
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    table.to_csv(output_path, index=False)
+    print(table.to_string(index=False))
+    print(f"escrito: {output_path}")
+
+
+def main() -> None:
+    """CLI: rejilla de tópicos (``--config``) o anexo de sensibilidad (``--sensitivity``)."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", type=Path, default=CONFIG_DIR / "experiment_01.yaml")
+    parser.add_argument("--sensitivity", action="store_true", help="anexo bge-m3 de D-24")
+    args = parser.parse_args()
+    if args.sensitivity:
+        sensitivity_main()
+        return
+    run_grid(args.config)
 
 
 if __name__ == "__main__":
