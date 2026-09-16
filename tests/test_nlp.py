@@ -22,6 +22,7 @@ from src.nlp.embeddings import (
     chunk_interventions,
     embed_chunks,
     embed_interventions,
+    output_paths,
     token_windows,
 )
 from src.nlp.sentiment import (
@@ -126,6 +127,16 @@ def test_experimento_02_usa_bge_m3() -> None:
     config = build_embedding_config(load_config(CONFIG_DIR / "experiment_02.yaml"))
     assert config.model == "BAAI/bge-m3"
     assert config.prefix == ""
+
+
+def test_output_paths_respeta_los_nombres_de_experimento_01() -> None:
+    chunks, embeddings = output_paths(CONFIG_DIR / "experiment_01.yaml")
+    assert (chunks.name, embeddings.name) == ("chunks.parquet", "embeddings.parquet")
+    chunks_bis, embeddings_bis = output_paths(CONFIG_DIR / "experiment_02.yaml")
+    assert (chunks_bis.name, embeddings_bis.name) == (
+        "chunks_experiment_02.parquet",
+        "embeddings_experiment_02.parquet",
+    )
 
 
 # ---------------------------------------------------------------------------

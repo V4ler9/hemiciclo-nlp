@@ -57,7 +57,8 @@ hemiciclo-nlp/
 ├── configs/
 │   ├── default.yaml            # Configuración por defecto
 │   ├── experiment_01.yaml
-│   └── experiment_02.yaml
+│   ├── experiment_02.yaml
+│   └── experiment_03.yaml      # Fase 3b: series, regímenes y eventos
 │
 ├── models/                     # Modelos serializados. Contenido ignorado por git
 │

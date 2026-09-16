@@ -77,6 +77,7 @@ La «Fase 4: Métricas» del canvas queda absorbida por 3a (coherencia, diversid
 | `reports/validacion_sentimiento_revision.html` | 3a | `src/nlp/sentiment.py` | informe HTML de la revisión humana (D-37) |
 | `data/intermediate/series_mensuales.parquet` | 3b | `src/analysis/temporal.py` | PELT y figuras |
 | `reports/tables/cambios_regimen.csv` | 3b | `src/analysis/regime_change.py` | figuras y memoria |
+| `reports/tables/cambios_regimen_sensibilidad.csv` | 3b | `src/analysis/regime_change.py` | robustez de la penalización de PELT (D-08) |
 | `reports/tables/eventos.csv` | 3b | espejo versionado de `data/external/eventos.csv` | trazabilidad del contraste |
 | `reports/figures/*` | 3b | `src/visualization/charts.py` | entregable visible |
 

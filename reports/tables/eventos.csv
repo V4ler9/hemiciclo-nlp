@@ -1,0 +1,9 @@
+evento,fecha,tipo,fuente,notas
+Elecciones generales 20-D,2015-12-20,elecciones,https://infoelectoral.interior.gob.es/,Resultados oficiales del Ministerio del Interior
+Elecciones generales 26-J,2016-06-26,elecciones,https://infoelectoral.interior.gob.es/,Resultados oficiales del Ministerio del Interior
+Moción de censura,2018-06-01,mocion_censura,https://www.congreso.es/,Votación de la moción de censura de 2018
+Elecciones generales 28-A,2019-04-28,elecciones,https://infoelectoral.interior.gob.es/,Resultados oficiales del Ministerio del Interior
+Elecciones generales 10-N,2019-11-10,elecciones,https://infoelectoral.interior.gob.es/,Resultados oficiales del Ministerio del Interior
+Investidura de 2020,2020-01-07,investidura,https://www.congreso.es/,Segunda votación del debate de investidura
+COVID-19: estado de alarma,2020-03-14,crisis_sanitaria,https://www.boe.es/buscar/doc.php?id=BOE-A-2020-3692,Declaración del estado de alarma
+Guerra de Ucrania,2022-02-24,conflicto_internacional,https://news.un.org/en/focus/ukraine,Inicio de la invasión rusa de Ucrania

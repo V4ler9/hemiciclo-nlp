@@ -255,4 +255,12 @@ Implementa D‑36 en `src/nlp/sentiment.py` y materializa sus artefactos. Comand
 - Secundarios: `validacion_sentimiento_concordancia_llm.csv` (200, pareado) y `..._concordancia_llm_metricas.csv`.
 - Se **retiran** los artefactos de D‑35/D‑26 (`validacion_sentimiento_metricas.csv`, `..._por_clase.csv`, `..._confusion_senti_*.csv`), que mezclaban pre‑anotación LLM con ParlaCAP.
 
-**Consecuencia**: la cifra de calidad de ParlaSent‑ES en este corpus es la **re‑ponderada** (0,675 en 3 clases; 0,374 en 6). El tono mensual de 3b (`senti_n`) hereda esa calidad, con la advertencia de que en 6 clases `Positive` solo tiene `support=2` en la submuestra y su F1 es 0.
+**Consecuencia**: la cifra de calidad de ParlaSent-ES en este corpus es la **re-ponderada** (0,675 en 3 clases; 0,374 en 6). El tono mensual de 3b (`senti_n`) hereda esa calidad, con la advertencia de que en 6 clases `Positive` solo tiene `support=2` en la submuestra y su F1 es 0.
+
+## 2026-09-16 — Implementación de la Fase 3b
+
+### D-38 · Recalibración de la rejilla de PELT y lectura de resultados
+
+Al ejecutar el pipeline real con la rejilla `[1e-1, 1e3]` acordada, todas las selecciones caían en el borde inferior (0,1) y solo 5 de 59 series detectaban cambios: para las cuotas de varianza pequeña (tópicos menores), las reducciones de RSS por segmento quedaban por debajo de la penalización mínima. El diagnóstico sobre 5 series representativas (BIC con rejilla `1e-6..1e3`) mostró óptimos interiores entre 2,8e-4 y 0,11 según la serie.
+
+Decisión: ampliar la rejilla a `[1e-6, 1e3]` (60 valores) y, en caso de empate en el BIC, preferir la penalización mayor (segmentación más simple). Con ello se detectan 136 cambios en 53 de 59 series (2–3 por serie; deltas típicos ≥3,4 puntos de cuota). La fiabilidad depende de la serie: los tópicos pequeños tienen cuotas ruidosas y con ceros frecuentes, así que `cambios_regimen.csv` incluye `tamano_serie` y `cambios_regimen_sensibilidad.csv` los cinco escenarios de penalización para poder filtrar con criterio. El análisis de asociaciones con eventos no supera BH (q mínimo 0,25; 22 p<0,05 brutos de 472, lo esperable por azar): resultado nulo exploratorio con potencia baja (82 meses, 472 contrastes) que se reporta sin forzar conclusiones (D-09).

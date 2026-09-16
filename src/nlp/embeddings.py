@@ -12,8 +12,10 @@ transformers (D-30).
 
 from __future__ import annotations
 
+import argparse
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -227,18 +229,40 @@ def build_embeddings(
     return chunks, embeddings
 
 
+def output_paths(config_path: Path) -> tuple[Path, Path]:
+    """Rutas de chunks y embeddings; la config principal conserva los nombres."""
+    output_dir = PROJECT_ROOT / "data" / "intermediate"
+    if config_path.stem == "experiment_01":
+        return output_dir / "chunks.parquet", output_dir / "embeddings.parquet"
+    return (
+        output_dir / f"chunks_{config_path.stem}.parquet",
+        output_dir / f"embeddings_{config_path.stem}.parquet",
+    )
+
+
 def main() -> None:
-    """CLI: genera chunks y embeddings en ``data/intermediate``."""
-    config = load_config(CONFIG_DIR / "experiment_01.yaml")
+    """CLI: genera chunks y embeddings en ``data/intermediate`` (``--config`` opcional)."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=CONFIG_DIR / "experiment_01.yaml",
+        help="YAML de la fase 3a (por defecto experiment_01)",
+    )
+    args = parser.parse_args()
+    config = load_config(args.config)
     embedding_config = build_embedding_config(config)
     input_path = PROJECT_ROOT / "data" / "processed" / "intervenciones_limpias.parquet"
-    output_dir = PROJECT_ROOT / "data" / "intermediate"
+    chunks_path, embeddings_path = output_paths(args.config)
     frame = pd.read_parquet(input_path)
     chunks, embeddings = build_embeddings(frame, embedding_config)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    chunks.to_parquet(output_dir / "chunks.parquet", index=False)
-    embeddings.to_parquet(output_dir / "embeddings.parquet", index=False)
-    print(f"{len(chunks)} chunks y {len(embeddings)} embeddings -> {output_dir}")
+    chunks_path.parent.mkdir(parents=True, exist_ok=True)
+    chunks.to_parquet(chunks_path, index=False)
+    embeddings.to_parquet(embeddings_path, index=False)
+    print(
+        f"{len(chunks)} chunks y {len(embeddings)} embeddings -> "
+        f"{chunks_path.name}, {embeddings_path.name}"
+    )
 
 
 if __name__ == "__main__":

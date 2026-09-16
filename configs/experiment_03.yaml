@@ -1,0 +1,35 @@
+# Fase 3b: series mensuales, cambios de régimen y eventos (D-08, D-09, D-28).
+phase: "3b"
+seed: 42
+
+temporal:
+  # Rejilla mensual completa; los meses sin sesiones quedan marcados con
+  # ``has_session: false`` y fuera del modelado (D-28).
+  start: "2015-01"
+  end: "2023-02"
+  # Los outliers de BERTopic se excluyen de las cuotas y su tasa se reporta.
+  outlier_strategy: "exclude"
+
+regime:
+  model: "l2"
+  min_size: 6
+  jump: 1
+  # Rejilla logarítmica de penalizaciones y selección por criterio tipo BIC.
+  # El borde inferior cubre series de cuota con varianza muy baja (D-38).
+  penalty:
+    start: 0.000001
+    stop: 1000.0
+    num: 60
+  # Análisis de sensibilidad alrededor de la penalización elegida.
+  sensitivity_factors: [0.25, 0.5, 1.0, 2.0, 4.0]
+
+events:
+  path: "data/external/eventos.csv"
+  window_months: 3
+  correction: "benjamini-hochberg"
+
+figures:
+  dpi: 150
+  heatmap_topics: 20
+  change_topics: 12
+  association_topics: 20
