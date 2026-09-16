@@ -56,9 +56,9 @@ uv run huggingface-cli download BAAI/bge-m3
 
 La lista exacta y las versiones están en [`pyproject.toml`](../pyproject.toml) y [`uv.lock`](../uv.lock). Grupos relevantes:
 
-- Núcleo y calidad: `numpy`, `pandas`, `pyyaml`; `pytest`, `ruff`, `pyright`, `pre-commit`.
+- Núcleo y calidad: `numpy`, `pandas`, `pyyaml`, `scikit-learn` (métricas de sentimiento y ARI/NMI) y `statsmodels` (kappa de Fleiss); `pytest`, `ruff`, `pyright`, `pre-commit`.
 - Extra `corpus` (Fase 1): `requests`, `lxml`, `pyarrow`.
-- Extra `nlp` (Fase 3a): `bertopic`, `sentence-transformers`, `torch`, `scikit-learn` (ARI/NMI) y `gensim` (coherencia c_v, D-32). `py3langid` queda pendiente para la caracterización lingüística.
+- Extra `nlp` (Fase 3a): `bertopic`, `sentence-transformers`, `torch` y `gensim` (coherencia c_v, D-32). `py3langid` queda pendiente para la caracterización lingüística.
 - Extra `analysis` (Fase 3b): `ruptures`, `scipy`, `matplotlib`, `seaborn`.
 - Extra `app` (Fase 5): `fastapi`, `uvicorn`, `streamlit`, `plotly`.
 - **Nota Windows/NVIDIA:** la rueda `torch` que publica PyPI para Windows es solo CPU, así que las ejecuciones con GPU requieren instalar la rueda CUDA del índice oficial de PyTorch (D-31). Comando en la sección 5.

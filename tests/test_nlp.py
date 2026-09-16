@@ -27,10 +27,7 @@ from src.nlp.embeddings import (
 from src.nlp.sentiment import (
     SENTI6_LABELS,
     SentimentConfig,
-    accuracy,
-    balanced_accuracy,
     build_sentiment_config,
-    cohen_kappa,
     evaluate_sentiment,
     proportional_sample,
     reweighted_accuracy,
@@ -553,7 +550,8 @@ def test_evaluate_sentiment_bootstrap_determinista() -> None:
     second = evaluate_sentiment(annotations, reference, n_boot=25, seed=7)
     assert first.ic.equals(second.ic)
     assert not first.ic.empty
-    assert (first.ic["ic_inf"] <= first.ic["ic_sup"]).all()
+    usable = first.ic.dropna(subset=["ic_inf", "ic_sup"])
+    assert (usable["ic_inf"] <= usable["ic_sup"]).all()
 
 
 def test_write_revision_tables_escribe_artefactos(tmp_path: Path) -> None:
@@ -571,26 +569,35 @@ def test_write_revision_tables_escribe_artefactos(tmp_path: Path) -> None:
     assert all(path.exists() for path in paths)
 
 
-def test_accuracy_balanceada_y_repoderada() -> None:
+def test_reweighted_accuracy_por_probabilidad_inversa() -> None:
     y_true = ["A", "A", "B", "B"]
     y_pred = ["A", "B", "B", "B"]
-    assert accuracy(y_true, y_pred) == 0.75
-    assert balanced_accuracy(y_true, y_pred, ["A", "B"]) == 0.75
     weighted = reweighted_accuracy(y_true, y_pred, {"A": 0.9, "B": 0.1})
     assert weighted == pytest.approx(2.2 / 4.0)
-    assert weighted != pytest.approx(accuracy(y_true, y_pred))
+    assert weighted != pytest.approx(0.75)
 
 
-def test_cohen_kappa_perfecto_y_entre_el_azar() -> None:
-    labels = ["Negative", "Neutral", "Positive"]
-    perfect = ["Negative", "Neutral", "Positive"]
-    assert cohen_kappa(perfect, perfect, labels, "quadratic") == 1.0
-    chance = cohen_kappa(
-        ["Negative", "Negative", "Neutral", "Neutral"],
-        ["Negative", "Neutral", "Negative", "Neutral"],
-        labels,
+def test_metricas_por_conteos_coinciden_con_sklearn() -> None:
+    from src.nlp.sentiment import (
+        _confusion_counts,  # pyright: ignore[reportPrivateUsage]
+        _label_codes,  # pyright: ignore[reportPrivateUsage]
+        _metrics,  # pyright: ignore[reportPrivateUsage]
+        _metrics_from_counts,  # pyright: ignore[reportPrivateUsage]
     )
-    assert chance == pytest.approx(0.0)
+
+    labels = SENTI6_LABELS
+    rng = np.random.default_rng(0)
+    y_true = rng.choice(labels, size=120).tolist()
+    y_pred = rng.choice(labels, size=120).tolist()
+    prevalence = {label: 0.1 + 0.02 * index for index, label in enumerate(labels)}
+    codes_true = _label_codes(y_true, labels)
+    codes_pred = _label_codes(y_pred, labels)
+    counts = _confusion_counts(codes_true, codes_pred, len(labels))
+    prevalence_vector = np.asarray([prevalence[label] for label in labels], dtype=float)
+    from_counts = _metrics_from_counts(counts, prevalence_vector)
+    from_sklearn = _metrics(y_true, y_pred, labels, prevalence)
+    for key, value in from_sklearn.items():
+        assert from_counts[key] == pytest.approx(value, nan_ok=True), key
 
 
 # ---------------------------------------------------------------------------

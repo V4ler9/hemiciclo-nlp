@@ -1,3 +1,4 @@
+# pyright: reportUnknownVariableType=false
 """Validación del sentimiento ParlaSent de ParlaCAP (Fase 3a, D-26/D-36/D-37).
 
 Flujo gobernado por ``main`` (idempotente: genera todo artefacto cuyo insumo exista):
@@ -15,12 +16,14 @@ Flujo gobernado por ``main`` (idempotente: genera todo artefacto cuyo insumo exi
    y un informe HTML autocontenido.
 
 Las etiquetas de ParlaCAP son predicciones de ParlaSent, no oro humano (D-36). Las
-métricas se implementan con pandas y numpy, de modo que importar el módulo no exige
-los extras `nlp` (D-30).
+métricas delegan en scikit-learn (accuracy, balanced accuracy, F1, confusión, kappa) y
+statsmodels (Fleiss), ambas dependencias base; el muestreo y el bootstrap usan
+numpy/pandas.
 """
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +31,15 @@ from typing import Any, cast
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    cohen_kappa_score,
+    confusion_matrix,
+    f1_score,
+    precision_recall_fscore_support,
+)
+from statsmodels.stats.inter_rater import fleiss_kappa as _statsmodels_fleiss_kappa
 
 from src.utils.config import CONFIG_DIR, PROJECT_ROOT, SEED, load_config
 
@@ -75,6 +87,14 @@ LABELS_BY_LEVEL: dict[str, tuple[str, ...]] = {
     "senti_3": SENTI3_LABELS,
     "senti_6": SENTI6_LABELS,
 }
+METRIC_KEYS = (
+    "accuracy",
+    "balanced_accuracy",
+    "reweighted_accuracy",
+    "f1_macro",
+    "kappa_linear",
+    "kappa_quadratic",
+)
 
 SUMMARY_COLUMNS = [
     "nivel",
@@ -231,48 +251,6 @@ def build_revision_subsample(
     return revision.loc[:, REVISION_COLUMNS].reset_index(drop=True)
 
 
-def confusion_frame(y_true: pd.Series, y_pred: pd.Series, labels: Sequence[str]) -> pd.DataFrame:
-    """Matriz de confusión con todas las clases fijas, indexada por etiqueta real."""
-    table = pd.crosstab(y_true, y_pred).reindex(
-        index=pd.Index(labels), columns=pd.Index(labels), fill_value=0
-    )
-    table.index.name = "real"
-    table.columns.name = "anotado"
-    return table
-
-
-def _prf(tp: int, fp: int, fn: int) -> tuple[float, float, float]:
-    precision = 0.0 if tp + fp == 0 else tp / (tp + fp)
-    recall = 0.0 if tp + fn == 0 else tp / (tp + fn)
-    f1 = 0.0 if precision + recall == 0.0 else 2 * precision * recall / (precision + recall)
-    return precision, recall, f1
-
-
-def accuracy(y_true: Sequence[str], y_pred: Sequence[str]) -> float:
-    """Fracción de coincidencias exactas."""
-    total = len(y_true)
-    if total == 0:
-        return float("nan")
-    hits = sum(1 for true, pred in zip(y_true, y_pred, strict=True) if str(true) == str(pred))
-    return hits / total
-
-
-def balanced_accuracy(y_true: Sequence[str], y_pred: Sequence[str], labels: Sequence[str]) -> float:
-    """Media del recall por clase sobre las clases presentes en la referencia."""
-    truth = [str(value) for value in y_true]
-    preds = [str(value) for value in y_pred]
-    recalls: list[float] = []
-    for label in labels:
-        positions = [index for index, value in enumerate(truth) if value == label]
-        if not positions:
-            continue
-        hits = sum(1 for index in positions if truth[index] == preds[index])
-        recalls.append(hits / len(positions))
-    if not recalls:
-        return float("nan")
-    return float(np.mean(recalls))
-
-
 def reweighted_accuracy(
     y_true: Sequence[str], y_pred: Sequence[str], prevalence: Mapping[str, float]
 ) -> float:
@@ -285,86 +263,37 @@ def reweighted_accuracy(
     if not truth:
         return float("nan")
     frequencies = pd.Series(truth).value_counts(normalize=True).to_dict()
-    weights: list[float] = []
-    for value in truth:
-        frequency = frequencies.get(value, 0.0)
-        weights.append(0.0 if frequency == 0.0 else float(prevalence.get(value, 0.0)) / frequency)
-    array = np.asarray(weights, dtype=float)
-    total = float(array.sum())
-    if total == 0.0:
-        return float("nan")
-    correct = np.asarray(
-        [1.0 if t == p else 0.0 for t, p in zip(truth, preds, strict=True)], dtype=float
+    weights = np.asarray(
+        [float(prevalence.get(value, 0.0)) / frequencies[value] for value in truth], dtype=float
     )
-    return float((array * correct).sum() / total)
-
-
-def _kappa_from_counts(counts: FloatArray, weights: str | None) -> float:
-    """Kappa de Cohen a partir de una matriz de confusión de conteos."""
-    size = int(counts.shape[0])
-    total = float(counts.sum())
-    if total == 0.0 or size <= 1:
+    if float(weights.sum()) == 0.0:
         return float("nan")
-    rows = cast(FloatArray, np.sum(counts, axis=1))
-    columns = cast(FloatArray, np.sum(counts, axis=0))
-    expected = np.outer(rows, columns) / total
-    grid = np.subtract.outer(np.arange(size), np.arange(size))
-    if weights is None:
-        weight_matrix = 1.0 - np.eye(size)
-    elif weights == "linear":
-        weight_matrix = np.abs(grid) / (size - 1)
-    elif weights == "quadratic":
-        weight_matrix = (grid**2) / ((size - 1) ** 2)
-    else:
-        raise ValueError(f"Pesos de kappa no soportados: {weights!r}")
-    denominator = float((weight_matrix * expected).sum())
-    if np.isclose(denominator, 0.0):
-        return float("nan")
-    return float(1.0 - float((weight_matrix * counts).sum()) / denominator)
+    return float(accuracy_score(truth, preds, sample_weight=weights))
 
 
-def cohen_kappa(
-    y_true: Sequence[str],
-    y_pred: Sequence[str],
-    labels: Sequence[str],
-    weights: str | None = None,
+def _safe_kappa(
+    y_true: Sequence[str], y_pred: Sequence[str], labels: Sequence[str], weights: str
 ) -> float:
-    """Kappa de Cohen (nominal si ``weights`` es ``None``; ``"linear"`` o ``"quadratic"``)."""
-    index = {label: position for position, label in enumerate(labels)}
-    counts = np.zeros((len(labels), len(labels)), dtype=float)
-    for true, pred in zip(y_true, y_pred, strict=True):
-        true_label, pred_label = str(true), str(pred)
-        if true_label in index and pred_label in index:
-            counts[index[true_label], index[pred_label]] += 1.0
-    return _kappa_from_counts(counts, weights)
+    """Kappa de Cohen de scikit-learn silenciando avisos de casos degenerados."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        value = cohen_kappa_score(y_true, y_pred, labels=list(labels), weights=weights)
+    return float(value)
 
 
 def fleiss_kappa(raters: Sequence[Sequence[str]], labels: Sequence[str]) -> float:
     """Kappa de Fleiss (nominal) para varios anotadores sobre la misma rejilla."""
+    if not raters or not raters[0]:
+        return float("nan")
     index = {label: position for position, label in enumerate(labels)}
-    series = [[str(value) for value in rater] for rater in raters]
-    if not series:
-        return float("nan")
-    items = len(series[0])
-    if items == 0:
-        return float("nan")
-    counts = np.zeros((items, len(labels)), dtype=float)
-    for rater in series:
+    table = np.zeros((len(raters[0]), len(labels)), dtype=float)
+    for rater in raters:
         for position, value in enumerate(rater):
-            if value in index:
-                counts[position, index[value]] += 1.0
-    per_item = counts.sum(axis=1)
-    raters_per_item = per_item[0]
-    if raters_per_item < 2 or not np.all(per_item == raters_per_item):
-        return float("nan")
-    marginals = counts.sum(axis=0) / (items * raters_per_item)
-    agreement = ((counts**2).sum(axis=1) - raters_per_item) / (
-        raters_per_item * (raters_per_item - 1)
-    )
-    expected = float((marginals**2).sum())
-    if np.isclose(expected, 1.0):
-        return float("nan")
-    return float((float(agreement.mean()) - expected) / (1.0 - expected))
+            table[position, index[str(value)]] += 1.0
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        value = _statsmodels_fleiss_kappa(table, method="fleiss")
+    return float(value)
 
 
 def corpus_prevalence(reference: pd.DataFrame) -> dict[str, dict[str, float]]:
@@ -376,6 +305,66 @@ def corpus_prevalence(reference: pd.DataFrame) -> dict[str, dict[str, float]]:
         }
         for level in SENTIMENT_LEVELS
     }
+
+
+def _metrics(
+    y_true: Sequence[str],
+    y_pred: Sequence[str],
+    labels: Sequence[str],
+    prevalence: Mapping[str, float],
+) -> dict[str, float]:
+    """Métricas de un nivel (scikit-learn + re-ponderación propia)."""
+    truth = [str(value) for value in y_true]
+    preds = [str(value) for value in y_pred]
+    if not truth:
+        return {key: float("nan") for key in METRIC_KEYS}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return {
+            "accuracy": float(accuracy_score(truth, preds)),
+            "balanced_accuracy": float(balanced_accuracy_score(truth, preds)),
+            "reweighted_accuracy": float(reweighted_accuracy(truth, preds, prevalence)),
+            "f1_macro": float(f1_score(truth, preds, average="macro", zero_division=cast(Any, 0))),
+            "kappa_linear": _safe_kappa(truth, preds, labels, "linear"),
+            "kappa_quadratic": _safe_kappa(truth, preds, labels, "quadratic"),
+        }
+
+
+def _evaluate_arrays(
+    y_true: Sequence[str],
+    y_pred: Sequence[str],
+    level: str,
+    prevalence: Mapping[str, float],
+) -> tuple[dict[str, float], pd.DataFrame, list[tuple[str, float, float, float, int]]]:
+    """Métricas, confusión y desglose por clase de un nivel."""
+    labels = LABELS_BY_LEVEL[level]
+    truth = [str(value) for value in y_true]
+    preds = [str(value) for value in y_pred]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        matrix = cast(Any, confusion_matrix(truth, preds, labels=list(labels)))
+        precision, recall, f1, support = cast(
+            tuple[Any, Any, Any, Any],
+            precision_recall_fscore_support(
+                truth, preds, labels=list(labels), zero_division=cast(Any, 0)
+            ),
+        )
+    table = pd.DataFrame(
+        matrix,
+        index=pd.Index(labels, name="real"),
+        columns=pd.Index(labels, name="anotado"),
+    )
+    per_class = [
+        (
+            label,
+            float(precision[index]),
+            float(recall[index]),
+            float(f1[index]),
+            int(support[index]),
+        )
+        for index, label in enumerate(labels)
+    ]
+    return _metrics(truth, preds, labels, prevalence), table, per_class
 
 
 def _label_codes(values: Sequence[str], labels: Sequence[str]) -> IntArray:
@@ -399,20 +388,36 @@ def _confusion_counts(true_codes: IntArray, pred_codes: IntArray, size: int) -> 
     return cast(FloatArray, counts)
 
 
-def _metrics_from_counts(counts: FloatArray, prevalence: FloatArray) -> dict[str, float]:
-    """Métricas de un nivel calculadas desde la matriz de confusión de conteos."""
+def _kappa_from_counts(counts: FloatArray, weights: str | None) -> float:
+    """Kappa de Cohen desde una matriz de confusión (mismo cálculo que scikit-learn)."""
     size = int(counts.shape[0])
     total = float(counts.sum())
-    keys = (
-        "accuracy",
-        "balanced_accuracy",
-        "reweighted_accuracy",
-        "f1_macro",
-        "kappa_linear",
-        "kappa_quadratic",
-    )
+    if total == 0.0 or size <= 1:
+        return float("nan")
+    rows = cast(FloatArray, np.sum(counts, axis=1))
+    columns = cast(FloatArray, np.sum(counts, axis=0))
+    expected = np.outer(rows, columns) / total
+    grid = np.subtract.outer(np.arange(size), np.arange(size))
+    if weights is None:
+        weight_matrix = 1.0 - np.eye(size)
+    elif weights == "linear":
+        weight_matrix = np.abs(grid) / (size - 1)
+    elif weights == "quadratic":
+        weight_matrix = (grid**2) / ((size - 1) ** 2)
+    else:
+        raise ValueError(f"Pesos de kappa no soportados: {weights!r}")
+    denominator = float((weight_matrix * expected).sum())
+    if np.isclose(denominator, 0.0):
+        return float("nan")
+    return float(1.0 - float((weight_matrix * counts).sum()) / denominator)
+
+
+def _metrics_from_counts(counts: FloatArray, prevalence: FloatArray) -> dict[str, float]:
+    """Métricas desde la matriz de confusión (equivalente vectorizado de ``_metrics``)."""
+    size = int(counts.shape[0])
+    total = float(counts.sum())
     if total == 0.0:
-        return {key: float("nan") for key in keys}
+        return {key: float("nan") for key in METRIC_KEYS}
     rows = cast(FloatArray, np.sum(counts, axis=1))
     columns = cast(FloatArray, np.sum(counts, axis=0))
     diagonal = cast(FloatArray, np.diag(counts))
@@ -426,54 +431,20 @@ def _metrics_from_counts(counts: FloatArray, prevalence: FloatArray) -> dict[str
     )
     active = (rows > 0) | (columns > 0)
     present = rows > 0
-    frequencies = rows / total
-    weights = np.divide(prevalence, frequencies, out=np.zeros(size), where=frequencies > 0)
-    weight_total = float(weights.sum())
+    prevalence_total = float(prevalence[present].sum())
+    reweighted = (
+        float((prevalence[present] * recall[present]).sum() / prevalence_total)
+        if prevalence_total > 0
+        else float("nan")
+    )
     return {
         "accuracy": float(diagonal.sum() / total),
-        "balanced_accuracy": float(recall[present].mean()) if present.any() else float("nan"),
-        "reweighted_accuracy": (
-            float((weights * recall).sum() / weight_total) if weight_total > 0 else float("nan")
-        ),
+        "balanced_accuracy": float(recall[active].mean()) if active.any() else float("nan"),
+        "reweighted_accuracy": reweighted,
         "f1_macro": float(f1[active].mean()) if active.any() else float("nan"),
         "kappa_linear": _kappa_from_counts(counts, "linear"),
         "kappa_quadratic": _kappa_from_counts(counts, "quadratic"),
     }
-
-
-def _evaluate_arrays(
-    y_true: Sequence[str],
-    y_pred: Sequence[str],
-    level: str,
-    prevalence: Mapping[str, float],
-) -> tuple[dict[str, float], pd.DataFrame, list[tuple[str, float, float, float, int]]]:
-    """Métricas, confusión y desglose por clase de un nivel."""
-    labels = LABELS_BY_LEVEL[level]
-    truth = [str(value) for value in y_true]
-    preds = [str(value) for value in y_pred]
-    table = confusion_frame(pd.Series(truth), pd.Series(preds), labels)
-    matrix = table.to_numpy(dtype=np.int64)
-    per_class: list[tuple[str, float, float, float, int]] = []
-    active_f1: list[float] = []
-    for position, label in enumerate(labels):
-        tp = int(matrix[position, position])
-        fp = int(matrix[:, position].sum()) - tp
-        fn = int(matrix[position, :].sum()) - tp
-        precision, recall, f1 = _prf(tp, fp, fn)
-        support = int(matrix[position, :].sum())
-        predicted = int(matrix[:, position].sum())
-        if support > 0 or predicted > 0:
-            active_f1.append(f1)
-        per_class.append((label, precision, recall, f1, support))
-    metrics = {
-        "accuracy": accuracy(truth, preds),
-        "balanced_accuracy": balanced_accuracy(truth, preds, labels),
-        "reweighted_accuracy": reweighted_accuracy(truth, preds, prevalence),
-        "f1_macro": float(np.mean(active_f1)) if active_f1 else float("nan"),
-        "kappa_linear": cohen_kappa(truth, preds, labels, "linear"),
-        "kappa_quadratic": cohen_kappa(truth, preds, labels, "quadratic"),
-    }
-    return metrics, table, per_class
 
 
 def _bootstrap_ic(
@@ -485,54 +456,56 @@ def _bootstrap_ic(
     seed: int,
     alpha: float,
 ) -> list[dict[str, Any]]:
-    """IC bootstrap percentil: i.i.d. por fila, salvo la balanceada (estrato ``senti_3``)."""
+    """IC bootstrap percentil: i.i.d. por fila, salvo la balanceada (estrato ``senti_3``).
+
+    El remuestreo usa conteos vectorizados (``bincount``) para que 10 000 réplicas no
+    dominen el tiempo; las métricas coinciden con ``_metrics`` (scikit-learn).
+    """
     labels = LABELS_BY_LEVEL[level]
     annotation_column = REFERENCE_COLUMNS[level]
-    size = len(merged)
+    truth = _label_codes(merged[level].astype(str).tolist(), labels)
+    preds = _label_codes(merged[annotation_column].astype(str).tolist(), labels)
+    strata = _label_codes(merged["senti_3"].astype(str).tolist(), SENTI3_LABELS)
+    size = len(truth)
     if size == 0 or n_boot <= 0:
         return []
-    prevalence_array = cast(
+    prevalence_vector = cast(
         FloatArray,
         np.asarray([float(prevalence.get(label, 0.0)) for label in labels], dtype=float),
     )
-    true_codes = _label_codes(merged[level].astype(str).tolist(), labels)
-    pred_codes = _label_codes(merged[annotation_column].astype(str).tolist(), labels)
-    strata_codes = _label_codes(merged["senti_3"].astype(str).tolist(), SENTI3_LABELS)
-    groups = [
-        cast(IntArray, np.where(strata_codes == code)[0]) for code in range(len(SENTI3_LABELS))
-    ]
+    groups = [np.flatnonzero(strata == code) for code in range(len(SENTI3_LABELS))]
     groups = [group for group in groups if group.size > 0]
-    rng = np.random.default_rng(seed)
-    iid_keys = (
-        "accuracy",
-        "reweighted_accuracy",
-        "f1_macro",
-        "kappa_linear",
-        "kappa_quadratic",
-    )
-    iid_samples: dict[str, np.ndarray] = {key: np.empty(n_boot, dtype=float) for key in iid_keys}
-    balanced_samples = np.empty(n_boot, dtype=float)
     label_count = len(labels)
+    rng = np.random.default_rng(seed)
+    iid_keys = ("accuracy", "reweighted_accuracy", "f1_macro", "kappa_linear", "kappa_quadratic")
+    iid_samples: dict[str, np.ndarray] = {key: np.empty(n_boot) for key in iid_keys}
+    balanced_samples = np.empty(n_boot)
     for iteration in range(n_boot):
         positions = rng.integers(0, size, size)
-        counts = _confusion_counts(true_codes[positions], pred_codes[positions], label_count)
-        resampled = _metrics_from_counts(counts, prevalence_array)
+        resampled = _metrics_from_counts(
+            _confusion_counts(
+                cast(IntArray, truth[positions]), cast(IntArray, preds[positions]), label_count
+            ),
+            prevalence_vector,
+        )
         for key in iid_keys:
             iid_samples[key][iteration] = resampled[key]
         balanced_positions = cast(
             IntArray,
             np.concatenate([group[rng.integers(0, group.size, group.size)] for group in groups]),
         )
-        balanced_counts = _confusion_counts(
-            true_codes[balanced_positions], pred_codes[balanced_positions], label_count
+        balanced = _metrics_from_counts(
+            _confusion_counts(
+                cast(IntArray, truth[balanced_positions]),
+                cast(IntArray, preds[balanced_positions]),
+                label_count,
+            ),
+            prevalence_vector,
         )
-        balanced_samples[iteration] = _metrics_from_counts(balanced_counts, prevalence_array)[
-            "balanced_accuracy"
-        ]
+        balanced_samples[iteration] = balanced["balanced_accuracy"]
 
     def interval(values: np.ndarray) -> tuple[float, float]:
-        array = np.asarray(values, dtype=float)
-        low, high = np.nanpercentile(array, [100 * alpha / 2, 100 * (1 - alpha / 2)])
+        low, high = np.nanpercentile(values, [100 * alpha / 2, 100 * (1 - alpha / 2)])
         return float(low), float(high)
 
     rows: list[dict[str, Any]] = []
@@ -703,9 +676,9 @@ def build_agreement(
                     "par": pair,
                     "nivel": level,
                     "n": len(merged),
-                    "acuerdo": round(accuracy(left, right), 6),
-                    "kappa_linear": round(cohen_kappa(left, right, labels, "linear"), 6),
-                    "kappa_quadratic": round(cohen_kappa(left, right, labels, "quadratic"), 6),
+                    "acuerdo": round(float(accuracy_score(left, right)), 6),
+                    "kappa_linear": round(_safe_kappa(left, right, labels, "linear"), 6),
+                    "kappa_quadratic": round(_safe_kappa(left, right, labels, "quadratic"), 6),
                     "fleiss_kappa": float("nan"),
                 }
             )

@@ -227,13 +227,13 @@ Nuevo marco (sustituye a D-26 en lo relativo a la validación y matiza D-07):
 
 ### D-37 · Métricas humanas, IC bootstrap, acuerdo a 3 bandas y concordancia LLM
 
-Implementa D‑36 en `src/nlp/sentiment.py` y materializa sus artefactos. Comando: `uv run --extra corpus python -m src.nlp.sentiment` (`main` idempotente: genera cada artefacto cuyo insumo exista). Duración ≈ 22 s con `n_boot=10000`.
+Implementa D‑36 en `src/nlp/sentiment.py` y materializa sus artefactos. Comando: `uv run --extra corpus python -m src.nlp.sentiment` (`main` idempotente: genera cada artefacto cuyo insumo exista). Duración ≈ 40 s con `n_boot=10000`.
 
 **Método**
 
 - Referencia: ParlaCAP 1.0 (`senti_3`/`senti_6` = predicciones de ParlaSent 1.0). ParlaMint solo aporta texto y metadatos.
 - Oro: revisión humana de la submuestra de 77 (`validacion_sentimiento_revision.csv`; `Valero`, 2026‑09‑16), equilibrada 30/30/20 por clase ParlaCAP, reutilizando la muestra de 200.
-- Métricas por nivel: accuracy **cruda**, **balanceada** (macro‑recall) y **re‑ponderada** por probabilidad inversa a la prevalencia del corpus (`intervenciones_limpias.parquet`), F1 macro y kappa de Cohen **lineal** y **cuadrática** sobre taxonomía fija y ordenada.
+- Métricas por nivel: accuracy **cruda**, **balanceada** (macro‑recall) y **re‑ponderada** por probabilidad inversa a la prevalencia del corpus (`intervenciones_limpias.parquet`), F1 macro y kappa de Cohen **lineal** y **cuadrática** sobre taxonomía fija y ordenada. El cálculo delega en `scikit-learn` (accuracy, balanced accuracy, F1, confusión y kappa) y `statsmodels` (Fleiss, 3 anotadores), añadidas a dependencias base; solo la re‑ponderación es propia.
 - IC: bootstrap percentil, 10 000 réplicas, SEED=42; remuestreo i.i.d. por fila para cruda/re‑ponderada/F1/kappa y **estratificado por `senti_3`** para la balanceada. Sin agrupamiento por sesión (limitación registrada).
 - Acuerdo a 3 bandas sobre las 77: pareado ParlaCAP↔humano, LLM↔humano y ParlaCAP↔LLM, más Fleiss nominal.
 - Casos límite: rejilla fija con `support=0` marcado; kappa indefinida → `NaN`; se avisa y continúa.
@@ -242,8 +242,8 @@ Implementa D‑36 en `src/nlp/sentiment.py` y materializa sus artefactos. Comand
 
 | Nivel | accuracy (IC 95 %) | balanceada (IC) | re‑ponderada (IC) | F1 macro (IC) | kappa lineal (IC) | kappa cuadrática (IC) |
 |---|---|---|---|---|---|---|
-| `senti_3` | 0,662 [0,545; 0,766] | 0,652 [0,540; 0,758] | **0,675** [0,552; 0,776] | 0,646 [0,528; 0,747] | 0,565 [0,407; 0,699] | 0,656 [0,497; 0,781] |
-| `senti_6` | 0,364 [0,260; 0,468] | 0,383 [0,308; 0,498] | **0,374** [0,281; 0,596] | 0,329 [0,228; 0,417] | 0,511 [0,401; 0,607] | 0,701 [0,586; 0,791] |
+| `senti_3` | 0,662 [0,545; 0,766] | 0,652 [0,540; 0,758] | **0,675** [0,568; 0,778] | 0,646 [0,528; 0,747] | 0,565 [0,407; 0,699] | 0,656 [0,497; 0,781] |
+| `senti_6` | 0,364 [0,260; 0,468] | 0,383 [0,307; 0,461] | **0,374** [0,262; 0,488] | 0,329 [0,228; 0,417] | 0,511 [0,401; 0,607] | 0,701 [0,586; 0,791] |
 
 - Acuerdo a 3 bandas (acuerdo / kappa cuadrática): `senti_3` ParlaCAP↔humano 0,662/0,656; LLM↔humano 0,675/0,559; ParlaCAP↔LLM 0,623/0,685. `senti_6`: 0,364/0,701; 0,468/0,661; 0,429/0,762. Fleiss (nominal): 0,458 (`senti_3`) y 0,285 (`senti_6`).
 - La revisión humana **no** es copia del pre‑anotado LLM (acuerdo 67,5 %/46,8 %).

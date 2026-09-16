@@ -1,13 +1,13 @@
 nivel,metrica,variante,estimador,ic_inf,ic_sup,n_boot,alpha
 senti_3,accuracy,cruda,0.662338,0.545455,0.766234,10000,0.05
 senti_3,accuracy,balanceada,0.651634,0.539869,0.757516,10000,0.05
-senti_3,accuracy,re-ponderada,0.674567,0.551607,0.776327,10000,0.05
+senti_3,accuracy,re-ponderada,0.674567,0.56758,0.778002,10000,0.05
 senti_3,f1_macro,,0.645503,0.527746,0.7467,10000,0.05
 senti_3,kappa,lineal,0.564796,0.406689,0.699223,10000,0.05
 senti_3,kappa,cuadratica,0.655674,0.497102,0.781022,10000,0.05
 senti_6,accuracy,cruda,0.363636,0.25974,0.467532,10000,0.05
-senti_6,accuracy,balanceada,0.38309,0.30837,0.498009,10000,0.05
-senti_6,accuracy,re-ponderada,0.373686,0.281171,0.596164,10000,0.05
+senti_6,accuracy,balanceada,0.38309,0.306712,0.461358,10000,0.05
+senti_6,accuracy,re-ponderada,0.373686,0.262155,0.488088,10000,0.05
 senti_6,f1_macro,,0.329293,0.227823,0.416883,10000,0.05
 senti_6,kappa,lineal,0.511294,0.400834,0.606967,10000,0.05
 senti_6,kappa,cuadratica,0.70092,0.586099,0.790589,10000,0.05
