@@ -117,6 +117,15 @@ AGREEMENT_COLUMNS = [
     "kappa_quadratic",
     "fleiss_kappa",
 ]
+PATTERN_ORDER = (
+    "unanime",
+    "mayoria_sin_llm",
+    "mayoria_sin_parlacap",
+    "mayoria_sin_humano",
+    "sin_mayoria",
+)
+PATTERN_COLUMNS = ["nivel", "patron", "n", "proporcion"]
+DISTANCE_COLUMNS = ["nivel", "comparacion", "distancia", "n", "proporcion", "distancia_media"]
 
 
 @dataclass(frozen=True)
@@ -644,10 +653,10 @@ def build_concordance(annotations: pd.DataFrame, reference: pd.DataFrame) -> pd.
     return table.reset_index(drop=True)
 
 
-def build_agreement(
+def _three_way_frame(
     revision: pd.DataFrame, annotations: pd.DataFrame, reference: pd.DataFrame
 ) -> pd.DataFrame:
-    """Acuerdo pareado a tres bandas (ParlaCAP, pre-anotación LLM y revisión humana)."""
+    """Terna alineada por ítem: ParlaCAP, pre-anotación LLM y revisión humana."""
     human = revision.loc[:, ["utterance_id", "senti_3_final", "senti_6_final"]].rename(
         columns={"senti_3_final": "human_3", "senti_6_final": "human_6"}
     )
@@ -660,6 +669,14 @@ def build_agreement(
         how="inner",
         validate="one_to_one",
     )
+    return merged.reset_index(drop=True)
+
+
+def build_agreement(
+    revision: pd.DataFrame, annotations: pd.DataFrame, reference: pd.DataFrame
+) -> pd.DataFrame:
+    """Acuerdo pareado a tres bandas (ParlaCAP, pre-anotación LLM y revisión humana)."""
+    merged = _three_way_frame(revision, annotations, reference)
     pair_defs = (
         ("parlacap_humano", "senti_{suffix}", "human_{suffix}"),
         ("llm_humano", "llm_{suffix}", "human_{suffix}"),
@@ -699,6 +716,75 @@ def build_agreement(
             }
         )
     return pd.DataFrame(rows, columns=AGREEMENT_COLUMNS)
+
+
+def _pattern_name(parlacap: str, llm: str, human: str) -> str:
+    if parlacap == llm == human:
+        return "unanime"
+    if parlacap == human:
+        return "mayoria_sin_llm"
+    if llm == human:
+        return "mayoria_sin_parlacap"
+    if parlacap == llm:
+        return "mayoria_sin_humano"
+    return "sin_mayoria"
+
+
+def build_pattern_table(
+    revision: pd.DataFrame, annotations: pd.DataFrame, reference: pd.DataFrame
+) -> pd.DataFrame:
+    """Patrones de mayoría por ítem en la terna ParlaCAP · LLM · humano."""
+    merged = _three_way_frame(revision, annotations, reference)
+    rows: list[dict[str, Any]] = []
+    for level, suffix in (("senti_3", "3"), ("senti_6", "6")):
+        patterns = [
+            _pattern_name(str(parlacap), str(llm), str(human))
+            for parlacap, llm, human in zip(
+                merged[f"senti_{suffix}"],
+                merged[f"llm_{suffix}"],
+                merged[f"human_{suffix}"],
+                strict=True,
+            )
+        ]
+        counts = pd.Series(patterns).value_counts()
+        for name in PATTERN_ORDER:
+            n = int(counts.get(name, 0))
+            rows.append(
+                {
+                    "nivel": level,
+                    "patron": name,
+                    "n": n,
+                    "proporcion": round(n / len(merged), 6) if len(merged) else 0.0,
+                }
+            )
+    return pd.DataFrame(rows, columns=PATTERN_COLUMNS)
+
+
+def build_distance_table(
+    revision: pd.DataFrame, annotations: pd.DataFrame, reference: pd.DataFrame
+) -> pd.DataFrame:
+    """Distribución de distancias ordinales en ``senti_6`` frente al humano."""
+    merged = _three_way_frame(revision, annotations, reference)
+    rank = {label: position for position, label in enumerate(SENTI6_LABELS)}
+    rows: list[dict[str, Any]] = []
+    for name, column in (("parlacap", "senti_6"), ("llm", "llm_6")):
+        distances = (merged[column].map(rank) - merged["human_6"].map(rank)).abs()
+        if distances.isna().any():
+            raise ValueError("Hay etiquetas de senti_6 fuera de la taxonomía")
+        mean = round(float(distances.mean()), 6)
+        counts = distances.value_counts().sort_index()
+        for distance, n in counts.items():
+            rows.append(
+                {
+                    "nivel": "senti_6",
+                    "comparacion": f"{name}_humano",
+                    "distancia": int(cast(int, distance)),
+                    "n": int(n),
+                    "proporcion": round(int(n) / len(merged), 6),
+                    "distancia_media": mean,
+                }
+            )
+    return pd.DataFrame(rows, columns=DISTANCE_COLUMNS)
 
 
 def write_revision_tables(report: SentimentReport, reports_dir: Path) -> list[Path]:
@@ -779,6 +865,8 @@ def render_revision_html(
     report: SentimentReport,
     agreement: pd.DataFrame | None,
     concordance_metrics: pd.DataFrame | None,
+    patterns: pd.DataFrame | None,
+    distances: pd.DataFrame | None,
     meta: Mapping[str, Any],
 ) -> str:
     """Informe HTML autocontenido (sin dependencias ni marcas de tiempo de reloj)."""
@@ -841,6 +929,24 @@ def render_revision_html(
         parts.append('<p class="vacio">sin pre-anotaciones: no disponible</p>')
     else:
         parts.append(_plain_table_html(agreement))
+    parts.append("<h2>Patrones de mayoría por ítem (ParlaCAP · LLM · humano)</h2>")
+    if patterns is None:
+        parts.append('<p class="vacio">sin pre-anotaciones: no disponible</p>')
+    else:
+        parts.append(
+            '<p class="nota">Quién queda fuera de la mayoría cuando los tres no coinciden; '
+            "el reparto mide calibraciones compartidas entre modelos.</p>"
+        )
+        parts.append(_plain_table_html(patterns))
+    parts.append("<h2>Distancias ordinales en senti_6 frente al humano</h2>")
+    if distances is None:
+        parts.append('<p class="vacio">sin pre-anotaciones: no disponible</p>')
+    else:
+        parts.append(
+            '<p class="nota">Escala ordinal de seis niveles: distancia 0 = coincidencia, '
+            "1 = categoría contigua.</p>"
+        )
+        parts.append(_plain_table_html(distances))
     parts.append("<h2>Concordancia LLM vs ParlaCAP (secundaria, modelo-modelo)</h2>")
     parts.append(
         '<p class="nota">No es calidad contra un oro humano: mide acuerdo entre modelos '
@@ -872,7 +978,7 @@ def render_revision_html(
             "</body></html>",
         ]
     )
-    return "\n".join(parts)
+    return "\n".join(parts) + "\n"
 
 
 def _join_distinct(frame: pd.DataFrame, column: str) -> str:
@@ -945,8 +1051,12 @@ def main() -> None:
         print(f"escrito: {path}")
 
     agreement: pd.DataFrame | None = None
+    patterns: pd.DataFrame | None = None
+    distances: pd.DataFrame | None = None
     if annotations is not None:
         agreement = build_agreement(revision, annotations, reference)
+        patterns = build_pattern_table(revision, annotations, reference)
+        distances = build_distance_table(revision, annotations, reference)
         for path in write_agreement_table(agreement, reports_dir):
             print(f"escrito: {path}")
     else:
@@ -962,7 +1072,8 @@ def main() -> None:
     }
     html_path = PROJECT_ROOT / "reports" / REPORT_HTML_FILENAME
     html_path.write_text(
-        render_revision_html(report, agreement, concordance_metrics, meta), encoding="utf-8"
+        render_revision_html(report, agreement, concordance_metrics, patterns, distances, meta),
+        encoding="utf-8",
     )
     print(f"escrito: {html_path}")
     print(report.summary.to_string(index=False))

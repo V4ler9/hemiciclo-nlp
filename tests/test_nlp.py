@@ -27,6 +27,8 @@ from src.nlp.embeddings import (
 from src.nlp.sentiment import (
     SENTI6_LABELS,
     SentimentConfig,
+    build_distance_table,
+    build_pattern_table,
     build_sentiment_config,
     evaluate_sentiment,
     proportional_sample,
@@ -567,6 +569,96 @@ def test_write_revision_tables_escribe_artefactos(tmp_path: Path) -> None:
         "validacion_sentimiento_revision_confusion_senti_6.csv",
     }
     assert all(path.exists() for path in paths)
+
+
+def _three_way_frames() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    revision = pd.DataFrame(
+        {
+            "utterance_id": ["u1", "u2", "u3", "u4", "u5"],
+            "senti_3_final": ["Positive", "Positive", "Neutral", "Neutral", "Positive"],
+            "senti_6_final": [
+                "Positive",
+                "Mixed Positive",
+                "Neutral Negative",
+                "Neutral Negative",
+                "Positive",
+            ],
+            "revisado_por": ["autor"] * 5,
+            "fecha": ["2026-09-16"] * 5,
+        }
+    )
+    annotations = pd.DataFrame(
+        {
+            "utterance_id": ["u1", "u2", "u3", "u4", "u5"],
+            "senti_3_final": ["Positive", "Neutral", "Neutral", "Negative", "Neutral"],
+            "senti_6_final": [
+                "Positive",
+                "Neutral Positive",
+                "Neutral Negative",
+                "Mixed Negative",
+                "Neutral Positive",
+            ],
+        }
+    )
+    reference = pd.DataFrame(
+        {
+            "utterance_id": ["u1", "u2", "u3", "u4", "u5"],
+            "senti_3": ["Positive", "Positive", "Negative", "Negative", "Negative"],
+            "senti_6": [
+                "Positive",
+                "Mixed Positive",
+                "Negative",
+                "Mixed Negative",
+                "Neutral Negative",
+            ],
+        }
+    )
+    return revision, annotations, reference
+
+
+def test_build_pattern_table_cubre_los_cinco_patrones() -> None:
+    revision, annotations, reference = _three_way_frames()
+    table = build_pattern_table(revision, annotations, reference)
+    assert list(table.columns) == ["nivel", "patron", "n", "proporcion"]
+    for level in ("senti_3", "senti_6"):
+        rows = table.loc[table["nivel"] == level].set_index("patron")
+        assert set(rows.index) == {
+            "unanime",
+            "mayoria_sin_llm",
+            "mayoria_sin_parlacap",
+            "mayoria_sin_humano",
+            "sin_mayoria",
+        }
+        assert (rows["n"] == 1).all()
+        assert (rows["proporcion"] == 0.2).all()
+
+
+def test_build_distance_table_distancias_ordinales() -> None:
+    revision, annotations, reference = _three_way_frames()
+    table = build_distance_table(revision, annotations, reference)
+    assert list(table.columns) == [
+        "nivel",
+        "comparacion",
+        "distancia",
+        "n",
+        "proporcion",
+        "distancia_media",
+    ]
+    parlacap = table.loc[table["comparacion"] == "parlacap_humano"].set_index("distancia")
+    assert parlacap.loc[0, "n"] == 2
+    assert parlacap.loc[3, "n"] == 1
+    assert parlacap["distancia_media"].iloc[0] == pytest.approx(1.2)
+    llm = table.loc[table["comparacion"] == "llm_humano"].set_index("distancia")
+    assert llm.loc[1, "n"] == 2
+    assert llm["distancia_media"].iloc[0] == pytest.approx(0.8)
+
+
+def test_build_distance_table_falla_con_etiqueta_desconocida() -> None:
+    revision, annotations, reference = _three_way_frames()
+    broken = revision.copy()
+    broken.loc[0, "senti_6_final"] = "Positivo"
+    with pytest.raises(ValueError, match="taxonom"):
+        build_distance_table(broken, annotations, reference)
 
 
 def test_reweighted_accuracy_por_probabilidad_inversa() -> None:

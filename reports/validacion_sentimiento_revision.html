@@ -46,7 +46,7 @@
       <td>77</td>
       <td>0.662338</td>
       <td>0.651634</td>
-      <td>0.674567</td>
+      <td>0.674565</td>
       <td>0.645503</td>
       <td>0.564796</td>
       <td>0.655674</td>
@@ -56,7 +56,7 @@
       <td>77</td>
       <td>0.363636</td>
       <td>0.383090</td>
-      <td>0.373686</td>
+      <td>0.373676</td>
       <td>0.329293</td>
       <td>0.511294</td>
       <td>0.700920</td>
@@ -102,9 +102,9 @@
       <td>senti_3</td>
       <td>accuracy</td>
       <td>re-ponderada</td>
-      <td>0.674567</td>
-      <td>0.567580</td>
-      <td>0.778002</td>
+      <td>0.674565</td>
+      <td>0.567563</td>
+      <td>0.778003</td>
       <td>10000</td>
       <td>0.050000</td>
     </tr>
@@ -162,9 +162,9 @@
       <td>senti_6</td>
       <td>accuracy</td>
       <td>re-ponderada</td>
-      <td>0.373686</td>
-      <td>0.262155</td>
-      <td>0.488088</td>
+      <td>0.373676</td>
+      <td>0.262128</td>
+      <td>0.488080</td>
       <td>10000</td>
       <td>0.050000</td>
     </tr>
@@ -380,6 +380,168 @@
     </tr>
   </tbody>
 </table>
+<h2>Patrones de mayoría por ítem (ParlaCAP · LLM · humano)</h2>
+<p class="nota">Quién queda fuera de la mayoría cuando los tres no coinciden; el reparto mide calibraciones compartidas entre modelos.</p>
+<table class="dataframe tabla">
+  <thead>
+    <tr style="text-align: right;">
+      <th>nivel</th>
+      <th>patron</th>
+      <th>n</th>
+      <th>proporcion</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>senti_3</td>
+      <td>unanime</td>
+      <td>40</td>
+      <td>0.519481</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>mayoria_sin_llm</td>
+      <td>11</td>
+      <td>0.142857</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>mayoria_sin_parlacap</td>
+      <td>12</td>
+      <td>0.155844</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>mayoria_sin_humano</td>
+      <td>8</td>
+      <td>0.103896</td>
+    </tr>
+    <tr>
+      <td>senti_3</td>
+      <td>sin_mayoria</td>
+      <td>6</td>
+      <td>0.077922</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>unanime</td>
+      <td>18</td>
+      <td>0.233766</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>mayoria_sin_llm</td>
+      <td>10</td>
+      <td>0.129870</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>mayoria_sin_parlacap</td>
+      <td>18</td>
+      <td>0.233766</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>mayoria_sin_humano</td>
+      <td>15</td>
+      <td>0.194805</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>sin_mayoria</td>
+      <td>16</td>
+      <td>0.207792</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Distancias ordinales en senti_6 frente al humano</h2>
+<p class="nota">Escala ordinal de seis niveles: distancia 0 = coincidencia, 1 = categoría contigua.</p>
+<table class="dataframe tabla">
+  <thead>
+    <tr style="text-align: right;">
+      <th>nivel</th>
+      <th>comparacion</th>
+      <th>distancia</th>
+      <th>n</th>
+      <th>proporcion</th>
+      <th>distancia_media</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>senti_6</td>
+      <td>parlacap_humano</td>
+      <td>0</td>
+      <td>28</td>
+      <td>0.363636</td>
+      <td>0.883117</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>parlacap_humano</td>
+      <td>1</td>
+      <td>34</td>
+      <td>0.441558</td>
+      <td>0.883117</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>parlacap_humano</td>
+      <td>2</td>
+      <td>11</td>
+      <td>0.142857</td>
+      <td>0.883117</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>parlacap_humano</td>
+      <td>3</td>
+      <td>4</td>
+      <td>0.051948</td>
+      <td>0.883117</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>llm_humano</td>
+      <td>0</td>
+      <td>36</td>
+      <td>0.467532</td>
+      <td>0.857143</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>llm_humano</td>
+      <td>1</td>
+      <td>27</td>
+      <td>0.350649</td>
+      <td>0.857143</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>llm_humano</td>
+      <td>2</td>
+      <td>7</td>
+      <td>0.090909</td>
+      <td>0.857143</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>llm_humano</td>
+      <td>3</td>
+      <td>3</td>
+      <td>0.038961</td>
+      <td>0.857143</td>
+    </tr>
+    <tr>
+      <td>senti_6</td>
+      <td>llm_humano</td>
+      <td>4</td>
+      <td>4</td>
+      <td>0.051948</td>
+      <td>0.857143</td>
+    </tr>
+  </tbody>
+</table>
 <h2>Concordancia LLM vs ParlaCAP (secundaria, modelo-modelo)</h2>
 <p class="nota">No es calidad contra un oro humano: mide acuerdo entre modelos (D-36). Se incluye solo como referencia.</p>
 <table class="dataframe tabla">
@@ -401,7 +563,7 @@
       <td>200</td>
       <td>0.600000</td>
       <td>0.595585</td>
-      <td>0.597819</td>
+      <td>0.597809</td>
       <td>0.507593</td>
       <td>0.470138</td>
       <td>0.607565</td>
@@ -411,7 +573,7 @@
       <td>200</td>
       <td>0.380000</td>
       <td>0.375610</td>
-      <td>0.368757</td>
+      <td>0.368733</td>
       <td>0.292385</td>
       <td>0.493536</td>
       <td>0.704292</td>
