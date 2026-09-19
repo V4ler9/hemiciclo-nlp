@@ -1,0 +1,3 @@
+modelo,n_topicos,outlier_rate,coherencia_cv,diversidad,ari_vs_e5,nmi_vs_e5,n_comparables
+multilingual-e5-large,58,0.3204,0.754575,0.941379,1.0,1.0,15233
+bge-m3,72,0.3977,0.785793,0.913889,0.710503,0.875022,15233

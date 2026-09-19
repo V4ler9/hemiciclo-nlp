@@ -6,7 +6,9 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 **Fase 2 completada**: 30.018 intervenciones limpias (≥ 20 palabras, sin notas ni fórmulas de cortesía) en `data/processed/intervenciones_limpias.parquet`, a partir de las 32.739 consolidadas en la Fase 1.
 
-**Fase 3a completada**: embeddings multilingües del corpus limpio, modelo BERTopic de 58 tópicos elegido por coherencia c_v y diversidad (D-32 y D-34) en `data/processed/intervenciones_topicos.parquet`, etiquetas propuestas en `reports/tables/topics_labels.csv` (pendientes de revisión) y trazabilidad de la rejilla en `reports/tables/topics_selection.csv`. La validación de sentimiento está revisada por el autor y medida contra ParlaSent-ES: 0,675 de accuracy re-ponderada en 3 clases (kappa cuadrática 0,656) y 0,374 en 6 (kappa cuadrática 0,701), con acuerdo a tres bandas en `reports/tables/validacion_sentimiento_acuerdo_3bandas.csv` e informe en `reports/validacion_sentimiento_revision.html` (D-36 y D-37). Siguiente: Fase 3b. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
+**Fase 3a completada**: embeddings multilingües del corpus limpio, modelo BERTopic de 58 tópicos elegido por coherencia c_v y diversidad (D-32 y D-34) en `data/processed/intervenciones_topicos.parquet`, etiquetas propuestas en `reports/tables/topics_labels.csv` (pendientes de revisión) y trazabilidad de la rejilla en `reports/tables/topics_selection.csv`. La validación de sentimiento está revisada por el autor y medida contra ParlaSent-ES: 0,675 de accuracy re-ponderada en 3 clases (kappa cuadrática 0,656) y 0,374 en 6 (kappa cuadrática 0,701), con acuerdo a tres bandas en `reports/tables/validacion_sentimiento_acuerdo_3bandas.csv` e informe en `reports/validacion_sentimiento_revision.html` (D-36 y D-37).
+
+**Fase 3b completada**: series mensuales por tópico y tono (`data/intermediate/series_mensuales.parquet`, local), cambios de régimen con PELT y análisis de sensibilidad de la penalización (`reports/tables/cambios_regimen*.csv`), contraste exploratorio con eventos sin asociaciones que superen Benjamini-Hochberg (`reports/tables/eventos_relaciones.csv`) y cinco figuras en `reports/figures/`; notebooks de EDA ejecutados en `notebooks/` (D-38). Anexo de sensibilidad de embeddings: bge-m3 con el mismo troceado e hiperparámetros produce 72 tópicos con ARI 0,71 y NMI 0,88 frente a e5 (D-39). El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## Objetivo
 
@@ -23,7 +25,7 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 | 1 | Descarga y parseo del corpus ParlaMint 5.0 ES | Completada |
 | 2 | Preprocesado y limpieza | Completada |
 | 3a | Representación, BERTopic, etiquetado y sentimiento | Completada (etiquetas pendientes) |
-| 3b | Series mensuales, PELT y eventos | Planificada |
+| 3b | Series mensuales, PELT y eventos | Completada |
 | 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1, Spearman) | Absorbida en 3a y 3b (D-21) |
 | 5 | API FastAPI + dashboard Streamlit + Docker local | Pendiente |
 | 6 | Pasada final de calidad y reproducibilidad end-to-end | Pendiente |
