@@ -416,7 +416,9 @@ def _load_inputs(embeddings_path: Path) -> tuple[pd.DataFrame, list[str], Embedd
 def topic_output_paths(config_stem: str) -> dict[str, Path]:
     """Rutas de los artefactos del modelado; la config principal conserva nombres."""
     suffix = "" if config_stem == "experiment_01" else f"_{config_stem}"
-    model_name = "bertopic_experiment_01" if config_stem == "experiment_01" else f"bertopic_{config_stem}"
+    model_name = (
+        "bertopic_experiment_01" if config_stem == "experiment_01" else f"bertopic_{config_stem}"
+    )
     return {
         "selection": PROJECT_ROOT / "reports" / "tables" / f"topics_selection{suffix}.csv",
         "assignments": PROJECT_ROOT
@@ -531,9 +533,9 @@ def sensitivity_main() -> None:
     del model
     gc.collect()
 
-    joined = pd.DataFrame(
-        {"utterance_id": merged["utterance_id"], "topic_bge": topics}
-    ).merge(e5_assignments, on="utterance_id", how="left", validate="one_to_one")
+    joined = pd.DataFrame({"utterance_id": merged["utterance_id"], "topic_bge": topics}).merge(
+        e5_assignments, on="utterance_id", how="left", validate="one_to_one"
+    )
     mask = (~joined["is_outlier"].astype(bool)) & (joined["topic_bge"] != OUTLIER_TOPIC)
     ari, nmi = agreement_scores(
         joined.loc[mask, "bertopic_topic"].to_numpy(),
