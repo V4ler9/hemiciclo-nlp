@@ -52,7 +52,8 @@ hemiciclo-nlp/
 │   ├── test_corpus.py
 │   ├── test_preprocessing.py
 │   ├── test_nlp.py
-│   └── test_analysis.py
+│   ├── test_analysis.py
+│   └── test_api.py
 │
 ├── configs/
 │   ├── default.yaml            # Configuración por defecto
