@@ -8,7 +8,9 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 **Fase 3a completada**: embeddings multilingües del corpus limpio, modelo BERTopic de 58 tópicos elegido por coherencia c_v y diversidad (D-32 y D-34) en `data/processed/intervenciones_topicos.parquet`, etiquetas propuestas en `reports/tables/topics_labels.csv` (pendientes de revisión) y trazabilidad de la rejilla en `reports/tables/topics_selection.csv`. La validación de sentimiento está revisada por el autor y medida contra ParlaSent-ES: 0,675 de accuracy re-ponderada en 3 clases (kappa cuadrática 0,656) y 0,374 en 6 (kappa cuadrática 0,701), con acuerdo a tres bandas en `reports/tables/validacion_sentimiento_acuerdo_3bandas.csv` e informe en `reports/validacion_sentimiento_revision.html` (D-36 y D-37).
 
-**Fase 3b completada**: series mensuales por tópico y tono (`data/intermediate/series_mensuales.parquet`, local), cambios de régimen con PELT y análisis de sensibilidad de la penalización (`reports/tables/cambios_regimen*.csv`), contraste exploratorio con eventos sin asociaciones que superen Benjamini-Hochberg (`reports/tables/eventos_relaciones.csv`) y cinco figuras en `reports/figures/`; notebooks de EDA ejecutados en `notebooks/` (D-38). Anexo de sensibilidad de embeddings: bge-m3 con el mismo troceado e hiperparámetros produce 72 tópicos con ARI 0,71 y NMI 0,88 frente a e5 (D-39). El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
+**Fase 3b completada**: series mensuales por tópico y tono (`data/intermediate/series_mensuales.parquet`, local), cambios de régimen con PELT y análisis de sensibilidad de la penalización (`reports/tables/cambios_regimen*.csv`), contraste exploratorio con eventos sin asociaciones que superen Benjamini-Hochberg (`reports/tables/eventos_relaciones.csv`) y cinco figuras en `reports/figures/`; notebooks de EDA ejecutados en `notebooks/` (D-38). Anexo de sensibilidad de embeddings: bge-m3 con el mismo troceado e hiperparámetros produce 72 tópicos con ARI 0,71 y NMI 0,88 frente a e5 (D-39).
+
+**Fase 5 implementada**: API FastAPI que sirve los artefactos precalculados como JSON (`src/api/main.py`) y dashboard Streamlit con cinco secciones (`app/app.py` y `app/components/`), con `Dockerfile` y `compose.yaml` para ejecución local (D-12). Validada con smoke tests de la API y del dashboard en local; el build de la imagen queda pendiente de arrancar Docker Desktop. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## Objetivo
 
@@ -27,7 +29,7 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 | 3a | Representación, BERTopic, etiquetado y sentimiento | Completada (etiquetas pendientes) |
 | 3b | Series mensuales, PELT y eventos | Completada |
 | 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1, Spearman) | Absorbida en 3a y 3b (D-21) |
-| 5 | API FastAPI + dashboard Streamlit + Docker local | Pendiente |
+| 5 | API FastAPI + dashboard Streamlit + Docker local | Implementada (build Docker pendiente) |
 | 6 | Pasada final de calidad y reproducibilidad end-to-end | Pendiente |
 
 El detalle de cada fase está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md).
@@ -56,6 +58,16 @@ La estructura de carpetas es un contrato: [`structure.md`](structure.md). Su mod
 Las decisiones técnicas tomadas durante el diseño están registradas en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 Las fuentes externas (corpus, modelos, software y eventos) y sus comandos de descarga están en [`docs/SOURCES.md`](docs/SOURCES.md).
+
+## Producto local (Fase 5)
+
+```bash
+uv sync --extra app
+uv run uvicorn src.api.main:app --port 8000
+uv run streamlit run app/app.py   # consume HEMICICLO_API_URL (por defecto http://localhost:8000)
+```
+
+Con Docker Desktop: `docker compose up --build` levanta la API en <http://localhost:8000> y el dashboard en <http://localhost:8501>.
 
 ## Datos
 

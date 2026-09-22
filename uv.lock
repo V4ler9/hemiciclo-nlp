@@ -494,6 +494,7 @@ analysis = [
 app = [
     { name = "fastapi" },
     { name = "plotly" },
+    { name = "pyarrow" },
     { name = "streamlit" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -534,6 +535,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "plotly", marker = "extra == 'app'", specifier = ">=5.24" },
+    { name = "pyarrow", marker = "extra == 'app'", specifier = ">=17.0" },
     { name = "pyarrow", marker = "extra == 'corpus'", specifier = ">=17.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "requests", marker = "extra == 'corpus'", specifier = ">=2.32" },

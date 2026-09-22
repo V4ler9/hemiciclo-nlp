@@ -61,7 +61,7 @@ La lista exacta y las versiones están en [`pyproject.toml`](../pyproject.toml) 
 - Extra `corpus` (Fase 1): `requests`, `lxml`, `pyarrow`.
 - Extra `nlp` (Fase 3a): `bertopic`, `sentence-transformers`, `torch` y `gensim` (coherencia c_v, D-32). `py3langid` queda pendiente para la caracterización lingüística.
 - Extra `analysis` (Fase 3b): `ruptures`, `scipy`, `matplotlib`, `seaborn`.
-- Extra `app` (Fase 5): `fastapi`, `uvicorn`, `streamlit`, `plotly`.
+- Extra `app` (Fase 5): `fastapi`, `uvicorn`, `streamlit`, `plotly` y `pyarrow` (lectura de parquet por la API).
 - **Nota Windows/NVIDIA:** la rueda `torch` que publica PyPI para Windows es solo CPU, así que las ejecuciones con GPU requieren instalar la rueda CUDA del índice oficial de PyTorch (D-31). Comando en la sección 5.
 
 ## 4. Eventos
@@ -114,3 +114,4 @@ uv run --extra corpus python -m src.nlp.sentiment
 | 2026-09-13 | Nota Windows/NVIDIA: instalación de la rueda CUDA de `torch` desde el índice de PyTorch (D-31) y comando en la reproducción por fase. |
 | 2026-09-15 | Cierre de la Fase 3a: comandos reales de embeddings, tópicos y sentimiento (D-35). |
 | 2026-09-16 | Fase 3b: dependencias de notebooks (`nbformat`, `nbclient`, `ipykernel`) y artefactos de series, regímenes y eventos (D-38). |
+| 2026-09-22 | Fase 5: API FastAPI y dashboard Streamlit (extra `app` con `pyarrow` para leer parquet); `Dockerfile` y `compose.yaml` locales. |
