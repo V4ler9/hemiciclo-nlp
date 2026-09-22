@@ -270,3 +270,11 @@ Decisión: ampliar la rejilla a `[1e-6, 1e3]` (60 valores) y, en caso de empate 
 Cerrado el 2026-09-20: embeber el corpus con `BAAI/bge-m3` (mismo troceado 384/320) y ajustar BERTopic con los hiperparámetros seleccionados (100/30/10) da **72 tópicos**, 39,8 % de outliers, c_v 0,786 y diversidad 0,914; frente a los 58 tópicos, 32,0 %, 0,755 y 0,941 de e5-large. Sobre las 15.233 intervenciones no-outlier en ambos modelos (51 % del corpus), el acuerdo es **ARI 0,711 y NMI 0,875**.
 
 Lectura: la estructura temática es robusta al cambio de modelo de embeddings (NMI alto), con granularidad algo mayor y más outliers en bge-m3. Se reporta como anexo de robustez (D-24), no como comparación de modelos (D-05). Artefacto: `reports/tables/sensibilidad_embeddings.csv`.
+
+## 2026-09-22 — Cierre de la Fase 5
+
+### D-40 · Producto local: API, dashboard y Docker
+
+Implementada y validada la fase 5 (D-12): `src/api/main.py` sirve los artefactos precalculados como JSON (endpoints de meta, tópicos, series, cambios, eventos, sensibilidad y sentimiento; 503 si falta un artefacto) y `app/app.py` con `app/components/` es el dashboard Streamlit de cinco secciones que consume la API por HTTP; `Dockerfile` (uv + Python 3.12, solo extra `app`) y `compose.yaml` levantan ambos servicios montando `data/` y `reports/` en solo lectura.
+
+Validación: suite de API con `TestClient` sobre fixtures sintéticas (`tests/test_api.py`, 10 tests; `tests/test_api.py` pasa a formar parte del contrato de estructura), smoke real de todos los endpoints con uvicorn, navegación de las cinco páginas del dashboard con `AppTest` (0 errores) y `docker compose up` (API healthy en `:8000`, dashboard 200 en `:8501`). `pyarrow` pasa al extra `app` porque la API lee parquet.

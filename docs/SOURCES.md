@@ -115,3 +115,4 @@ uv run --extra corpus python -m src.nlp.sentiment
 | 2026-09-15 | Cierre de la Fase 3a: comandos reales de embeddings, tópicos y sentimiento (D-35). |
 | 2026-09-16 | Fase 3b: dependencias de notebooks (`nbformat`, `nbclient`, `ipykernel`) y artefactos de series, regímenes y eventos (D-38). |
 | 2026-09-22 | Fase 5: API FastAPI y dashboard Streamlit (extra `app` con `pyarrow` para leer parquet); `Dockerfile` y `compose.yaml` locales. |
+| 2026-09-22 | Fase 5 cerrada: tests de API (`tests/test_api.py`, contrato) y validación con `docker compose up` (D-40). |

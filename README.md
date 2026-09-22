@@ -10,7 +10,7 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 **Fase 3b completada**: series mensuales por tópico y tono (`data/intermediate/series_mensuales.parquet`, local), cambios de régimen con PELT y análisis de sensibilidad de la penalización (`reports/tables/cambios_regimen*.csv`), contraste exploratorio con eventos sin asociaciones que superen Benjamini-Hochberg (`reports/tables/eventos_relaciones.csv`) y cinco figuras en `reports/figures/`; notebooks de EDA ejecutados en `notebooks/` (D-38). Anexo de sensibilidad de embeddings: bge-m3 con el mismo troceado e hiperparámetros produce 72 tópicos con ARI 0,71 y NMI 0,88 frente a e5 (D-39).
 
-**Fase 5 implementada**: API FastAPI que sirve los artefactos precalculados como JSON (`src/api/main.py`) y dashboard Streamlit con cinco secciones (`app/app.py` y `app/components/`), con `Dockerfile` y `compose.yaml` para ejecución local (D-12). Validada con smoke tests de la API y del dashboard en local; el build de la imagen queda pendiente de arrancar Docker Desktop. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
+**Fase 5 completada**: API FastAPI que sirve los artefactos precalculados como JSON (`src/api/main.py`) y dashboard Streamlit con cinco secciones (`app/app.py` y `app/components/`), con `Dockerfile` y `compose.yaml` para ejecución local (D-12 y D-40). Validada con smoke tests de la API y del dashboard, suite de `TestClient` sobre fixtures sintéticas (`tests/test_api.py`) y `docker compose up` (API healthy en `:8000` y dashboard 200 en `:8501`). El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## Objetivo
 
@@ -29,7 +29,7 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 | 3a | Representación, BERTopic, etiquetado y sentimiento | Completada (etiquetas pendientes) |
 | 3b | Series mensuales, PELT y eventos | Completada |
 | 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1, Spearman) | Absorbida en 3a y 3b (D-21) |
-| 5 | API FastAPI + dashboard Streamlit + Docker local | Implementada (build Docker pendiente) |
+| 5 | API FastAPI + dashboard Streamlit + Docker local | Completada |
 | 6 | Pasada final de calidad y reproducibilidad end-to-end | Pendiente |
 
 El detalle de cada fase está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md).
