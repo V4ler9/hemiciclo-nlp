@@ -79,7 +79,7 @@ La lista exacta y las versiones están en [`pyproject.toml`](../pyproject.toml) 
 | COVID-19: estado de alarma | 2020-03-14 | [BOE-A-2020-3692](https://www.boe.es/buscar/doc.php?id=BOE-A-2020-3692); [OMS](https://www.who.int/emergencies/diseases/novel-coronavirus-2019) |
 | Guerra de Ucrania | 2022-02-24 | [ONU](https://news.un.org/en/focus/ukraine); [Consejo Europeo](https://www.consilium.europa.eu/en/policies/eu-response-ukraine-invasion/) |
 
-Las fechas se verificarán contra el expediente o la publicación oficial correspondiente al construir `eventos.csv` en 3b.
+Las fechas se verificaron contra el expediente o la publicación oficial correspondiente al construir `eventos.csv` en 3b (D-38); la tabla usada queda versionada en `reports/tables/eventos.csv`.
 
 ## 5. Reproducción por fase
 
@@ -101,9 +101,24 @@ uv run python -m src.nlp.embeddings
 uv run python -m src.nlp.topic_model
 uv run --extra corpus python -m src.nlp.sentiment
 
-# Fase 3b (pendiente de implementación)
-# uv run python -m src.analysis.temporal
-# uv run python -m src.analysis.regime_change
+# Anexo de sensibilidad con bge-m3 (D-24, D-39)
+uv run python -m src.nlp.embeddings --config configs/experiment_02.yaml
+uv run python -m src.nlp.topic_model --sensitivity
+
+# Fase 3b
+uv run python -m src.analysis.temporal
+uv run python -m src.analysis.regime_change
+uv run python -m src.visualization.charts
+
+# Fase 5 (local; alternativa: `docker compose up --build`)
+uv sync --extra app
+uv run uvicorn src.api.main:app --port 8000
+uv run streamlit run app/app.py
+
+# Verificación (la suite pesada solo en la máquina NVIDIA, D-30)
+uv run pytest
+# HEMICICLO_HEAVY=1 HEMICICLO_INTEGRATION=1 uv run pytest
+uv run pre-commit run --all-files
 ```
 
 ## 6. Registro de cambios
@@ -116,3 +131,4 @@ uv run --extra corpus python -m src.nlp.sentiment
 | 2026-09-16 | Fase 3b: dependencias de notebooks (`nbformat`, `nbclient`, `ipykernel`) y artefactos de series, regímenes y eventos (D-38). |
 | 2026-09-22 | Fase 5: API FastAPI y dashboard Streamlit (extra `app` con `pyarrow` para leer parquet); `Dockerfile` y `compose.yaml` locales. |
 | 2026-09-22 | Fase 5 cerrada: tests de API (`tests/test_api.py`, contrato) y validación con `docker compose up` (D-40). |
+| 2026-09-22 | Fase 6: reproducción por fase completada (3b, anexo bge-m3 y app) y cierre de calidad y reproducibilidad (D-41). |

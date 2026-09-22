@@ -278,3 +278,15 @@ Lectura: la estructura temática es robusta al cambio de modelo de embeddings (N
 Implementada y validada la fase 5 (D-12): `src/api/main.py` sirve los artefactos precalculados como JSON (endpoints de meta, tópicos, series, cambios, eventos, sensibilidad y sentimiento; 503 si falta un artefacto) y `app/app.py` con `app/components/` es el dashboard Streamlit de cinco secciones que consume la API por HTTP; `Dockerfile` (uv + Python 3.12, solo extra `app`) y `compose.yaml` levantan ambos servicios montando `data/` y `reports/` en solo lectura.
 
 Validación: suite de API con `TestClient` sobre fixtures sintéticas (`tests/test_api.py`, 10 tests; `tests/test_api.py` pasa a formar parte del contrato de estructura), smoke real de todos los endpoints con uvicorn, navegación de las cinco páginas del dashboard con `AppTest` (0 errores) y `docker compose up` (API healthy en `:8000`, dashboard 200 en `:8501`). `pyarrow` pasa al extra `app` porque la API lee parquet.
+
+## 2026-09-22 — Cierre de la Fase 6
+
+### D-41 · Pasada final de calidad y reproducibilidad
+
+- **Integridad del corpus crudo**: los MD5 de `ParlaMint-ES.tgz` y `ParlaCAP-ES_speeches_no_text.tsv.zip` se verifican contra los publicados en `SOURCES.md`/`downloader.py` (OK).
+- **Idempotencia**: re-ejecutar `src.nlp.sentiment`, `src.analysis.temporal`, `src.analysis.regime_change` y `src.visualization.charts` deja **18 artefactos vigilados byte-idénticos** (CSV de métricas, informe HTML, parquet de series y las cinco figuras PNG). La semilla 42 está centralizada en todas las configs y se comprueba en `tests/test_smoke.py`.
+- **Suite completa** en la máquina NVIDIA con `HEMICICLO_HEAVY=1` y `HEMICICLO_INTEGRATION=1`: **143 tests pasan sin skips** (embeddings reales en GPU, BERTopic, coherencia c_v, parser sobre el corpus real y test de red del sample).
+- **Contrato y estáticos**: `tests/test_smoke.py` verifica rutas del contrato, módulos documentados con `main()` y la protección de `data/` y `models/`; ruff, formato, pyright estricto, pre-commit y `uv lock --check` en verde.
+- **Pendiente único del proyecto**: la revisión humana de las 58 etiquetas de tópicos (`reports/tables/topics_labels.csv`, `reviewed_by` vacío). No afecta a la reproducibilidad y queda registrado como limitación.
+
+Con esto la hoja de ruta del `PROJECT_SPEC` queda completa (fases 0-6; la fase 4 se absorbió en 3a/3b, D-21).
