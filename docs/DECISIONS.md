@@ -290,3 +290,18 @@ Validación: suite de API con `TestClient` sobre fixtures sintéticas (`tests/te
 - **Pendiente único del proyecto**: la revisión humana de las 58 etiquetas de tópicos (`reports/tables/topics_labels.csv`, `reviewed_by` vacío). No afecta a la reproducibilidad y queda registrado como limitación.
 
 Con esto la hoja de ruta del `PROJECT_SPEC` queda completa (fases 0-6; la fase 4 se absorbió en 3a/3b, D-21).
+
+
+## 2026-09-23 — Refactorización del frontend y retirada de Streamlit
+
+### D-42 — Panel web Next.js en sustitución de Streamlit y de las figuras PNG
+
+El panel de presentación pasa a **Next.js 16 + TypeScript** en `frontend/` (plan completo en `docs/plan_refactor_frontend.md`), con cuatro secciones —portada (3 cambios de tono con sus fichas + rejilla de58 tópicos ordenada por magnitud), Métricas, Evidencias por tópico y Metodología—, identidad editorial (Source Serif 4 + Inter), gráficos interactivos en ECharts y tooltips con `r`, `p`, `n` e intervalo por foco o hover. La calidad se automatiza:29 unitarios (Vitest),17 E2E (Playwright, que arranca API y panel) y4 auditorías axe **WCAG2A/AA sin violaciones**; la auditoría detectó el fallo real de accesibilidad de las regiones con scroll (WCAG2.1.1), corregido con `role="region"` + foco.
+
+**Nuevo en la API (solo aditivo):** `GET /changes/stats` con el contraste Mann-Whitney antes/después de cada cambio y corrección de Benjamini-Hochberg (`reports/tables/cambios_regimen_test.csv`:136 contrastes,45 con q<0,05), `GET /topics/selection` con la rejilla completa, CORS explícito (`HEMICICLO_ALLOWED_ORIGINS`) y volcado del esquema en `reports/openapi.json` (`npm run gen:api`).
+
+**Retiradas:** `app/` (dashboard Streamlit + plotly), `src/visualization/charts.py` y los cinco PNG de `reports/figures/` — su contenido vive ahora en el panel (heatmap de cuota y de asociaciones, volumen y outliers). El extra `app` de `pyproject.toml` queda reducido a `fastapi`, `uvicorn` y `pyarrow`. Contrato (`structure.md`, `tests/test_smoke.py`), README, SOURCES y PROJECT_SPEC actualizados.
+
+**Docker:** `compose.yaml` levanta `api` (:8000) y `web` (:3000) con build multi-stage (`frontend/Dockerfile`, contexto en la raíz) y URL dual: `NEXT_PUBLIC_HEMICICLO_API_URL` en build (la consume el navegador) y `HEMICICLO_API_URL_SERVER` en runtime (la consume el servidor Next dentro de la red del compose).
+
+**Validación:** pytest144 · Vitest29 · Playwright17 · ruff/pyright/ESLint/Prettier en verde · `docker compose up --build` con API healthy y panel respondiendo.

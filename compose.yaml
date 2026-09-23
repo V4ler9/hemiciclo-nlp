@@ -1,5 +1,7 @@
-# Fase 5: API FastAPI + dashboard Streamlit en local (D-12).
+# API FastAPI + panel web (Next.js) en local (D-12, D-42).
 # Uso: docker compose up --build
+#   API   -> http://localhost:8000
+#   Panel -> http://localhost:3000
 services:
   api:
     build: .
@@ -20,16 +22,18 @@ services:
       timeout: 5s
       retries: 5
 
-  dashboard:
-    build: .
-    image: hemiciclo-nlp:local
-    command: >-
-      streamlit run app/app.py
-      --server.address 0.0.0.0 --server.port 8501 --server.headless true
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # La consume el navegador tras publicar: localhost del host.
+        NEXT_PUBLIC_HEMICICLO_API_URL: http://localhost:8000
     ports:
-      - "8501:8501"
+      - "3000:3000"
     environment:
-      HEMICICLO_API_URL: http://api:8000
+      # La consume el servidor Next dentro de la red del compose.
+      HEMICICLO_API_URL_SERVER: http://api:8000
     depends_on:
       api:
         condition: service_healthy

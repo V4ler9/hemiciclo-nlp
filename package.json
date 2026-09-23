@@ -1,0 +1,16 @@
+{
+  "name": "hemiciclo-nlp",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev:all",
+    "dev:all": "npm --prefix frontend run dev:all",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "lint": "npm --prefix frontend run lint",
+    "format": "npm --prefix frontend run format",
+    "sync:informes": "npm --prefix frontend run sync:informes",
+    "test": "npm --prefix frontend run test",
+    "e2e": "npm --prefix frontend run e2e",
+    "gen:api": "npm --prefix frontend run gen:api"
+  }
+}

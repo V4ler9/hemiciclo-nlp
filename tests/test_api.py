@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -77,6 +78,20 @@ def _fixtures(root: Path) -> tuple[Path, Path]:
             "n_cambios": [1],
         }
     ).to_csv(tables / "cambios_regimen_sensibilidad.csv", index=False)
+    pd.DataFrame(
+        {
+            "serie": ["topic", "tone"],
+            "serie_id": ["0", "tone"],
+            "fecha": ["2020-01-01", "2020-02-01"],
+            "r": [0.5, -0.3],
+            "p": [0.01, 0.02],
+            "q": [0.04, 0.05],
+            "n_antes": [5, 5],
+            "n_despues": [5, 5],
+            "n": [10, 10],
+            "significativo_bh": [1, 1],
+        }
+    ).to_csv(tables / "cambios_regimen_test.csv", index=False)
     pd.DataFrame(
         {
             "evento": ["Evento A"],
@@ -199,6 +214,13 @@ def test_topics_fusiona_etiquetas(client: Any) -> None:
     assert topics[0]["size"] == 100
 
 
+def test_topics_selection_expone_la_rejilla_completa(client: Any) -> None:
+    selection = client.get("/topics/selection").json()
+    assert len(selection) == 1
+    assert selection[0]["min_topic_size"] == 100
+    assert selection[0]["selected"] == 1
+
+
 def test_topic_detail_divide_representativas(client: Any) -> None:
     detail = client.get("/topics/0").json()
     assert detail["representative_texts"] == ["texto uno", "texto dos"]
@@ -220,6 +242,17 @@ def test_changes_y_sensibilidad(client: Any) -> None:
         "/changes/sensitivity", params={"serie": "topic", "serie_id": "0"}
     ).json()
     assert len(sensitivity) == 1
+
+
+def test_changes_stats_filtra_y_ordena(client: Any) -> None:
+    stats = client.get("/changes/stats").json()
+    assert [row["serie"] for row in stats] == ["topic", "tone"]
+    assert stats[0]["n"] == 10
+    assert stats[0]["significativo_bh"] == 1
+    filtered = client.get("/changes/stats", params={"serie": "tone"}).json()
+    assert [row["serie_id"] for row in filtered] == ["tone"]
+    assert len(client.get("/changes/stats", params={"max_q": 0.045}).json()) == 1
+    assert client.get("/changes/stats", params={"max_q": 0.03}).json() == []
 
 
 def test_eventos_y_relaciones(client: Any) -> None:
@@ -251,3 +284,36 @@ def test_artefacto_ausente_devuelve_503(tmp_path: Path) -> None:
     client: Any = TestClient(create_app(reports_dir=reports, data_dir=data))
     assert client.get("/topics").status_code == 503
     assert client.get("/meta").status_code == 503
+
+
+def test_cors_permite_el_origen_del_frontend(tmp_path: Path) -> None:
+    reports, data = _fixtures(tmp_path)
+    client: Any = TestClient(create_app(reports_dir=reports, data_dir=data))
+    response = client.get("/health", headers={"Origin": "http://localhost:3000"})
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+    denied = client.get("/health", headers={"Origin": "http://localhost:9999"})
+    assert "access-control-allow-origin" not in denied.headers
+
+
+def test_export_openapi_expone_todos_los_endpoints(tmp_path: Path) -> None:
+    from src.api.openapi import export_openapi
+
+    destination = export_openapi(tmp_path / "openapi.json")
+    schema = json.loads(destination.read_text(encoding="utf-8"))
+    expected = {
+        "/health",
+        "/meta",
+        "/topics",
+        "/topics/selection",
+        "/topics/{topic_id}",
+        "/series",
+        "/changes",
+        "/changes/sensitivity",
+        "/changes/stats",
+        "/events",
+        "/events/relations",
+        "/sensitivity",
+        "/sentiment",
+        "/sentiment/confusion/{level}",
+    }
+    assert expected == set(schema["paths"])

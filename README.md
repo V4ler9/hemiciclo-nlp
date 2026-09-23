@@ -8,11 +8,13 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 **Fase 3a completada**: embeddings multilingües del corpus limpio, modelo BERTopic de 58 tópicos elegido por coherencia c_v y diversidad (D-32 y D-34) en `data/processed/intervenciones_topicos.parquet`, etiquetas propuestas en `reports/tables/topics_labels.csv` (pendientes de revisión) y trazabilidad de la rejilla en `reports/tables/topics_selection.csv`. La validación de sentimiento está revisada por el autor y medida contra ParlaSent-ES: 0,675 de accuracy re-ponderada en 3 clases (kappa cuadrática 0,656) y 0,374 en 6 (kappa cuadrática 0,701), con acuerdo a tres bandas en `reports/tables/validacion_sentimiento_acuerdo_3bandas.csv` e informe en `reports/validacion_sentimiento_revision.html` (D-36 y D-37).
 
-**Fase 3b completada**: series mensuales por tópico y tono (`data/intermediate/series_mensuales.parquet`, local), cambios de régimen con PELT y análisis de sensibilidad de la penalización (`reports/tables/cambios_regimen*.csv`), contraste exploratorio con eventos sin asociaciones que superen Benjamini-Hochberg (`reports/tables/eventos_relaciones.csv`) y cinco figuras en `reports/figures/`; notebooks de EDA ejecutados en `notebooks/` (D-38). Anexo de sensibilidad de embeddings: bge-m3 con el mismo troceado e hiperparámetros produce 72 tópicos con ARI 0,71 y NMI 0,88 frente a e5 (D-39).
+**Fase 3b completada**: series mensuales por tópico y tono (`data/intermediate/series_mensuales.parquet`, local), cambios de régimen con PELT y análisis de sensibilidad de la penalización (`reports/tables/cambios_regimen*.csv`), contraste exploratorio con eventos sin asociaciones que superen Benjamini-Hochberg (`reports/tables/eventos_relaciones.csv`) y notebooks de EDA ejecutados en `notebooks/` (D-38). Anexo de sensibilidad de embeddings: bge-m3 con el mismo troceado e hiperparámetros produce 72 tópicos con ARI 0,71 y NMI 0,88 frente a e5 (D-39). Las cinco figuras PNG originales se retiran en D-42: su contenido vive ahora en el panel web.
 
-**Fase 5 completada**: API FastAPI que sirve los artefactos precalculados como JSON (`src/api/main.py`) y dashboard Streamlit con cinco secciones (`app/app.py` y `app/components/`), con `Dockerfile` y `compose.yaml` para ejecución local (D-12 y D-40). Validada con smoke tests de la API y del dashboard, suite de `TestClient` sobre fixtures sintéticas (`tests/test_api.py`) y `docker compose up` (API healthy en `:8000` y dashboard 200 en `:8501`).
+**Fase 5 completada**: API FastAPI que sirve los artefactos precalculados como JSON (`src/api/main.py`), con `Dockerfile` y `compose.yaml` para ejecución local (D-12 y D-40). El panel de presentación es el de Next.js de `frontend/` (D-42; el dashboard Streamlit original se retiró al validarse el panel).
 
 **Fase 6 completada**: auditoría de reproducibilidad — MD5 del corpus crudo verificado, cadena determinista **byte-idéntica** al re-ejecutarla (18 artefactos vigilados) y suite completa en la máquina NVIDIA (**143 tests**, incluidos `heavy` en GPU e integración con corpus real), más el contrato de estructura verificado en `tests/test_smoke.py` (D-41). Queda como único pendiente la revisión humana de las 58 etiquetas de tópicos. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
+
+**Refactorización del frontend completada** (plan en [`docs/plan_refactor_frontend.md`](docs/plan_refactor_frontend.md), D-42): panel web Next.js 16 + TypeScript en `frontend/` con cuatro secciones —portada con los cambios de tono y la rejilla por tópico, métricas, evidencias por tópico y metodología—, gráficos interactivos en ECharts, nuevo contraste Mann-Whitney con BH por cambio (`reports/tables/cambios_regimen_test.csv`), arranque único `npm run dev:all` desde la raíz y calidad automatizada:29 tests unitarios (Vitest),17 E2E (Playwright) y4 auditorías axe **WCAG2A/AA sin violaciones**. Se retiran el dashboard Streamlit (`app/`), `src/visualization/charts.py` y los cinco PNG de `reports/figures/`, sustituidos por el panel (D-42).
 
 ## Objetivo
 
@@ -31,8 +33,9 @@ Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/par
 | 3a | Representación, BERTopic, etiquetado y sentimiento | Completada (etiquetas pendientes) |
 | 3b | Series mensuales, PELT y eventos | Completada |
 | 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1, Spearman) | Absorbida en 3a y 3b (D-21) |
-| 5 | API FastAPI + dashboard Streamlit + Docker local | Completada |
+| 5 | API FastAPI + presentación + Docker local | Completada (presentación en `frontend/`, D-42) |
 | 6 | Pasada final de calidad y reproducibilidad end-to-end | Completada |
+| — | Refactorización del frontend: panel Next.js + calidad (plan en [`docs/plan_refactor_frontend.md`](docs/plan_refactor_frontend.md)) | Completada |
 
 El detalle de cada fase está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md).
 
@@ -61,15 +64,21 @@ Las decisiones técnicas tomadas durante el diseño están registradas en [`docs
 
 Las fuentes externas (corpus, modelos, software y eventos) y sus comandos de descarga están en [`docs/SOURCES.md`](docs/SOURCES.md).
 
-## Producto local (Fase 5)
+## Producto local
+
+Requisitos: Python 3.12 con [`uv`](https://docs.astral.sh/uv/) y **Node 20.9+ con npm** (el panel vive en `frontend/`).
+
+### Desarrollo
 
 ```bash
-uv sync --extra app
-uv run uvicorn src.api.main:app --port 8000
-uv run streamlit run app/app.py   # consume HEMICICLO_API_URL (por defecto http://localhost:8000)
+npm run dev:all      # desde la raíz: API (:8000) + panel (:3000), un solo comando
 ```
 
-Con Docker Desktop: `docker compose up --build` levanta la API en <http://localhost:8000> y el dashboard en <http://localhost:8501>.
+El panel se abre en <http://localhost:3000>. Comprobaciones automáticas: `uv run pytest` (Python), `npm test` (unitarios Vitest) y `npm run e2e` (Playwright + axe WCAG AA; arranca API y panel solas).
+
+### Docker
+
+`docker compose up --build` levanta la API en <http://localhost:8000> y el panel en <http://localhost:3000>.
 
 ## Datos
 

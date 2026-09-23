@@ -61,7 +61,7 @@ La lista exacta y las versiones están en [`pyproject.toml`](../pyproject.toml) 
 - Extra `corpus` (Fase 1): `requests`, `lxml`, `pyarrow`.
 - Extra `nlp` (Fase 3a): `bertopic`, `sentence-transformers`, `torch` y `gensim` (coherencia c_v, D-32). `py3langid` queda pendiente para la caracterización lingüística.
 - Extra `analysis` (Fase 3b): `ruptures`, `scipy`, `matplotlib`, `seaborn`.
-- Extra `app` (Fase 5): `fastapi`, `uvicorn`, `streamlit`, `plotly` y `pyarrow` (lectura de parquet por la API).
+- Extra `app` (Fase 5): `fastapi`, `uvicorn` y `pyarrow` (lectura de parquet por la API); el panel web usa npm en `frontend/` (D-42).
 - **Nota Windows/NVIDIA:** la rueda `torch` que publica PyPI para Windows es solo CPU, así que las ejecuciones con GPU requieren instalar la rueda CUDA del índice oficial de PyTorch (D-31). Comando en la sección 5.
 
 ## 4. Eventos
@@ -108,12 +108,11 @@ uv run python -m src.nlp.topic_model --sensitivity
 # Fase 3b
 uv run python -m src.analysis.temporal
 uv run python -m src.analysis.regime_change
-uv run python -m src.visualization.charts
 
-# Fase 5 (local; alternativa: `docker compose up --build`)
+# Local (alternativa: `docker compose up --build`)
 uv sync --extra app
 uv run uvicorn src.api.main:app --port 8000
-uv run streamlit run app/app.py
+npm run dev:all   # panel web desde la raíz (requiere Node 20.9+)
 
 # Verificación (la suite pesada solo en la máquina NVIDIA, D-30)
 uv run pytest

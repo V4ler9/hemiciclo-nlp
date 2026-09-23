@@ -1,0 +1,680 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "hemiciclo-nlp API",
+    "description": "Evolución temática y tonal del Congreso de los Diputados (2015-2023).",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "description": "Comprobación de disponibilidad.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta": {
+      "get": {
+        "summary": "Meta",
+        "description": "Resumen del corpus, la rejilla y el modelo de tópicos final.",
+        "operationId": "meta_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Meta Meta Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/topics": {
+      "get": {
+        "summary": "Topics",
+        "description": "Tópicos con etiqueta, tamaño y términos principales.",
+        "operationId": "topics_topics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Topics Topics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/topics/selection": {
+      "get": {
+        "summary": "Topics Selection",
+        "description": "Rejilla completa de combinaciones probadas y regla de selección (D-32).",
+        "operationId": "topics_selection_topics_selection_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Topics Selection Topics Selection Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/topics/{topic_id}": {
+      "get": {
+        "summary": "Topic Detail",
+        "description": "Detalle de un tópico: términos y documentos representativos.",
+        "operationId": "topic_detail_topics__topic_id__get",
+        "parameters": [
+          {
+            "name": "topic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Topic Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Topic Detail Topics  Topic Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series": {
+      "get": {
+        "summary": "Series",
+        "description": "Serie mensual en formato largo, filtrada por tipo e identificador.",
+        "operationId": "series_series_get",
+        "parameters": [
+          {
+            "name": "series_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "topic, tone, tone_weighted, outliers o volume",
+              "title": "Series Type"
+            },
+            "description": "topic, tone, tone_weighted, outliers o volume"
+          },
+          {
+            "name": "series_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Series Series Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/changes": {
+      "get": {
+        "summary": "Changes",
+        "description": "Puntos de cambio de una serie (PELT; D-28 y D-38).",
+        "operationId": "changes_changes_get",
+        "parameters": [
+          {
+            "name": "serie",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "'topic' o 'tone'",
+              "title": "Serie"
+            },
+            "description": "'topic' o 'tone'"
+          },
+          {
+            "name": "serie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Changes Changes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/changes/sensitivity": {
+      "get": {
+        "summary": "Changes Sensitivity",
+        "description": "Sensibilidad de la penalización de PELT por serie.",
+        "operationId": "changes_sensitivity_changes_sensitivity_get",
+        "parameters": [
+          {
+            "name": "serie",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie"
+            }
+          },
+          {
+            "name": "serie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Changes Sensitivity Changes Sensitivity Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/changes/stats": {
+      "get": {
+        "summary": "Changes Stats",
+        "description": "Estadísticos por cambio (Mann-Whitney antes/después con BH).",
+        "operationId": "changes_stats_changes_stats_get",
+        "parameters": [
+          {
+            "name": "serie",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie"
+            }
+          },
+          {
+            "name": "serie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie Id"
+            }
+          },
+          {
+            "name": "max_q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Changes Stats Changes Stats Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "summary": "Events",
+        "description": "Tabla de eventos usada en el contraste (espejo versionado, D-13).",
+        "operationId": "events_events_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Events Events Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/relations": {
+      "get": {
+        "summary": "Event Relations",
+        "description": "Asociaciones exploratorias evento-serie (Spearman + BH; D-09).",
+        "operationId": "event_relations_events_relations_get",
+        "parameters": [
+          {
+            "name": "serie",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie"
+            }
+          },
+          {
+            "name": "serie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie Id"
+            }
+          },
+          {
+            "name": "max_q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Event Relations Events Relations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensitivity": {
+      "get": {
+        "summary": "Sensitivity",
+        "description": "Anexo de robustez de embeddings e5 frente a bge-m3 (D-39).",
+        "operationId": "sensitivity_sensitivity_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Sensitivity Sensitivity Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sentiment": {
+      "get": {
+        "summary": "Sentiment",
+        "description": "Métricas de la validación humana de sentimiento (D-36 y D-37).",
+        "operationId": "sentiment_sentiment_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response Sentiment Sentiment Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sentiment/confusion/{level}": {
+      "get": {
+        "summary": "Sentiment Confusion",
+        "description": "Matriz de confusión por nivel (``senti_3`` o ``senti_6``).",
+        "operationId": "sentiment_confusion_sentiment_confusion__level__get",
+        "parameters": [
+          {
+            "name": "level",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Sentiment Confusion Sentiment Confusion  Level  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -55,7 +55,7 @@ Se excluyen: `Speaker_name`, `Speaker_ID` (solo muestreo y control de calidad), 
    - **Series temporales:** agregación mensual de cuota relativa por tópico y tono medio (con sensibilidad ponderada por longitud).
    - **Cambios de régimen:** PELT sobre las series mensuales (coste l2; penalización por criterio tipo BIC y análisis de sensibilidad).
    - **Eventos:** Spearman exploratorio con `data/external/eventos.csv` (ventana ±3 meses), corrección por comparaciones múltiples (Benjamini-Hochberg) y redacción no causal; figuras y tablas en `reports/`.
-5. **Producto:** API FastAPI (JSON precalculado) + dashboard Streamlit + Docker local.
+5. **Producto:** API FastAPI (JSON precalculado) + panel web Next.js + Docker local (el dashboard Streamlit original se retira en D-42).
 6. **Cierre:** tests end-to-end, pre-commit y reproducibilidad documentada.
 
 La «Fase 4: Métricas» del canvas queda absorbida por 3a (coherencia, diversidad, ARI/NMI, F1) y 3b (Spearman), según D-21.
@@ -68,19 +68,20 @@ La «Fase 4: Métricas» del canvas queda absorbida por 3a (coherencia, diversid
 | `data/processed/intervenciones_limpias.parquet` | 2 | `src/preprocessing/cleaner.py` | Fase 3a |
 | `data/intermediate/chunks.parquet` | 3a | `src/nlp/embeddings.py` | embeddings y control de calidad |
 | `data/intermediate/embeddings.parquet` | 3a | `src/nlp/embeddings.py` | BERTopic |
-| `data/processed/intervenciones_topicos.parquet` | 3a | `src/nlp/topic_model.py` | Fase 3b y dashboard |
-| `models/` (modelo BERTopic) | 3a | `src/nlp/topic_model.py` | reutilización y dashboard; no versionado |
+| `data/processed/intervenciones_topicos.parquet` | 3a | `src/nlp/topic_model.py` | Fase 3b y panel web |
+| `models/` (modelo BERTopic) | 3a | `src/nlp/topic_model.py` | reutilización y panel web; no versionado |
 | `reports/tables/topics_evidence.csv` | 3a | `src/nlp/topic_model.py` | etiquetado (D-25) |
 | `reports/tables/topics_selection.csv` | 3a | `src/nlp/topic_model.py` | trazabilidad de la rejilla y la selección (D-32) |
-| `reports/tables/topics_labels.csv` | 3a | etiquetado asistido con revisión | figuras y dashboard |
+| `reports/tables/topics_labels.csv` | 3a | etiquetado asistido con revisión | panel web |
 | `reports/tables/validacion_sentimiento_*.csv` | 3a | `src/nlp/sentiment.py` | métricas de sentimiento |
 | `reports/validacion_sentimiento_revision.html` | 3a | `src/nlp/sentiment.py` | informe HTML de la revisión humana (D-37) |
-| `data/intermediate/series_mensuales.parquet` | 3b | `src/analysis/temporal.py` | PELT y figuras |
-| `reports/tables/cambios_regimen.csv` | 3b | `src/analysis/regime_change.py` | figuras y memoria |
+| `data/intermediate/series_mensuales.parquet` | 3b | `src/analysis/temporal.py` | PELT y panel web |
+| `reports/tables/cambios_regimen.csv` | 3b | `src/analysis/regime_change.py` | panel web y memoria |
+| `reports/tables/cambios_regimen_test.csv` | refactor | `src/analysis/regime_change.py` | contraste Mann-Whitney con BH por cambio (D-42) |
 | `reports/tables/cambios_regimen_sensibilidad.csv` | 3b | `src/analysis/regime_change.py` | robustez de la penalización de PELT (D-08) |
 | `reports/tables/sensibilidad_embeddings.csv` | 3a (anexo) | `src/nlp/topic_model.py` | robustez con bge-m3 (D-24, D-39) |
 | `reports/tables/eventos.csv` | 3b | espejo versionado de `data/external/eventos.csv` | trazabilidad del contraste |
-| `reports/figures/*` | 3b | `src/visualization/charts.py` | entregable visible |
+| `reports/figures/*` | 3b | `src/visualization/charts.py` | retirado en D-42 (sustituido por el panel web) |
 
 ## 4. Eventos externos
 

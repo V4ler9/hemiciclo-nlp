@@ -8,10 +8,12 @@ import numpy as np
 import pandas as pd
 import pytest
 from src.analysis.regime_change import (
+    CHANGE_TEST_COLUMNS,
     REGIME_COLUMNS,
     RELATION_COLUMNS,
     RegimeConfig,
     bic_like,
+    build_changes_stats,
     build_event_relations,
     build_regime_config,
     detect_changes,
@@ -155,6 +157,84 @@ def test_detect_changes_falla_con_serie_corta() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Contraste por cambio (Mann-Whitney + BH)
+# ---------------------------------------------------------------------------
+
+
+def _stepped_tone_series() -> pd.DataFrame:
+    months = pd.date_range("2018-01-01", periods=60, freq="MS")
+    values = np.concatenate([np.zeros(30), np.full(30, 5.0)])
+    return pd.DataFrame(
+        {
+            "month": months,
+            "series_type": "tone",
+            "series_id": "tone",
+            "value": values,
+            "n_interventions": 40,
+            "has_session": True,
+        }
+    )
+
+
+def _stepped_change() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "serie": "tone",
+                "serie_id": "tone",
+                "fecha": pd.Timestamp("2020-07-01"),
+                "indice": 30,
+                "media_antes": 0.0,
+                "media_despues": 5.0,
+                "delta": 5.0,
+                "pen_seleccionada": 1.0,
+                "n_cambios": 1,
+                "n_puntos": 60,
+                "tamano_serie": 2400,
+            }
+        ],
+        columns=REGIME_COLUMNS,
+    )
+
+
+def test_build_changes_stats_escalon_significativo() -> None:
+    stats = build_changes_stats(_stepped_tone_series(), _stepped_change())
+    assert list(stats.columns) == CHANGE_TEST_COLUMNS
+    row = stats.iloc[0]
+    assert row["r"] == pytest.approx(1.0)
+    assert float(row["p"]) < 0.001
+    assert float(row["q"]) == pytest.approx(float(row["p"]))
+    assert (row["n_antes"], row["n_despues"], row["n"]) == (30, 30, 60)
+    assert int(row["significativo_bh"]) == 1
+
+
+def test_build_changes_stats_signo_concordante_con_delta() -> None:
+    descent = _stepped_tone_series()
+    descent.loc[descent["month"] >= "2020-07-01", "value"] = -5.0
+    row = build_changes_stats(descent, _stepped_change()).iloc[0]
+    assert row["r"] == pytest.approx(-1.0)
+    assert int(row["significativo_bh"]) == 1
+
+
+def test_build_changes_stats_serie_degenerada_sin_efecto() -> None:
+    flat = _stepped_tone_series()
+    flat["value"] = 1.0
+    row = build_changes_stats(flat, _stepped_change()).iloc[0]
+    assert row["r"] == 0.0
+    assert float(row["p"]) == 1.0
+    assert int(row["significativo_bh"]) == 0
+
+
+def test_build_changes_stats_valida_serie_e_indice() -> None:
+    missing = _stepped_change().assign(serie="topic")
+    with pytest.raises(ValueError, match="Sin serie mensual"):
+        build_changes_stats(_stepped_tone_series(), missing)
+    out_of_range = _stepped_change().assign(indice=60)
+    with pytest.raises(ValueError, match="fuera de rango"):
+        build_changes_stats(_stepped_tone_series(), out_of_range)
+
+
+# ---------------------------------------------------------------------------
 # Eventos
 # ---------------------------------------------------------------------------
 
@@ -229,128 +309,3 @@ def test_mirror_events_copia_bytes(tmp_path: Path) -> None:
     destination = tmp_path / "espejo" / "eventos.csv"
     mirror_events(source, destination)
     assert destination.read_bytes() == source.read_bytes()
-
-
-# ---------------------------------------------------------------------------
-# Figuras
-# ---------------------------------------------------------------------------
-
-
-def _synthetic_series() -> pd.DataFrame:
-    rng = np.random.default_rng(0)
-    months = pd.date_range("2020-01-01", "2021-12-01", freq="MS")
-    rows: list[dict[str, object]] = []
-    for topic_id in ("0", "1", "2", "3"):
-        for month in months:
-            rows.append(
-                {
-                    "month": month,
-                    "series_type": "topic",
-                    "series_id": topic_id,
-                    "value": float(rng.random()),
-                    "n_interventions": 10,
-                    "has_session": True,
-                }
-            )
-    for month in months:
-        rows.extend(
-            [
-                {
-                    "month": month,
-                    "series_type": "tone",
-                    "series_id": "tone",
-                    "value": 2.5,
-                    "n_interventions": 40,
-                    "has_session": True,
-                },
-                {
-                    "month": month,
-                    "series_type": "tone_weighted",
-                    "series_id": "tone_weighted",
-                    "value": 2.4,
-                    "n_interventions": 40,
-                    "has_session": True,
-                },
-                {
-                    "month": month,
-                    "series_type": "outliers",
-                    "series_id": "outliers",
-                    "value": 0.3,
-                    "n_interventions": 12,
-                    "has_session": True,
-                },
-                {
-                    "month": month,
-                    "series_type": "volume",
-                    "series_id": "volume",
-                    "value": 40.0,
-                    "n_interventions": 40,
-                    "has_session": True,
-                },
-            ]
-        )
-    return pd.DataFrame(rows)
-
-
-def _synthetic_changes() -> pd.DataFrame:
-    record = {
-        "fecha": pd.Timestamp("2020-07-01"),
-        "indice": 6,
-        "media_antes": 0.2,
-        "media_despues": 0.8,
-        "delta": 0.6,
-        "pen_seleccionada": 1.0,
-        "n_cambios": 1,
-        "n_puntos": 24,
-        "tamano_serie": 240,
-    }
-    return pd.DataFrame(
-        [
-            {"serie": "topic", "serie_id": "0", **record},
-            {"serie": "tone", "serie_id": "tone", **record},
-        ],
-        columns=REGIME_COLUMNS,
-    )
-
-
-def _synthetic_relations() -> pd.DataFrame:
-    rows = [
-        {
-            "evento": event,
-            "serie": "topic",
-            "serie_id": topic,
-            "rho": 0.4,
-            "p": 0.03,
-            "q": 0.04,
-            "n": 24,
-            "media_en_ventana": 0.5,
-            "media_fuera": 0.3,
-        }
-        for topic in ("0", "1")
-        for event in ("Evento A", "Evento B")
-    ]
-    return pd.DataFrame(rows, columns=RELATION_COLUMNS)
-
-
-def test_las_cinco_figuras_se_generan(tmp_path: Path) -> None:
-    from src.visualization.charts import (
-        FigureConfig,
-        associations_figure,
-        changes_figure,
-        tone_figure,
-        topic_heatmap,
-        volume_figure,
-    )
-
-    config = FigureConfig(dpi=72, heatmap_topics=3, change_topics=2, association_topics=3)
-    series = _synthetic_series()
-    outputs = [
-        topic_heatmap(series, {}, config, tmp_path / "heatmap.png"),
-        tone_figure(
-            series, _synthetic_events(), _synthetic_changes(), config, tmp_path / "tone.png"
-        ),
-        changes_figure(series, _synthetic_changes(), {}, config, tmp_path / "changes.png"),
-        associations_figure(_synthetic_relations(), {}, config, tmp_path / "assoc.png"),
-        volume_figure(series, config, tmp_path / "volume.png"),
-    ]
-    assert all(path.exists() and path.stat().st_size > 0 for path in outputs)

@@ -16,7 +16,6 @@ DOCUMENTED_MODULES = (
     "src.nlp.sentiment",
     "src.analysis.temporal",
     "src.analysis.regime_change",
-    "src.visualization.charts",
 )
 
 CONFIG_FILES = ("default.yaml", "experiment_01.yaml", "experiment_02.yaml", "experiment_03.yaml")
@@ -34,9 +33,9 @@ CONTRACT_PATHS = (
     "src/preprocessing/cleaner.py",
     "src/preprocessing/segmenter.py",
     "src/utils/config.py",
-    "src/visualization/charts.py",
-    "app/app.py",
-    "app/components",
+    "frontend/package.json",
+    "frontend/src/app",
+    "frontend/e2e",
     "configs/experiment_01.yaml",
     "configs/experiment_02.yaml",
     "configs/experiment_03.yaml",

@@ -16,11 +16,13 @@ mensaje explícito en lugar de fallar con un error interno.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.utils.config import PROJECT_ROOT
 
@@ -70,6 +72,20 @@ def create_app(reports_dir: Path | None = None, data_dir: Path | None = None) ->
         description="Evolución temática y tonal del Congreso de los Diputados (2015-2023).",
     )
 
+    allowed_origins = [
+        origin.strip()
+        for origin in os.environ.get("HEMICICLO_ALLOWED_ORIGINS", "http://localhost:3000").split(
+            ","
+        )
+        if origin.strip()
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
+
     @app.get("/health")
     def health() -> dict[str, str]:
         """Comprobación de disponibilidad."""
@@ -110,6 +126,11 @@ def create_app(reports_dir: Path | None = None, data_dir: Path | None = None) ->
             )
         columns = ["topic", "size", "share", "top_terms", "label", "description", "reviewed_by"]
         return _records(frame.reindex(columns=columns))
+
+    @app.get("/topics/selection")
+    def topics_selection() -> list[dict[str, Any]]:
+        """Rejilla completa de combinaciones probadas y regla de selección (D-32)."""
+        return _records(_load_csv(tables / "topics_selection.csv"))
 
     @app.get("/topics/{topic_id}")
     def topic_detail(topic_id: int) -> dict[str, Any]:
@@ -169,6 +190,22 @@ def create_app(reports_dir: Path | None = None, data_dir: Path | None = None) ->
         if serie_id is not None:
             frame = frame.loc[frame["serie_id"].astype(str) == serie_id]
         return _records(frame)
+
+    @app.get("/changes/stats")
+    def changes_stats(
+        serie: str | None = Query(default=None),
+        serie_id: str | None = Query(default=None),
+        max_q: float | None = Query(default=None),
+    ) -> list[dict[str, Any]]:
+        """Estadísticos por cambio (Mann-Whitney antes/después con BH)."""
+        frame = _load_csv(tables / "cambios_regimen_test.csv")
+        if serie is not None:
+            frame = frame.loc[frame["serie"] == serie]
+        if serie_id is not None:
+            frame = frame.loc[frame["serie_id"].astype(str) == serie_id]
+        if max_q is not None:
+            frame = frame.loc[frame["q"].astype(float) <= max_q]
+        return _records(frame.sort_values("fecha"))
 
     @app.get("/events")
     def events() -> list[dict[str, Any]]:

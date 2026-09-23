@@ -33,13 +33,10 @@ hemiciclo-nlp/
 │   │   ├── __init__.py
 │   │   ├── temporal.py         # Agregación mensual y tendencias
 │   │   └── regime_change.py    # PELT y cambios de régimen
-│   ├── visualization/
-│   │   ├── __init__.py
-│   │   ├── charts.py           # Figuras y tablas
-│   │   └── dashboard.py        # Utilidades de la UI
 │   ├── api/                    # Fase 5: servicio FastAPI
 │   │   ├── __init__.py
-│   │   └── main.py
+│   │   ├── main.py
+│   │   └── openapi.py          # Vuelca reports/openapi.json (tipos TS del frontend)
 │   ├── utils/
 │   │   ├── __init__.py
 │   │   ├── config.py           # Configuración, paths y SEED
@@ -53,7 +50,8 @@ hemiciclo-nlp/
 │   ├── test_preprocessing.py
 │   ├── test_nlp.py
 │   ├── test_analysis.py
-│   └── test_api.py
+│   ├── test_api.py
+│   └── test_smoke.py
 │
 ├── configs/
 │   ├── default.yaml            # Configuración por defecto
@@ -64,21 +62,33 @@ hemiciclo-nlp/
 ├── models/                     # Modelos serializados. Contenido ignorado por git
 │
 ├── reports/
-│   ├── figures/                # Figuras finales (versionadas)
-│   └── tables/                 # Tablas de resultados (versionadas)
+│   ├── tables/                 # Tablas de resultados (versionadas)
+│   └── openapi.json            # Esquema de la API para `npm run gen:api` (versionado)
 │
-├── app/
-│   ├── app.py                  # UI Streamlit (consume la API)
-│   └── components/             # Componentes de la UI
+├── frontend/                   # Next.js 16 + TS: panel web editorial (D-42; retira app/ y charts.py)
+│   ├── src/
+│   │   ├── app/                # App Router: layout, navegación y páginas por sección
+│   │   ├── components/         # UI shadcn y componentes de presentación
+│   │   └── lib/                # Capa de datos (api.ts), tipos OpenAPI y lógica pura con tests unitarios (Vitest)
+│   ├── e2e/                    # Tests E2E de Playwright: 4 secciones + auditoría axe WCAG2A/AA
+│   ├── scripts/                # sync-informes.mjs: copia el informe HTML a public/informes/
+│   ├── public/                 # Informe de validación servido (copia de reports/, regenerada en dev/build)
+│   ├── package.json            # Scripts: dev, dev:all, gen:api, lint, format, test, e2e, sync:informes
+│   ├── components.json         # Configuración de shadcn/ui
+│   ├── vitest.config.mts       # Configuración de tests unitarios
+│   ├── playwright.config.ts    # Configuración E2E (arranca API + web solas)
+│   └── tsconfig.json           # TypeScript estricto (strict + noUncheckedIndexedAccess)
 │
 ├── docs/
 │   ├── resumen.canvas          # Mapa visual del plan (Obsidian Canvas)
 │   ├── PROJECT_SPEC.md         # Especificación canónica del proyecto
 │   ├── DECISIONS.md            # Registro de decisiones técnicas
+│   ├── plan_refactor_frontend.md  # Plan de la refactorización del frontend
 │   └── SOURCES.md              # Fuentes externas y descargas reproducibles
 │
-├── Dockerfile                  # Fase 5: imagen de API/dashboard
+├── Dockerfile                  # Fase 5: imagen de la API (el panel usa frontend/Dockerfile)
 ├── compose.yaml                # Fase 5: ejecución local
+├── package.json                # Scripts npm delegados en frontend/ (dev, dev:all, build, lint, format, gen:api)
 ├── .gitignore
 ├── .pre-commit-config.yaml
 ├── pyproject.toml              # Dependencias y herramientas (uv)

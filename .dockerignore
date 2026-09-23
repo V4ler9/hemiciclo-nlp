@@ -1,0 +1,14 @@
+# Contexto de build = raíz del repositorio: el peso sobrante no viaja.
+.git
+.venv
+**/__pycache__
+**/node_modules
+frontend/.next
+frontend/test-results
+frontend/playwright-report
+data
+models
+notebooks
+.ipynb_checkpoints
+.pytest_cache
+.ruff_cache

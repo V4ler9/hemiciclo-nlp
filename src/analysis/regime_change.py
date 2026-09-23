@@ -4,6 +4,10 @@
   cada serie mensual (58 tópicos + tono). La penalización se elige por criterio
   tipo BIC (``n·log(RSS/n) + k·log(n)``) sobre una rejilla logarítmica y se
   reporta un análisis de sensibilidad de cinco factores.
+- Contraste por cambio: Mann-Whitney U bilateral de los valores mensuales
+  anteriores y posteriores a cada corte, con ``r`` rango-biserial (signo
+  concordante con ``delta``), meses en juego y Benjamini-Hochberg sobre la
+  familia completa de contrastes (``cambios_regimen_test.csv``).
 - Asociación exploratoria evento↔serie con ventana de ±``window_months``,
   Spearman, corrección de Benjamini-Hochberg sobre una única familia y
   medias dentro/fuera de la ventana; lenguaje no causal (D-09).
@@ -44,6 +48,18 @@ REGIME_COLUMNS = [
     "tamano_serie",
 ]
 SENSITIVITY_COLUMNS = ["serie", "serie_id", "factor", "penalizacion", "n_cambios"]
+CHANGE_TEST_COLUMNS = [
+    "serie",
+    "serie_id",
+    "fecha",
+    "r",
+    "p",
+    "q",
+    "n_antes",
+    "n_despues",
+    "n",
+    "significativo_bh",
+]
 RELATION_COLUMNS = [
     "evento",
     "serie",
@@ -59,6 +75,7 @@ EVENT_COLUMNS = ["evento", "fecha", "tipo", "fuente", "notas"]
 SERIES_WITH_REGIMES = ("topic", "tone")
 EVENTS_MIRROR = "eventos.csv"
 CHANGES_FILENAME = "cambios_regimen.csv"
+CHANGES_TEST_FILENAME = "cambios_regimen_test.csv"
 SENSITIVITY_FILENAME = "cambios_regimen_sensibilidad.csv"
 RELATIONS_FILENAME = "eventos_relaciones.csv"
 
@@ -244,6 +261,65 @@ def build_changes_table(
     return changes, sensitivity
 
 
+def build_changes_stats(series: pd.DataFrame, changes: pd.DataFrame) -> pd.DataFrame:
+    """Mann-Whitney U antes/después de cada cambio con corrección de BH.
+
+    Para cada fila de ``changes`` se contrastan (bilateral) los valores
+    mensuales anteriores y posteriores al corte. ``r`` es la correlación
+    rango-biserial ``2·U/(n_antes·n_despues) - 1``, calculada con el segmento
+    posterior como primer argumento, de modo que su signo es concordante con
+    ``delta`` (positivo si el valor posterior supera al anterior). ``p`` y ``q``
+    se guardan sin redondear: el formateo para mostrar es responsabilidad de la
+    capa de presentación. ``q`` corresponde a Benjamini-Hochberg sobre todos los
+    contrastes y ``significativo_bh`` marca ``q < 0.05``.
+    """
+    scipy_stats = import_optional("scipy.stats")
+    frame = series.loc[series["has_session"] & series["series_type"].isin(SERIES_WITH_REGIMES)]
+    ordered_values: dict[tuple[str, str], FloatArray] = {}
+    for (series_type, series_id), group in frame.groupby(["series_type", "series_id"], sort=True):
+        values = group.sort_values("month")["value"].to_numpy(dtype=np.float64)
+        ordered_values[(str(series_type), str(series_id))] = values[np.isfinite(values)]
+    rows: list[dict[str, Any]] = []
+    for record in changes.to_dict(orient="records"):
+        key = (str(record["serie"]), str(record["serie_id"]))
+        values = ordered_values.get(key)
+        if values is None:
+            raise ValueError(f"Sin serie mensual para el cambio: {key}")
+        index = int(record["indice"])
+        if not 0 < index < values.size:
+            raise ValueError(f"Índice de cambio fuera de rango en {key}: {index}")
+        before = values[:index]
+        after = values[index:]
+        n_antes = int(before.size)
+        n_despues = int(after.size)
+        if np.unique(values).size < 2:
+            statistic = n_antes * n_despues / 2
+            p_value = 1.0
+        else:
+            result = scipy_stats.mannwhitneyu(after, before, alternative="two-sided")
+            statistic = float(result.statistic)
+            p_value = float(result.pvalue)
+        rows.append(
+            {
+                "serie": key[0],
+                "serie_id": key[1],
+                "fecha": pd.Timestamp(record["fecha"]),
+                "r": round(2.0 * statistic / (n_antes * n_despues) - 1.0, 6),
+                "p": p_value,
+                "n_antes": n_antes,
+                "n_despues": n_despues,
+                "n": n_antes + n_despues,
+            }
+        )
+    table = pd.DataFrame(rows)
+    if table.empty:
+        return table.reindex(columns=CHANGE_TEST_COLUMNS)
+    p_array = table["p"].to_numpy(dtype=np.float64)
+    table["q"] = scipy_stats.false_discovery_control(p_array)
+    table["significativo_bh"] = (table["q"] < 0.05).astype(int)
+    return table.reindex(columns=CHANGE_TEST_COLUMNS)
+
+
 def load_events(path: Path) -> pd.DataFrame:
     """Carga y valida el CSV de eventos editado a mano (D-09)."""
     events = pd.read_csv(path)
@@ -343,7 +419,11 @@ def main() -> None:
     changes.to_csv(changes_path, index=False)
     sensitivity_path = reports_dir / SENSITIVITY_FILENAME
     sensitivity.to_csv(sensitivity_path, index=False)
+    changes_stats = build_changes_stats(series, changes)
+    changes_stats_path = reports_dir / CHANGES_TEST_FILENAME
+    changes_stats.to_csv(changes_stats_path, index=False)
     print(f"{len(changes)} cambios en {changes['serie_id'].nunique()} series -> {changes_path}")
+    print(f"contraste Mann-Whitney + BH -> {changes_stats_path}")
     print(f"sensibilidad de penalizaciones -> {sensitivity_path}")
     print(f"series con cambios: {changes.groupby(['serie', 'serie_id']).size().shape[0]}")
 
