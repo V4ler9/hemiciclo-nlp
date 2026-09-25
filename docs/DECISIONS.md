@@ -66,6 +66,8 @@ La estructura es un contrato: toda modificación se confirma con el usuario ante
 
 `docs/PROJECT_SPEC.md` es el texto canónico; `resumen.canvas` es el mapa visual. Las notas del vault personal (`second-brain`) no se copian al repo: son notas de estudio, no documentación del proyecto. `LICENSE` queda pendiente mientras el repo sea privado.
 
+*Actualizado por D-43 (2026-09-25): `resumen.canvas` se retira del repo y `LICENSE` (MIT) se añade al hacerse público.*
+
 ### D-16 · `src/` como paquete plano
 
 `src/` conserva su `__init__.py` por contrato, aunque no sea el layout más ortodoxo. Refactorizarlo a `src/hemiciclo_nlp/` sería una modificación de contrato y no aporta valor ahora; queda anotado como posible mejora futura.
@@ -296,12 +298,27 @@ Con esto la hoja de ruta del `PROJECT_SPEC` queda completa (fases 0-6; la fase 4
 
 ### D-42 — Panel web Next.js en sustitución de Streamlit y de las figuras PNG
 
-El panel de presentación pasa a **Next.js 16 + TypeScript** en `frontend/` (plan completo en `docs/plan_refactor_frontend.md`), con cuatro secciones —portada (3 cambios de tono con sus fichas + rejilla de58 tópicos ordenada por magnitud), Métricas, Evidencias por tópico y Metodología—, identidad editorial (Source Serif 4 + Inter), gráficos interactivos en ECharts y tooltips con `r`, `p`, `n` e intervalo por foco o hover. La calidad se automatiza:29 unitarios (Vitest),17 E2E (Playwright, que arranca API y panel) y4 auditorías axe **WCAG2A/AA sin violaciones**; la auditoría detectó el fallo real de accesibilidad de las regiones con scroll (WCAG2.1.1), corregido con `role="region"` + foco.
+El panel de presentación pasa a **Next.js 16 + TypeScript** en `frontend/` (plan completo en `docs/plan_refactor_frontend.md`), con cuatro secciones —portada (3 cambios de tono con sus fichas + rejilla de 58 tópicos ordenada por magnitud), Métricas, Evidencias por tópico y Metodología—, identidad editorial (Source Serif 4 + Inter), gráficos interactivos en ECharts y tooltips con `r`, `p`, `n` e intervalo por foco o hover. La calidad se automatiza: 29 unitarios (Vitest), 17 E2E (Playwright, que arranca API y panel) y 4 auditorías axe **WCAG2A/AA sin violaciones**; la auditoría detectó el fallo real de accesibilidad de las regiones con scroll (WCAG2.1.1), corregido con `role="region"` + foco.
 
-**Nuevo en la API (solo aditivo):** `GET /changes/stats` con el contraste Mann-Whitney antes/después de cada cambio y corrección de Benjamini-Hochberg (`reports/tables/cambios_regimen_test.csv`:136 contrastes,45 con q<0,05), `GET /topics/selection` con la rejilla completa, CORS explícito (`HEMICICLO_ALLOWED_ORIGINS`) y volcado del esquema en `reports/openapi.json` (`npm run gen:api`).
+**Nuevo en la API (solo aditivo):** `GET /changes/stats` con el contraste Mann-Whitney antes/después de cada cambio y corrección de Benjamini-Hochberg (`reports/tables/cambios_regimen_test.csv`: 136 contrastes, 45 con q<0,05), `GET /topics/selection` con la rejilla completa, CORS explícito (`HEMICICLO_ALLOWED_ORIGINS`) y volcado del esquema en `reports/openapi.json` (`npm run gen:api`).
 
 **Retiradas:** `app/` (dashboard Streamlit + plotly), `src/visualization/charts.py` y los cinco PNG de `reports/figures/` — su contenido vive ahora en el panel (heatmap de cuota y de asociaciones, volumen y outliers). El extra `app` de `pyproject.toml` queda reducido a `fastapi`, `uvicorn` y `pyarrow`. Contrato (`structure.md`, `tests/test_smoke.py`), README, SOURCES y PROJECT_SPEC actualizados.
 
 **Docker:** `compose.yaml` levanta `api` (:8000) y `web` (:3000) con build multi-stage (`frontend/Dockerfile`, contexto en la raíz) y URL dual: `NEXT_PUBLIC_HEMICICLO_API_URL` en build (la consume el navegador) y `HEMICICLO_API_URL_SERVER` en runtime (la consume el servidor Next dentro de la red del compose).
 
-**Validación:** pytest144 · Vitest29 · Playwright17 · ruff/pyright/ESLint/Prettier en verde · `docker compose up --build` con API healthy y panel respondiendo.
+**Validación:** pytest 144 · Vitest 29 · Playwright 17 · ruff/pyright/ESLint/Prettier en verde · `docker compose up --build` con API healthy y panel respondiendo.
+
+
+## 2026-09-25 — Preparación del repositorio para su publicación
+
+### D-43 · Repo público en GitHub: licencia MIT, limpieza y transparencia
+
+El repositorio pasa a ser **público**, lo que obliga a cerrar tres frentes que en privado estaban pendientes:
+
+- **Licencia**: se añade `LICENSE` con **MIT** para el código (D-15 dejaba esto pendiente mientras el repo fuera privado). Los datos siguen siendo CC BY 4.0 de sus autores y no se redistribuyen; el README lo declara en «Corpus y origen de los datos» y «Licencia».
+- **Limpieza de sobrantes**: retirados el boilerplate de `create-next-app` (los cinco SVG de `frontend/public/` y `frontend/README.md`, sin ninguna referencia en el código) y `docs/resumen.canvas`, un canvas de Obsidian con enlaces a ficheros de un vault personal que no existen en el repo (D-15 lo describía como mapa visual; queda sustituido por `PROJECT_SPEC.md`).
+- **Documentación**: el README gana las secciones «Corpus y origen de los datos» (ParlaMint-ES 5.0, handle `11356/2004`; ParlaCAP 1.0 ES, DOI `10.23669/1ZTELP`; licencias y descarga con MD5) y «Generación del código», que declara de forma explícita que la gran parte del código ha sido generado con asistencia de LLM y revisado/validado después por el autor. Corregidos además espacios perdidos en D-42 y en el README.
+
+**Contrato (`structure.md`) actualizado en consecuencia**: desaparece `resumen.canvas`, `LICENSE` deja de figurar como pendiente, `reports/figures` se marca retirado (D-42) y se incorporan los ficheros reales de `frontend/` y de la raíz que faltaban (incluido `.gitattributes`, que normaliza los finales de línea a LF para evitar las conversiones LF→CRLF en Windows).
+
+*Pendiente asociado a hacerse público (D-10): valorar CI; ahora mismo la calidad se verifica en local con `pre-commit`.*

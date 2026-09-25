@@ -14,7 +14,7 @@ Análisis de la evolución temática y tonal del Congreso de los Diputados entre
 
 **Fase 6 completada**: auditoría de reproducibilidad — MD5 del corpus crudo verificado, cadena determinista **byte-idéntica** al re-ejecutarla (18 artefactos vigilados) y suite completa en la máquina NVIDIA (**143 tests**, incluidos `heavy` en GPU e integración con corpus real), más el contrato de estructura verificado en `tests/test_smoke.py` (D-41). Queda como único pendiente la revisión humana de las 58 etiquetas de tópicos. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
-**Refactorización del frontend completada** (plan en [`docs/plan_refactor_frontend.md`](docs/plan_refactor_frontend.md), D-42): panel web Next.js 16 + TypeScript en `frontend/` con cuatro secciones —portada con los cambios de tono y la rejilla por tópico, métricas, evidencias por tópico y metodología—, gráficos interactivos en ECharts, nuevo contraste Mann-Whitney con BH por cambio (`reports/tables/cambios_regimen_test.csv`), arranque único `npm run dev:all` desde la raíz y calidad automatizada:29 tests unitarios (Vitest),17 E2E (Playwright) y4 auditorías axe **WCAG2A/AA sin violaciones**. Se retiran el dashboard Streamlit (`app/`), `src/visualization/charts.py` y los cinco PNG de `reports/figures/`, sustituidos por el panel (D-42).
+**Refactorización del frontend completada** (plan en [`docs/plan_refactor_frontend.md`](docs/plan_refactor_frontend.md), D-42): panel web Next.js 16 + TypeScript en `frontend/` con cuatro secciones —portada con los cambios de tono y la rejilla por tópico, métricas, evidencias por tópico y metodología—, gráficos interactivos en ECharts, nuevo contraste Mann-Whitney con BH por cambio (`reports/tables/cambios_regimen_test.csv`), arranque único `npm run dev:all` desde la raíz y calidad automatizada: 29 tests unitarios (Vitest), 17 E2E (Playwright) y 4 auditorías axe **WCAG2A/AA sin violaciones**. Se retiran el dashboard Streamlit (`app/`), `src/visualization/charts.py` y los cinco PNG de `reports/figures/`, sustituidos por el panel (D-42).
 
 ## Objetivo
 
@@ -80,9 +80,16 @@ El panel se abre en <http://localhost:3000>. Comprobaciones automáticas: `uv ru
 
 `docker compose up --build` levanta la API en <http://localhost:8000> y el panel en <http://localhost:3000>.
 
-## Datos
+## Corpus y origen de los datos
 
-El corpus de trabajo es **ParlaMint 5.0 ES** (texto y metadatos) junto con las anotaciones de **ParlaCAP 1.0 ES** (sentimiento ParlaSent y tópico CAP), ambos bajo licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Este repositorio no redistribuye los datos:
+El corpus no está generado por este proyecto: procede de dos recursos externos de investigación sobre el Parlamento español, ambos bajo licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+| Recurso | Identificador | Origen | Uso en el proyecto |
+|---|---|---|---|
+| **ParlaMint 5.0 ES** (texto y metadatos de las intervenciones del Pleno, 01/01/2015 – 23/02/2023) | handle `11356/2004` | [CLARIN Repository](https://www.clarin.si/repository/xmlui/handle/11356/2004) | Fase 1: descarga, parseo y consolidación |
+| **ParlaCAP 1.0 ES** (anotaciones de sentimiento ParlaSent y de tópico CAP sobre el mismo corpus) | DOI `10.23669/1ZTELP` | [DOI](https://doi.org/10.23669/1ZTELP) | Fase 3a: validación de sentimiento y comparación de tópicos |
+
+El proyecto solo **descarga y transforma** esos datos; no los redistribuye. La descarga es reproducible y verificada por MD5 contra los hashes publicados por cada fuente:
 
 ```bash
 uv run python -m src.corpus.downloader  # descarga y extrae en data/raw/corpus (con verificación MD5)
@@ -90,8 +97,16 @@ uv run python -m src.corpus.parser      # consolida data/processed/intervencione
 uv run python -m src.preprocessing.cleaner  # limpia data/processed/intervenciones_limpias.parquet
 ```
 
-Todo queda en `data/`, ignorado por git. Las URLs exactas, los MD5 de la release y las fuentes de los modelos están en [`docs/SOURCES.md`](docs/SOURCES.md).
+Todo queda en `data/`, ignorado por git. Las URLs exactas de los ficheros, sus MD5, las fuentes de los modelos y la lista de eventos utilizados están en [`docs/SOURCES.md`](docs/SOURCES.md).
+
+## Generación del código
+
+La gran mayoría del código de este repositorio (módulos Python de `src/`, componentes y lógica de `frontend/`, configuración, tests y documentación) ha sido **generado con asistencia de modelos de lenguaje (LLM)** mediante agentes de IA, siguiendo las indicaciones del autor.
+
+Posteriormente ha habido una **revisión y validación humana**: el autor revisa los resultados, contrasta las decisiones técnicas (registradas en [`docs/DECISIONS.md`](docs/DECISIONS.md)) y verifica el proyecto con tests automatizados, auditorías de accesibilidad y comprobaciones de reproducibilidad (`uv run pytest`, `npm test`, `npm run e2e`, `pre-commit`). Pese a esa revisión, el código puede contener errores; las limitaciones conocidas quedan documentadas en la propia especificación y en el registro de decisiones.
 
 ## Licencia
 
-Pendiente de decisión: el repositorio es privado por ahora.
+El **código** de este repositorio está bajo [MIT](LICENSE).
+
+Los **datos** no se redistribuyen aquí: ParlaMint-ES 5.0 y ParlaCAP 1.0 ES son obra de sus autores y se utilizan bajo [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); se obtienen de las fuentes enlazadas en «Corpus y origen de los datos» con `uv run python -m src.corpus.downloader`.

@@ -91,7 +91,7 @@
 ### Fase 8 — Integración y retiro ✅ (validada por el usuario)
 - [x] `compose.yaml`: servicios `api` (:8000) + **`web` (:3000)** con build multi-stage (`frontend/Dockerfile`, `.dockerignore` en la raíz) y URL dual: `NEXT_PUBLIC_HEMICICLO_API_URL` (build, navegador) y `HEMICICLO_API_URL_SERVER` (runtime, servidor Next → `http://api:8000`).
 - [x] README: estado del refactor, roadmap con la fila del frontend, «Producto local» con `npm run dev:all` como mando único y comprobaciones (`pytest`/`test`/`e2e`); SOURCES y PROJECT_SPEC actualizados.
-- [x] Retiro: **`app/`** (Streamlit + plotly), **`src/visualization/charts.py`**, los **5 PNG de `reports/figures/`** y `streamlit`/`plotly` del extra `app` (queda `fastapi`+`uvicorn`+`pyarrow`; `uv lock` regenerado). Contrato actualizado: `test_smoke.py` (rutas → `frontend/…`, módulos documentados sin `charts`) y `test_analysis.py` sin el test de figuras (**pytest144**).
+- [x] Retiro: **`app/`** (Streamlit + plotly), **`src/visualization/charts.py`**, los **5 PNG de `reports/figures/`** y `streamlit`/`plotly` del extra `app` (queda `fastapi`+`uvicorn`+`pyarrow`; `uv lock` regenerado). Contrato actualizado: `test_smoke.py` (rutas → `frontend/…`, módulos documentados sin `charts`) y `test_analysis.py` sin el test de figuras (**pytest 144**).
 - [x] `structure.md`: borrados los bloques `app/`, `src/visualization/` y `reports/figures/`; Dockerfile y frontend descritos con D-42. **D-42** añadida a `docs/DECISIONS.md`.
 
 ### Fase 9 — Pulidos finales (post-D-42) ✅
