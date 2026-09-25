@@ -1,0 +1,11 @@
+# Normaliza finales de línea: el repo se edita en Windows (core.autocrlf) y en
+# otros sistemas; sin esto git avisa de conversiones LF→CRLF en cada commit.
+* text=auto eol=lf
+
+# Binarios: git no intenta convertirlos.
+*.png binary
+*.jpg binary
+*.ico binary
+*.parquet binary
+*.tgz binary
+*.zip binary

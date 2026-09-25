@@ -12,7 +12,7 @@ hemiciclo-nlp/
 │   ├── intermediate/           # Embeddings, matrices de tópicos, series temporales
 │   └── external/               # Eventos, calendario electoral, taxonomías auxiliares
 │
-├── notebooks/                  # EDA y generación de figuras (01_... a 06_...)
+├── notebooks/                  # EDA (01_... a 03_...)
 │
 ├── src/
 │   ├── __init__.py
@@ -45,7 +45,8 @@ hemiciclo-nlp/
 ├── tests/
 │   ├── __init__.py
 │   ├── fixtures/               # Mini-corpus sintético para los tests
-│   │   └── parlamint_es_mini/
+│   │   ├── parlamint_es_mini/
+│   │   └── parlacap_es_mini/
 │   ├── test_corpus.py
 │   ├── test_preprocessing.py
 │   ├── test_nlp.py
@@ -72,15 +73,21 @@ hemiciclo-nlp/
 │   │   └── lib/                # Capa de datos (api.ts), tipos OpenAPI y lógica pura con tests unitarios (Vitest)
 │   ├── e2e/                    # Tests E2E de Playwright: 4 secciones + auditoría axe WCAG2A/AA
 │   ├── scripts/                # sync-informes.mjs: copia el informe HTML a public/informes/
-│   ├── public/                 # Informe de validación servido (copia de reports/, regenerada en dev/build)
+│   ├── public/                 # favicon e informe de validación servido (copia de reports/, regenerada en dev/build)
+│   ├── Dockerfile              # Build multi-stage del panel (contexto en la raíz, D-42)
+│   ├── AGENTS.md               # Directrices del subproyecto frontend
+│   ├── CLAUDE.md               # Alias → AGENTS.md (lo reescribe `next dev`)
 │   ├── package.json            # Scripts: dev, dev:all, gen:api, lint, format, test, e2e, sync:informes
 │   ├── components.json         # Configuración de shadcn/ui
+│   ├── eslint.config.mjs       # Reglas ESLint (flat config)
+│   ├── next.config.ts          # Configuración de Next.js
+│   ├── postcss.config.mjs      # PostCSS (Tailwind)
+│   ├── .prettierrc / .prettierignore  # Formato del código TS/TSX
 │   ├── vitest.config.mts       # Configuración de tests unitarios
 │   ├── playwright.config.ts    # Configuración E2E (arranca API + web solas)
 │   └── tsconfig.json           # TypeScript estricto (strict + noUncheckedIndexedAccess)
 │
 ├── docs/
-│   ├── resumen.canvas          # Mapa visual del plan (Obsidian Canvas)
 │   ├── PROJECT_SPEC.md         # Especificación canónica del proyecto
 │   ├── DECISIONS.md            # Registro de decisiones técnicas
 │   ├── plan_refactor_frontend.md  # Plan de la refactorización del frontend
@@ -89,20 +96,22 @@ hemiciclo-nlp/
 ├── Dockerfile                  # Fase 5: imagen de la API (el panel usa frontend/Dockerfile)
 ├── compose.yaml                # Fase 5: ejecución local
 ├── package.json                # Scripts npm delegados en frontend/ (dev, dev:all, build, lint, format, gen:api)
+├── .dockerignore               # Excluye del contexto de build lo que no necesita Docker
 ├── .gitignore
+├── .gitattributes              # Finales de línea normalizados a LF
 ├── .pre-commit-config.yaml
 ├── pyproject.toml              # Dependencias y herramientas (uv)
 ├── uv.lock
 ├── README.md
 ├── structure.md                # Este contrato
 ├── AGENTS.md
-└── LICENSE                     # Pendiente: se decidirá si el repo se publica
+└── LICENSE                     # MIT (código); los datos son CC BY 4.0 de sus autores
 ```
 
 ## Reglas
 
 1. El contenido de `data/` y `models/` no se versiona jamás; solo se conserva la carpeta con `.gitkeep`.
-2. `reports/figures` y `reports/tables` sí se versionan: son el entregable visible.
+2. `reports/tables` sí se versiona: es el entregable visible (`reports/figures` se retiró en D-42).
 3. `src/` es un paquete plano (`src/__init__.py`); se mantiene así por contrato.
 4. Los notebooks son solo para EDA y figuras; la lógica reproducible vive en `src/`.
 5. `src/corpus/` sustituye al antiguo `src/scrapping/`; el scraping de congreso.es queda aplazado y fuera de v1.

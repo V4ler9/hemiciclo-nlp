@@ -1,6 +1,6 @@
 # Especificación del proyecto: hemiciclo-nlp
 
-Documento canónico del proyecto. El canvas [`resumen.canvas`](resumen.canvas) es el mapa visual del plan; en caso de conflicto, manda este documento.
+Documento canónico del proyecto; en caso de conflicto con cualquier otra fuente, manda este documento.
 
 - **Tipo:** investigación personal.
 - **Última actualización:** 2026-09-10.
