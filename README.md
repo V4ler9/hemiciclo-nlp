@@ -2,42 +2,12 @@
 
 Análisis de la evolución temática y tonal del Congreso de los Diputados entre 2015 y 2023, y detección de cambios de régimen asociados a eventos políticos.
 
-## Estado
-
-**Fase 2 completada**: 30.018 intervenciones limpias (≥ 20 palabras, sin notas ni fórmulas de cortesía) en `data/processed/intervenciones_limpias.parquet`, a partir de las 32.739 consolidadas en la Fase 1.
-
-**Fase 3a completada**: embeddings multilingües del corpus limpio, modelo BERTopic de 58 tópicos elegido por coherencia c_v y diversidad (D-32 y D-34) en `data/processed/intervenciones_topicos.parquet`, etiquetas propuestas en `reports/tables/topics_labels.csv` (pendientes de revisión) y trazabilidad de la rejilla en `reports/tables/topics_selection.csv`. La validación de sentimiento está revisada por el autor y medida contra ParlaSent-ES: 0,675 de accuracy re-ponderada en 3 clases (kappa cuadrática 0,656) y 0,374 en 6 (kappa cuadrática 0,701), con acuerdo a tres bandas en `reports/tables/validacion_sentimiento_acuerdo_3bandas.csv` e informe en `reports/validacion_sentimiento_revision.html` (D-36 y D-37).
-
-**Fase 3b completada**: series mensuales por tópico y tono (`data/intermediate/series_mensuales.parquet`, local), cambios de régimen con PELT y análisis de sensibilidad de la penalización (`reports/tables/cambios_regimen*.csv`), contraste exploratorio con eventos sin asociaciones que superen Benjamini-Hochberg (`reports/tables/eventos_relaciones.csv`) y notebooks de EDA ejecutados en `notebooks/` (D-38). Anexo de sensibilidad de embeddings: bge-m3 con el mismo troceado e hiperparámetros produce 72 tópicos con ARI 0,71 y NMI 0,88 frente a e5 (D-39). Las cinco figuras PNG originales se retiran en D-42: su contenido vive ahora en el panel web.
-
-**Fase 5 completada**: API FastAPI que sirve los artefactos precalculados como JSON (`src/api/main.py`), con `Dockerfile` y `compose.yaml` para ejecución local (D-12 y D-40). El panel de presentación es el de Next.js de `frontend/` (D-42; el dashboard Streamlit original se retiró al validarse el panel).
-
-**Fase 6 completada**: auditoría de reproducibilidad — MD5 del corpus crudo verificado, cadena determinista **byte-idéntica** al re-ejecutarla (18 artefactos vigilados) y suite completa en la máquina NVIDIA (**143 tests**, incluidos `heavy` en GPU e integración con corpus real), más el contrato de estructura verificado en `tests/test_smoke.py` (D-41). Queda como único pendiente la revisión humana de las 58 etiquetas de tópicos. El plan está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) y las decisiones en [`docs/DECISIONS.md`](docs/DECISIONS.md).
-
-**Refactorización del frontend completada** (plan en [`docs/plan_refactor_frontend.md`](docs/plan_refactor_frontend.md), D-42): panel web Next.js 16 + TypeScript en `frontend/` con cuatro secciones —portada con los cambios de tono y la rejilla por tópico, métricas, evidencias por tópico y metodología—, gráficos interactivos en ECharts, nuevo contraste Mann-Whitney con BH por cambio (`reports/tables/cambios_regimen_test.csv`), arranque único `npm run dev:all` desde la raíz y calidad automatizada: 29 tests unitarios (Vitest), 17 E2E (Playwright) y 4 auditorías axe **WCAG2A/AA sin violaciones**. Se retiran el dashboard Streamlit (`app/`), `src/visualization/charts.py` y los cinco PNG de `reports/figures/`, sustituidos por el panel (D-42).
-
 ## Objetivo
 
 Responder dos preguntas sobre el corpus [ParlaMint-ES](https://www.clarin.eu/parlamint) (01/01/2015 - 23/02/2023):
 
 1. ¿Cómo evolucionan los temas y el tono de las intervenciones?
 2. ¿En qué momentos se detectan cambios de régimen temático o tonal, y cómo se relacionan con eventos como elecciones, investiduras, la COVID-19 o la guerra de Ucrania?
-
-## Hoja de ruta
-
-| Fase | Contenido | Estado |
-|---|---|---|
-| 0 | Higiene del repo, contrato, entorno y documentación | Completada |
-| 1 | Descarga y parseo del corpus ParlaMint 5.0 ES | Completada |
-| 2 | Preprocesado y limpieza | Completada |
-| 3a | Representación, BERTopic, etiquetado y sentimiento | Completada (etiquetas pendientes) |
-| 3b | Series mensuales, PELT y eventos | Completada |
-| 4 | Evaluación (coherencia, diversidad, ARI/NMI, F1, Spearman) | Absorbida en 3a y 3b (D-21) |
-| 5 | API FastAPI + presentación + Docker local | Completada (presentación en `frontend/`, D-42) |
-| 6 | Pasada final de calidad y reproducibilidad end-to-end | Completada |
-| — | Refactorización del frontend: panel Next.js + calidad (plan en [`docs/plan_refactor_frontend.md`](docs/plan_refactor_frontend.md)) | Completada |
-
-El detalle de cada fase está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md).
 
 ## Entorno
 
@@ -59,6 +29,8 @@ uv sync --all-extras                  # todo
 ## Estructura
 
 La estructura de carpetas es un contrato: [`structure.md`](structure.md). Su modificación requiere confirmación explícita.
+
+La especificación completa del proyecto, fase por fase, está en [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md).
 
 Las decisiones técnicas tomadas durante el diseño están registradas en [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
