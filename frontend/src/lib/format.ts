@@ -81,3 +81,24 @@ export function fmtTopicLabel(label: string | null, topicId: number): string {
   const text = label ?? `tópico ${topicId}`;
   return text.length > LABEL_MAX_LENGTH ? `${text.slice(0, LABEL_MAX_LENGTH - 1)}…` : text;
 }
+
+import type { ResultChange } from "@/lib/changes";
+
+/** Línea de estadísticos de un cambio: `r`, `p` y meses en juego (o aviso). */
+export function statsLine(change: ResultChange): string {
+  const available = Number.isFinite(change.r) && Number.isFinite(change.p) && change.n > 0;
+  if (!available) return "Estadísticos no disponibles";
+  return `r = ${fmtR(change.r)} · p = ${fmtP(change.p)} · n = ${change.n} meses`;
+}
+
+/** Intervalo temporal comparado por un cambio (ventanas antes y después). */
+export function intervalLine(change: ResultChange): string {
+  if (change.nAntes <= 0 || change.nDespues <= 0) return "";
+  const antesInicio = fmtMonth(monthShift(change.fecha, -change.nAntes));
+  const antesFin = fmtMonth(monthShift(change.fecha, -1));
+  const despuesFin = fmtMonth(monthShift(change.fecha, change.nDespues - 1));
+  return (
+    `antes: ${antesInicio} – ${antesFin} (${change.nAntes} m) · ` +
+    `después: ${fmtMonth(change.fecha)} – ${despuesFin} (${change.nDespues} m)`
+  );
+}

@@ -1,6 +1,6 @@
 import { useId } from "react";
 import type { ResultChange } from "@/lib/changes";
-import { fmtDelta, fmtMonth, fmtP, fmtR, monthShift } from "@/lib/format";
+import { fmtDelta, fmtMonth, intervalLine, statsLine } from "@/lib/format";
 
 /**
  * Resultado de un cambio (fecha + delta) con sus estadísticos `r`, `p` y `n`
@@ -16,15 +16,8 @@ export function ChangeChip({
   showDate?: boolean;
 }) {
   const id = useId();
-  const hasStats = Number.isFinite(change.r) && Number.isFinite(change.p) && change.n > 0;
-
-  const statsLine = hasStats
-    ? `r = ${fmtR(change.r)} · p = ${fmtP(change.p)} · n = ${change.n} meses`
-    : "Estadísticos no disponibles";
-  const rangeLine = hasStats
-    ? `antes: ${fmtMonth(monthShift(change.fecha, -change.nAntes))} – ${fmtMonth(change.fecha)} (${change.nAntes} m) · ` +
-      `después: ${fmtMonth(change.fecha)} – ${fmtMonth(monthShift(change.fecha, change.nDespues - 1))} (${change.nDespues} m)`
-    : "";
+  const stats = statsLine(change);
+  const range = intervalLine(change);
 
   return (
     <span className="group/tip relative inline-flex items-baseline gap-2">
@@ -49,8 +42,8 @@ export function ChangeChip({
           "opacity-0 shadow-md transition-opacity group-focus-within/tip:opacity-100 group-hover/tip:opacity-100"
         }
       >
-        <span className="block font-medium">{statsLine}</span>
-        {rangeLine && <span className="text-muted-foreground mt-1 block">{rangeLine}</span>}
+        <span className="block font-medium">{stats}</span>
+        {range && <span className="text-muted-foreground mt-1 block">{range}</span>}
       </span>
     </span>
   );

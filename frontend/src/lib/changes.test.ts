@@ -211,9 +211,12 @@ describe("buildTopicHeatmap", () => {
     expect(view.labels[0]?.startsWith("Etiqueta larguísima")).toBe(true);
     expect(view.labels[0]?.length).toBe(42);
     expect(view.values[0]?.[0]).toBeCloseTo(0);
+    expect(view.counts[0]?.[0]).toBe(100);
     const holeRow = view.values[HEATMAP_TOPICS - 1];
     expect(holeRow?.[1]).toBeNull();
     expect(holeRow?.[0]).not.toBeNull();
+    expect(view.counts[HEATMAP_TOPICS - 1]?.[1]).toBeNull();
+    expect(view.counts[HEATMAP_TOPICS - 1]?.[0]).toBe(81);
     expect(view.max).toBeGreaterThan(0);
   });
 });

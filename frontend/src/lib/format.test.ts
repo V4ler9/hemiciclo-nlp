@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ResultChange } from "@/lib/changes";
 import {
   fmtDelta,
   fmtInt,
@@ -7,8 +8,22 @@ import {
   fmtQuota,
   fmtR,
   fmtTopicLabel,
+  intervalLine,
   monthShift,
+  statsLine,
 } from "@/lib/format";
+
+const CAMBIO: ResultChange = {
+  fecha: "2020-03-01",
+  delta: 0.4,
+  mediaAntes: 2.1,
+  mediaDespues: 2.5,
+  r: -0.623077,
+  p: 0.5,
+  n: 12,
+  nAntes: 2,
+  nDespues: 10,
+};
 
 describe("fmtMonth", () => {
   it("etiqueta meses en español con año", () => {
@@ -75,6 +90,22 @@ describe("fmtTopicLabel", () => {
     const result = fmtTopicLabel(long, 0);
     expect(result.length).toBe(42);
     expect(result.endsWith("…")).toBe(true);
+  });
+});
+
+describe("líneas de estadísticos (compartidas por tooltip, fichas y diálogo)", () => {
+  it("statsLine formatea r, p y n", () => {
+    expect(statsLine(CAMBIO)).toBe("r = -0,623 · p = 0,500 · n = 12 meses");
+  });
+
+  it("statsLine avisa si faltan estadísticos", () => {
+    expect(statsLine({ ...CAMBIO, r: Number.NaN, n: 0 })).toBe("Estadísticos no disponibles");
+  });
+
+  it("intervalLine describe ambas ventanas", () => {
+    expect(intervalLine(CAMBIO)).toBe(
+      "antes: ene 2020 – feb 2020 (2 m) · después: mar 2020 – dic 2020 (10 m)"
+    );
   });
 });
 

@@ -1,12 +1,27 @@
+import { HEATMAP_LOG_EPS } from "@/lib/constants";
 import type { HeatmapData, ResultChange, TimelinePoint, TopicCard } from "@/lib/changes";
 import type { ChartOption } from "@/lib/echarts";
 import type { EventsView } from "@/lib/events";
-import { fmtDecimal, fmtInt, fmtMonth, fmtP, fmtQuota } from "@/lib/format";
+import {
+  fmtDecimal,
+  fmtDelta,
+  fmtInt,
+  fmtMonth,
+  fmtP,
+  fmtQuota,
+  intervalLine,
+  statsLine,
+} from "@/lib/format";
 
 type TooltipParam = {
   axisValue?: string;
   seriesName?: string;
   value?: number | number[] | string | null;
+};
+
+type TooltipEntry = TooltipParam & {
+  componentType?: string;
+  name?: string;
 };
 
 /**
@@ -32,9 +47,44 @@ function changeMarks(changes: ResultChange[], labels: Set<string>) {
     .map((change) => ({ xAxis: fmtMonth(change.fecha), name: fmtMonth(change.fecha) }));
 }
 
+/**
+ * Tooltip del héroe: mes + valor como base y, al tocar una línea de cambio,
+ * la ficha completa del cambio (fecha, Δ, medias, `r`, `p`, `n` e intervalo).
+ */
+function toneTooltip(params: unknown, changesByLabel: Map<string, ResultChange>): string {
+  const list = (Array.isArray(params) ? params : [params]) as TooltipEntry[];
+  const lines: string[] = [];
+
+  const serie = list.find((entry) => entry.componentType === "series");
+  if (serie) {
+    const raw = serie.value;
+    const value = typeof raw === "number" ? fmtDecimal(raw, 3) : String(raw ?? "");
+    lines.push(`${serie.axisValue ?? ""}<br/>${serie.seriesName ?? ""}: ${value}`);
+  }
+
+  const marca = list.find((entry) => entry.componentType === "markLine");
+  const change = marca ? changesByLabel.get(String(marca.name ?? "")) : undefined;
+  if (change) {
+    lines.push(
+      "",
+      `<b>${fmtMonth(change.fecha)}</b> · Δ ${fmtDelta(change.delta)}`,
+      `${fmtDecimal(change.mediaAntes)} → ${fmtDecimal(change.mediaDespues)}`,
+      statsLine(change)
+    );
+    const intervalo = intervalLine(change);
+    if (intervalo) lines.push(intervalo);
+  }
+
+  if (lines.length === 0) {
+    return axisTooltip(params, (value) => fmtDecimal(value, 3));
+  }
+  return lines.join("<br/>");
+}
+
 /** Opción de la serie de tono global con líneas de cambio en cada corte. */
 export function buildToneOption(points: TimelinePoint[], changes: ResultChange[]): ChartOption {
   const labels = points.map((point) => fmtMonth(point.month));
+  const changesByLabel = new Map(changes.map((change) => [fmtMonth(change.fecha), change]));
   return {
     animation: false,
     grid: { left: 40, right: 20, top: 34, bottom: 28 },
@@ -60,10 +110,7 @@ export function buildToneOption(points: TimelinePoint[], changes: ResultChange[]
       borderColor: RULE,
       backgroundColor: "#ffffff",
       textStyle: { color: INK, fontSize: 12 },
-      formatter: (params: unknown) =>
-        axisTooltip(params, (value) =>
-          value.toLocaleString("es-ES", { minimumFractionDigits: 3, maximumFractionDigits: 3 })
-        ),
+      formatter: (params: unknown) => toneTooltip(params, changesByLabel),
     },
     series: [
       {
@@ -74,7 +121,8 @@ export function buildToneOption(points: TimelinePoint[], changes: ResultChange[]
         lineStyle: { width: 2, color: INK },
         itemStyle: { color: INK },
         markLine: {
-          silent: true,
+          silent: false,
+          triggerLineEvent: true,
           symbol: ["none", "none"],
           lineStyle: { type: "dashed", color: "#a1a1aa", width: 1.5 },
           label: {
@@ -227,13 +275,26 @@ const RDBU = [
   "#08306b",
 ];
 
-/** Opción del heatmap «cuota relativa por tópico y mes» (top tópicos). */
+/** Escala logarítmica de cuota con piso en {@link HEATMAP_LOG_EPS} (evita −∞). */
+export function heatmapLog(quota: number): number {
+  return Math.log10(Math.max(quota, HEATMAP_LOG_EPS));
+}
+
+function heatmapLogLabel(value: number): string {
+  const quota = 10 ** value;
+  if (quota <= HEATMAP_LOG_EPS * 1.5) return `< ${fmtQuota(HEATMAP_LOG_EPS)}`;
+  return `${quota.toLocaleString("es-ES", { maximumSignificantDigits: 2 })} %`;
+}
+
+/** Opción del heatmap «cuota relativa por tópico y mes» (escala log, top tópicos). */
 export function buildTopicHeatmapOption(data: HeatmapData): ChartOption {
   const months = data.months.map((month) => fmtMonth(month));
+  const floorLog = Math.log10(HEATMAP_LOG_EPS);
+  const maxLog = data.max > HEATMAP_LOG_EPS ? Math.log10(data.max) : floorLog + 1;
   const cells: number[][] = [];
   data.values.forEach((row, y) => {
     row.forEach((value, x) => {
-      if (value !== null) cells.push([x, y, value]);
+      if (value !== null) cells.push([x, y, heatmapLog(value)]);
     });
   });
   return {
@@ -259,8 +320,9 @@ export function buildTopicHeatmapOption(data: HeatmapData): ChartOption {
       },
     },
     visualMap: {
-      min: 0,
-      max: data.max,
+      min: floorLog,
+      max: maxLog,
+      splitNumber: 5,
       calculable: true,
       orient: "horizontal",
       left: "center",
@@ -268,7 +330,7 @@ export function buildTopicHeatmapOption(data: HeatmapData): ChartOption {
       itemWidth: 12,
       itemHeight: 120,
       textStyle: AXIS_LABEL,
-      formatter: (value: number) => fmtQuota(value),
+      formatter: (value: number) => heatmapLogLabel(value),
       inRange: { color: VIRIDIS },
     },
     tooltip: {
@@ -278,18 +340,69 @@ export function buildTopicHeatmapOption(data: HeatmapData): ChartOption {
       textStyle: { color: INK, fontSize: 12 },
       formatter: (params: unknown) => {
         const item = params as { data?: [number, number, number] };
-        const [x, y, value] = item.data ?? [0, 0, 0];
+        const [x = 0, y = 0] = item.data ?? [];
         const month = months[x] ?? "";
         const topic = data.labels[y] ?? "";
-        return `${topic}<br/>${month}: ${fmtQuota(value ?? 0)}`;
+        const original = data.values[y]?.[x];
+        const count = data.counts[y]?.[x];
+        const cuota = original !== null && original !== undefined ? fmtQuota(original) : "n/d";
+        const intervenciones =
+          count !== null && count !== undefined ? ` · ${fmtInt(count)} interv.` : "";
+        return `${topic}<br/>${month}: ${cuota}${intervenciones}`;
       },
     },
     series: [
       {
         type: "heatmap",
-        name: "Cuota",
+        name: "Cuota (log)",
         data: cells,
-        itemStyle: { borderWidth: 0 },
+        itemStyle: { borderWidth: 0.5, borderColor: "rgba(255, 255, 255, 0.6)" },
+      },
+    ],
+  };
+}
+
+/** Opción ampliada de un tópico para el diálogo de la portada (Q1c: sin `q`). */
+export function buildTopicDetailOption(card: TopicCard): ChartOption {
+  const labels = card.points.map((point) => fmtMonth(point.month));
+  return {
+    animation: false,
+    grid: { left: 56, right: 20, top: 32, bottom: 32 },
+    xAxis: temporalAxis(labels),
+    yAxis: {
+      type: "value",
+      min: 0,
+      axisLabel: { ...AXIS_LABEL, formatter: (value: number) => fmtQuota(value) },
+      splitLine: { lineStyle: { color: "#e4e4e7", type: "dashed" } },
+    },
+    tooltip: {
+      trigger: "axis",
+      borderColor: RULE,
+      backgroundColor: "#ffffff",
+      textStyle: { color: INK, fontSize: 12 },
+      formatter: (params: unknown) => axisTooltip(params, (value) => fmtQuota(value)),
+    },
+    series: [
+      {
+        type: "line",
+        name: "Cuota",
+        data: card.points.map((point) => point.value),
+        showSymbol: false,
+        lineStyle: { width: 1.5, color: "#3f3f46" },
+        itemStyle: { color: "#3f3f46" },
+        markLine: {
+          silent: true,
+          symbol: ["none", "none"],
+          lineStyle: { type: "dashed", color: "#a1a1aa", width: 1.5 },
+          label: {
+            position: "insideEndTop",
+            distance: 6,
+            formatter: "{b}",
+            color: "#71717a",
+            fontSize: 11,
+          },
+          data: changeMarks(card.changes, new Set(labels)),
+        },
       },
     ],
   };

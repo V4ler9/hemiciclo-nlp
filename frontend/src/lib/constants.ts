@@ -29,3 +29,10 @@ export const LABEL_MAX_LENGTH = 42;
  * `association_topics` de `configs/experiment_03.yaml` (20).
  */
 export const ASSOCIATION_TOPICS = 20;
+
+/**
+ * Piso de la escala logarítmica del heatmap de cuota (0,01 %): las cuotas por
+ * debajo —incluidos los ceros— se pintan en el extremo de la leyenda. Sin él,
+ * `log10(0)` sería −∞ (Q4: escala log + render fino, D-42).
+ */
+export const HEATMAP_LOG_EPS = 1e-4;

@@ -47,3 +47,35 @@ test("portada: el delta muestra r, p, n e intervalo al pasar el ratón y al enfo
   const secondId = (await second.getAttribute("aria-describedby")) as string;
   await expect(page.locator(`[id="${secondId}"]`)).toHaveCSS("opacity", "1");
 });
+
+test("portada: el diálogo amplía el subgráfico con su tabla de respaldo (sin q)", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const trigger = page.locator('[aria-label^="Ampliar gráfico de"]').first();
+  await expect(trigger).toBeVisible();
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator("canvas").first()).toBeVisible({ timeout: 15_000 });
+  for (const column of ["fecha", "Δ", "media antes → después", "r", "p", "n", "intervalo"]) {
+    await expect(dialog.getByRole("columnheader", { name: column, exact: true })).toBeVisible();
+  }
+  await expect(dialog.getByRole("columnheader", { name: "q", exact: true })).toHaveCount(0);
+  await expect(dialog.locator("table tbody tr").first()).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+});
+
+test("portada: el diálogo enlaza con Evidencias vía ?topico=", async ({ page }) => {
+  await page.goto("/");
+  await page.locator('[aria-label^="Ampliar gráfico de"]').first().click();
+  const link = page.getByRole("dialog").getByRole("link", { name: /Ver evidencias/ });
+  await link.click();
+
+  await expect(page).toHaveURL(/\/evidencias\?topico=\d+/);
+  const topicId = new URL(page.url()).searchParams.get("topico");
+  await expect(page.locator("#topic-select")).toHaveValue(topicId ?? "");
+});

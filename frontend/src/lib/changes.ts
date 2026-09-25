@@ -79,6 +79,8 @@ export interface HeatmapData {
   labels: string[];
   months: string[];
   values: (number | null)[][];
+  /** Intervenciones del tópico en cada celda (para el tooltip). */
+  counts: (number | null)[][];
   max: number;
 }
 
@@ -114,26 +116,37 @@ export function buildTopicHeatmap(series: SeriesPoint[], topics: Topic[]): Heatm
   }
   const months = [...monthSet].sort();
 
-  const bySerie = new Map<string, Map<string, number>>();
+  const bySerie = new Map<string, Map<string, { value: number; count: number }>>();
   for (const row of topicRows) {
     if (!row.has_session || row.value === null) continue;
-    const monthIndex = bySerie.get(row.series_id) ?? new Map<string, number>();
-    monthIndex.set(row.month.slice(0, 10), row.value);
-    bySerie.set(row.series_id, monthIndex);
+    const serie = bySerie.get(row.series_id) ?? new Map<string, { value: number; count: number }>();
+    serie.set(row.month.slice(0, 10), { value: row.value, count: row.n_interventions });
+    bySerie.set(row.series_id, serie);
   }
 
   let max = 0;
-  const values = topIds.map((id) => {
-    const serie = bySerie.get(id) ?? new Map<string, number>();
-    return months.map((month) => {
-      const value = serie.get(month);
-      if (value === undefined) return null;
-      max = Math.max(max, value);
-      return value;
-    });
-  });
+  const values: (number | null)[][] = [];
+  const counts: (number | null)[][] = [];
+  for (const id of topIds) {
+    const serie = bySerie.get(id) ?? new Map<string, { value: number; count: number }>();
+    const valueRow: (number | null)[] = [];
+    const countRow: (number | null)[] = [];
+    for (const month of months) {
+      const cell = serie.get(month);
+      if (cell === undefined) {
+        valueRow.push(null);
+        countRow.push(null);
+        continue;
+      }
+      valueRow.push(cell.value);
+      countRow.push(cell.count);
+      max = Math.max(max, cell.value);
+    }
+    values.push(valueRow);
+    counts.push(countRow);
+  }
 
-  return { labels, months, values, max };
+  return { labels, months, values, counts, max };
 }
 
 function byMonth(changes: ResultChange[]): ResultChange[] {

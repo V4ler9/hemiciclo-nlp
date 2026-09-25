@@ -94,6 +94,14 @@
 - [x] Retiro: **`app/`** (Streamlit + plotly), **`src/visualization/charts.py`**, los **5 PNG de `reports/figures/`** y `streamlit`/`plotly` del extra `app` (queda `fastapi`+`uvicorn`+`pyarrow`; `uv lock` regenerado). Contrato actualizado: `test_smoke.py` (rutas → `frontend/…`, módulos documentados sin `charts`) y `test_analysis.py` sin el test de figuras (**pytest144**).
 - [x] `structure.md`: borrados los bloques `app/`, `src/visualization/` y `reports/figures/`; Dockerfile y frontend descritos con D-42. **D-42** añadida a `docs/DECISIONS.md`.
 
+### Fase 9 — Pulidos finales (post-D-42) ✅
+- [x] **Q1c — Popup de subgráfico**: click/tap/teclado en el gráfico de cualquier tarjeta abre un `<dialog>` nativo (ESC, botón y fondo lo cierran) con el gráfico ampliado (`buildTopicDetailOption`: ejes, cuota y líneas de cambio etiquetadas) y la **tabla de respaldo** por cambio: fecha, Δ, medias antes/después, `r`, `p`, `n` e intervalo — **sin `q`**. Región de tabla con foco teclado (axe) y sin llamadas nuevas a la API.
+- [x] **Q2 — Deep-link**: botón «Ver evidencias de este tópico →» en el popup; Evidencias ahora interpreta `?topico=N` (`PageProps` + `initialTopic` en el selector).
+- [x] **Q3a — Hover con estadísticos en el héroe**: las líneas de cambio dejan de ser `silent` (`triggerLineEvent`) y el tooltip del eje añade la ficha completa bajo el puntero: fecha, Δ, medias, `r`, `p`, `n` e intervalo (mismos textos que las fichas, extraídos a `statsLine`/`intervalLine` compartidos).
+- [x] **Q4a+b — Heatmap de Evidencias**: escala **logarítmica** con piso `HEATMAP_LOG_EPS` = 0,01 % (leyenda con ticks re-transformados, sin −∞), bordes de celda, tooltip con **cuota lineal + intervenciones** (`HeatmapData.counts`) y figcaption que explica la escala.
+- [x] Tests: **Vitest 38/38** (`chart-options.test.ts` nuevo: tooltip del héroe, `heatmapLog`, detalle de diálogo; `statsLine`/`intervalLine` en `format.test.ts`; `counts` en `changes.test.ts`) y **Playwright 20/20** (diálogo con tabla sin `q`, deep-link `?topico=` y **5ª auditoría axe con el diálogo abierto: 0 violaciones**).
+- **Criterio**: ✅ ESLint/Prettier/`next build` verdes · pytest **144 passed** · puertos libres.
+
 ## 2. Riesgos asumidos
 - Segmentos cortos de PELT (`min_size=6`) → `n` pequeño en algunos contrastes; el hover expone `n` para que el lector juzgue.
 - Tras BH, cambios detectados por PELT que no superen significancia: la portada los presenta como *detectados por PELT* y deja que `r`/`p`/`q` hablen, sin adornar.

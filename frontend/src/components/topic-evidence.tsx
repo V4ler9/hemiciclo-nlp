@@ -31,9 +31,25 @@ function toFailure(cause: unknown): ApiFailure {
  * `selected`), de modo que el efecto solo dispara trabajo asíncrono y los
  * `setState` ocurren en callbacks de promesa (regla `set-state-in-effect`).
  */
-export function TopicEvidence({ topics }: { topics: Topic[] }) {
+/** Selector de tópico con panel de evidencias (carga perezosa vía API).
+ *
+ * `initialTopic` permite el deep-link `?topico=N` de la portada (Q2).
+ */
+export function TopicEvidence({
+  topics,
+  initialTopic,
+}: {
+  topics: Topic[];
+  initialTopic?: number;
+}) {
   const sorted = useMemo(() => [...topics].sort(byLabel), [topics]);
-  const [selected, setSelected] = useState(() => sorted[0]?.topic ?? null);
+  const [selected, setSelected] = useState(() => {
+    const base = [...topics].sort(byLabel);
+    if (initialTopic !== undefined && base.some((topic) => topic.topic === initialTopic)) {
+      return initialTopic;
+    }
+    return base[0]?.topic ?? null;
+  });
   const [loaded, setLoaded] = useState<LoadedState | null>(null);
 
   useEffect(() => {

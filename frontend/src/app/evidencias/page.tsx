@@ -14,7 +14,11 @@ async function loadEvidence(): Promise<EvidenceBundle> {
   return { topics, heatmap: buildTopicHeatmap(series, topics) };
 }
 
-export default async function EvidenciasPage() {
+export default async function EvidenciasPage({ searchParams }: PageProps<"/evidencias">) {
+  const params = await searchParams;
+  const parsedTopic = Number(params.topico);
+  const requestedTopic = Number.isInteger(parsedTopic) ? parsedTopic : undefined;
+
   let bundle: EvidenceBundle | null = null;
   let failure: ApiFailure | null = null;
   try {
@@ -27,6 +31,10 @@ export default async function EvidenciasPage() {
       detail: cause instanceof Error ? cause.message : "Error inesperado",
     };
   }
+  const initialTopic =
+    bundle && requestedTopic !== undefined
+      ? bundle.topics.find((topic) => topic.topic === requestedTopic)?.topic
+      : undefined;
 
   return (
     <div>
@@ -47,7 +55,7 @@ export default async function EvidenciasPage() {
             >
               Explorador de tópicos
             </h2>
-            <TopicEvidence topics={bundle.topics} />
+            <TopicEvidence topics={bundle.topics} initialTopic={initialTopic} />
           </section>
           <section aria-labelledby="heatmap-heading" className="border-border mt-12 border-t pt-8">
             <h2

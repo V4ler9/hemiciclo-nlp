@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import { Chart } from "@/components/charts/chart";
 import { ChangeChip } from "@/components/change-chip";
+import { TopicDialog } from "@/components/topic-dialog";
 import type { TopicCard } from "@/lib/changes";
 import { buildSparklineOption } from "@/lib/chart-options";
 import { MESES_REGULARES_MIN } from "@/lib/constants";
 import { fmtInt, fmtMonth } from "@/lib/format";
 
-function TopicCardView({ card }: { card: TopicCard }) {
+function TopicCardView({ card, onOpen }: { card: TopicCard; onOpen: (card: TopicCard) => void }) {
   const option = useMemo(() => buildSparklineOption(card), [card]);
   const label = card.label ?? `Tópico ${card.topic}`;
   const changesText = card.changes.length
@@ -34,7 +35,14 @@ function TopicCardView({ card }: { card: TopicCard }) {
           Baja potencia · {card.mesesRegulares} m
         </span>
       )}
-      <Chart option={option} className="mt-3 h-24 w-full" ariaLabel={ariaLabel} />
+      <button
+        type="button"
+        onClick={() => onOpen(card)}
+        aria-label={`Ampliar gráfico de ${label}`}
+        className="focus-visible:outline-foreground mt-3 block w-full cursor-zoom-in rounded text-left focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        <Chart option={option} className="h-24 w-full" ariaLabel={ariaLabel} />
+      </button>
       {card.changes.length > 0 ? (
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
           {card.changes.map((change) => (
@@ -56,6 +64,7 @@ function TopicCardView({ card }: { card: TopicCard }) {
  */
 export function TopicGrid({ cards }: { cards: TopicCard[] }) {
   const [hideLowPower, setHideLowPower] = useState(false);
+  const [active, setActive] = useState<TopicCard | null>(null);
   const lowPowerCount = cards.filter((card) => card.lowPower).length;
   const visible = hideLowPower ? cards.filter((card) => !card.lowPower) : cards;
   const totalChanges = cards.reduce((total, card) => total + card.changes.length, 0);
@@ -91,7 +100,7 @@ export function TopicGrid({ cards }: { cards: TopicCard[] }) {
       {visible.length > 0 ? (
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((card) => (
-            <TopicCardView key={card.topic} card={card} />
+            <TopicCardView key={card.topic} card={card} onOpen={setActive} />
           ))}
         </ul>
       ) : (
@@ -99,6 +108,7 @@ export function TopicGrid({ cards }: { cards: TopicCard[] }) {
           No queda ninguna serie visible con el filtro actual.
         </p>
       )}
+      <TopicDialog card={active} onClose={() => setActive(null)} />
     </section>
   );
 }
