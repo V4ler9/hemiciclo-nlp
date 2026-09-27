@@ -2,6 +2,7 @@
   "name": "hemiciclo-nlp",
   "private": true,
   "scripts": {
+    "pipeline": "node scripts/run-pipeline.mjs",
     "dev": "npm --prefix frontend run dev:all",
     "dev:all": "npm --prefix frontend run dev:all",
     "build": "npm --prefix frontend run build",

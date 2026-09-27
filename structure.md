@@ -93,9 +93,12 @@ hemiciclo-nlp/
 │   ├── plan_refactor_frontend.md  # Plan de la refactorización del frontend
 │   └── SOURCES.md              # Fuentes externas y descargas reproducibles
 │
+├── scripts/
+│   └── run-pipeline.mjs        # Orquestador de `npm run pipeline`: uv sync (opcional con --no-sync) + fases 1 → 3b con salto de fases completadas
+│
 ├── Dockerfile                  # Fase 5: imagen de la API (el panel usa frontend/Dockerfile)
 ├── compose.yaml                # Fase 5: ejecución local
-├── package.json                # Scripts npm delegados en frontend/ (dev, dev:all, build, lint, format, gen:api)
+├── package.json                # Scripts npm: pipeline (datos) y delegados en frontend/ (dev, dev:all, build, lint, format, gen:api)
 ├── .dockerignore               # Excluye del contexto de build lo que no necesita Docker
 ├── .gitignore
 ├── .gitattributes              # Finales de línea normalizados a LF

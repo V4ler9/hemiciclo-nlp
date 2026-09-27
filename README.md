@@ -64,10 +64,17 @@ El corpus no está generado por este proyecto: procede de dos recursos externos 
 El proyecto solo **descarga y transforma** esos datos; no los redistribuye. La descarga es reproducible y verificada por MD5 contra los hashes publicados por cada fuente:
 
 ```bash
+npm run pipeline  # Fase 1 → 3b de un solo comando: uv sync --all-extras + todas las fases
+
+# …o fase a fase:
 uv run python -m src.corpus.downloader  # descarga y extrae en data/raw/corpus (con verificación MD5)
 uv run python -m src.corpus.parser      # consolida data/processed/intervenciones.parquet
 uv run python -m src.preprocessing.cleaner  # limpia data/processed/intervenciones_limpias.parquet
 ```
+
+`npm run pipeline` omite las fases cuyas salidas ya existen y, si regenera una fase, vuelve a ejecutar las aguas abajo para no dejar artefactos obsoletos. La primera pasada completa (embeddings, BERTopic) es la de la máquina NVIDIA; en el portátil solo conviene lanzarlo cuando los artefactos ya están generados. Para regenerar un artefacto concreto, bórralo y vuelve a lanzar el comando.
+
+El arranque incluye `uv sync --all-extras`, que deja el entorno fiel a `uv.lock` (elimina además restos como `streamlit`). En una máquina NVIDIA con torch CUDA instalado a mano, omite esa sincronización con `npm run pipeline -- --no-sync` para no reemplazarlo por la rueda de PyPI.
 
 Todo queda en `data/`, ignorado por git. Las URLs exactas de los ficheros, sus MD5, las fuentes de los modelos y la lista de eventos utilizados están en [`docs/SOURCES.md`](docs/SOURCES.md).
 
