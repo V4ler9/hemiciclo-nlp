@@ -172,7 +172,7 @@ uv pip install "torch==2.14.0+cu130" --index-url https://download.pytorch.org/wh
 
 Verificado con la RTX 3060 Ti (driver 591.86 / CUDA 13.1): `torch.cuda.is_available()` pasa a `True` y los embeddings reales del corpus limpio (88.141 chunks) se codifican en GPU con un pico de ~4,4 GB de VRAM.
 
-Consecuencias: la sustitución afecta solo al venv local y `uv sync` la revierte; por ahora es un paso manual documentado en `docs/SOURCES.md` (§3 y §5). Hacerlo permanente implicaría declarar el índice CUDA de PyTorch en `pyproject.toml`/`uv.lock` (decisión futura). El flujo del portátil (D-30) no cambia: las ruedas CUDA son específicas de plataforma y allí no se instalan.
+Consecuencia en ese momento: la sustitución afectaba solo al venv local y `uv sync` la revertía; era un paso manual documentado en `docs/SOURCES.md` (§3 y §5). Esta solución queda supersedida por D-44, que declara el índice CUDA en `pyproject.toml`/`uv.lock` y lo convierte en la configuración reproducible por defecto para Linux/Windows. El fallback de macOS conserva la rueda de PyPI.
 
 ## 2026-09-13 — Implementación de `topic_model` (Fase 3a)
 
@@ -322,3 +322,16 @@ El repositorio pasa a ser **público**, lo que obliga a cerrar tres frentes que 
 **Contrato (`structure.md`) actualizado en consecuencia**: desaparece `resumen.canvas`, `LICENSE` deja de figurar como pendiente, `reports/figures` se marca retirado (D-42) y se incorporan los ficheros reales de `frontend/` y de la raíz que faltaban (incluido `.gitattributes`, que normaliza los finales de línea a LF para evitar las conversiones LF→CRLF en Windows).
 
 *Pendiente asociado a hacerse público (D-10): valorar CI; ahora mismo la calidad se verifica en local con `pre-commit`.*
+
+
+## 2026-09-27 — CUDA como configuración reproducible por defecto
+
+### D-44 · Índice CUDA de PyTorch gestionado por uv
+
+D-31 detectó correctamente que la resolución de PyPI dejaba la máquina NVIDIA con la rueda CPU, pero la solución manual hacía que `uv sync` revirtiera CUDA. Se sustituye ese flujo por una configuración declarativa y versionada:
+
+- `pyproject.toml` apunta `torch` al índice oficial `https://download.pytorch.org/whl/cu130` en Linux y Windows mediante `tool.uv.sources`.
+- `uv.lock` conserva la resolución `torch==2.14.0+cu130` para esas plataformas y mantiene `torch==2.14.0` desde PyPI como fallback para macOS.
+- `npm run pipeline` puede ejecutar su `uv sync --all-extras` normal sin desactivar CUDA; `--no-sync` queda únicamente como escape para entornos ya preparados u offline.
+
+Validado en la RTX 3060 Ti: `torch==2.14.0+cu130` y `torch.cuda.is_available() == True`. La rueda CUDA requiere un driver NVIDIA compatible en la máquina que ejecute las fases pesadas.

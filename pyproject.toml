@@ -25,7 +25,7 @@ nlp = [
     "gensim>=4.3",
     "scikit-learn>=1.5",
     "sentence-transformers>=3.0",
-    "torch>=2.4",
+    "torch>=2.4", # CUDA cu130 en Linux/Windows; PyPI en macOS (ver tool.uv.sources)
 ]
 # Fases 3-4: análisis temporal, PELT y evaluación
 analysis = [
@@ -34,11 +34,22 @@ analysis = [
     "matplotlib>=3.9",
     "seaborn>=0.13",
 ]
+
 # Fase 5: API FastAPI (el panel web vive en frontend/ con npm; D-42)
 app = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "pyarrow>=17.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu130", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 
 [dependency-groups]

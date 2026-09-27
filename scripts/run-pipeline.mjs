@@ -5,9 +5,10 @@
  * las fases del pipeline (Fase 1 → 3b) en la raíz del repositorio.
  *
  * Reglas de ejecución:
- *   - Primero `uv sync --all-extras` (extras de corpus, nlp y analysis); con
- *     `--no-sync` se omite, para conservar en máquinas NVIDIA un torch CUDA
- *     instalado a mano que uv.lock reemplazaría por la rueda de PyPI.
+ *   - Primero `uv sync --all-extras` (extras de corpus, nlp y analysis). La
+ *     configuración del proyecto selecciona PyTorch CUDA cu130 en Linux y
+ *     Windows, y PyPI como fallback en macOS. Con `--no-sync` se omite la
+ *     sincronización para conservar un entorno ya preparado u offline.
  *   - Una fase se omite si todas sus salidas ya existen.
  *   - Si una fase se ejecuta, todas las aguas abajo se ejecutan también aunque
  *     tengan salida, para no dejar artefactos obsoletos (p. ej. clon nuevo,
