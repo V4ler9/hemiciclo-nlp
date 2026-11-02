@@ -46,7 +46,7 @@ Requisitos: Python 3.12 con [`uv`](https://docs.astral.sh/uv/) y **Node 20.9+ co
 npm run dev:all      # desde la raíz: API (:8000) + panel (:3000), un solo comando
 ```
 
-El panel se abre en <http://localhost:3000>. Comprobaciones automáticas: `uv run pytest` (Python), `npm test` (unitarios Vitest) y `npm run e2e` (Playwright + axe WCAG AA; arranca API y panel solas).
+El panel se abre en <http://localhost:3000>. La home (`/`) cuenta la tesis en cinco actos —tono, episodios, actores, eventos y un explorador de los 45 cambios—; `/episodios` conserva el detalle de las 58 series y `/metricas`/`/evidencias`/`/metodologia` son la capa de auditoría. Comprobaciones automáticas: `uv run pytest` (Python), `npm test` (unitarios Vitest) y `npm run e2e` (Playwright + axe WCAG AA; arranca API y panel solas).
 
 ### Docker
 
@@ -64,7 +64,7 @@ El corpus no está generado por este proyecto: procede de dos recursos externos 
 El proyecto solo **descarga y transforma** esos datos; no los redistribuye. La descarga es reproducible y verificada por MD5 contra los hashes publicados por cada fuente:
 
 ```bash
-npm run pipeline  # Fase 1 → 3b: uv sync --all-extras (CUDA por defecto) + todas las fases
+npm run pipeline  # Fase 1 → 3c: uv sync --all-extras (CUDA por defecto) + todas las fases
 
 # …o fase a fase:
 uv run python -m src.corpus.downloader  # descarga y extrae en data/raw/corpus (con verificación MD5)

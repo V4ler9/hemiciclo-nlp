@@ -32,7 +32,10 @@ hemiciclo-nlp/
 │   ├── analysis/               # Fases 3-4: análisis temporal y evaluación
 │   │   ├── __init__.py
 │   │   ├── temporal.py         # Agregación mensual y tendencias
-│   │   └── regime_change.py    # PELT y cambios de régimen
+│   │   ├── regime_change.py    # PELT y cambios de régimen
+│   │   ├── actors.py           # v2: partidos, estatus y descomposición (D-45)
+│   │   ├── events.py           # v2: catálogo, episodios y event study (D-45)
+│   │   └── episodes.py         # v2: bundle editorial de episodios (D-45)
 │   ├── api/                    # Fase 5: servicio FastAPI
 │   │   ├── __init__.py
 │   │   ├── main.py
@@ -51,6 +54,8 @@ hemiciclo-nlp/
 │   ├── test_preprocessing.py
 │   ├── test_nlp.py
 │   ├── test_analysis.py
+│   ├── test_actors.py          # v2: actores y descomposición (D-45)
+│   ├── test_events.py          # v2: event study (D-45)
 │   ├── test_api.py
 │   └── test_smoke.py
 │
@@ -58,7 +63,8 @@ hemiciclo-nlp/
 │   ├── default.yaml            # Configuración por defecto
 │   ├── experiment_01.yaml
 │   ├── experiment_02.yaml
-│   └── experiment_03.yaml      # Fase 3b: series, regímenes y eventos
+│   ├── experiment_03.yaml      # Fase 3b: series, regímenes y eventos
+│   └── experiment_04.yaml      # v2: actores, episodios y event study (D-45)
 │
 ├── models/                     # Modelos serializados. Contenido ignorado por git
 │
@@ -68,10 +74,10 @@ hemiciclo-nlp/
 │
 ├── frontend/                   # Next.js 16 + TS: panel web editorial (D-42; retira app/ y charts.py)
 │   ├── src/
-│   │   ├── app/                # App Router: layout, navegación y páginas por sección
-│   │   ├── components/         # UI shadcn y componentes de presentación
-│   │   └── lib/                # Capa de datos (api.ts), tipos OpenAPI y lógica pura con tests unitarios (Vitest)
-│   ├── e2e/                    # Tests E2E de Playwright: 4 secciones + auditoría axe WCAG2A/AA
+│   │   ├── app/                # App Router: home editorial (Inicio), episodios (portada anterior), métricas, evidencias y metodología
+│   │   ├── components/         # UI shadcn y actos de la home: tono, episodios, actores, eventos y explorador
+│   │   └── lib/                # Capa de datos (api.ts), tipos OpenAPI, lógica pura de la home (home.ts) y tests unitarios (Vitest)
+│   ├── e2e/                    # Tests E2E de Playwright: home, episodios, métricas, evidencias, metodología + axe WCAG2A/AA
 │   ├── scripts/                # sync-informes.mjs: copia el informe HTML a public/informes/
 │   ├── public/                 # favicon e informe de validación servido (copia de reports/, regenerada en dev/build)
 │   ├── Dockerfile              # Build multi-stage del panel (contexto en la raíz, D-42)
@@ -94,7 +100,7 @@ hemiciclo-nlp/
 │   └── SOURCES.md              # Fuentes externas y descargas reproducibles
 │
 ├── scripts/
-│   └── run-pipeline.mjs        # Orquestador de `npm run pipeline`: uv sync (opcional con --no-sync) + fases 1 → 3b con salto de fases completadas
+│   └── run-pipeline.mjs        # Orquestador de `npm run pipeline`: uv sync (opcional con --no-sync) + fases 1 → 3c con salto de fases completadas
 │
 ├── Dockerfile                  # Fase 5: imagen de la API (el panel usa frontend/Dockerfile)
 ├── compose.yaml                # Fase 5: ejecución local

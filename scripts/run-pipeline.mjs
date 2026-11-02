@@ -2,7 +2,7 @@
 
 /**
  * Orquestador de `npm run pipeline`: sincroniza dependencias con uv y ejecuta
- * las fases del pipeline (Fase 1 → 3b) en la raíz del repositorio.
+ * las fases del pipeline (Fase 1 → 3c) en la raíz del repositorio.
  *
  * Reglas de ejecución:
  *   - Primero `uv sync --all-extras` (extras de corpus, nlp y analysis). La
@@ -76,6 +76,26 @@ const FASES = [
     nombre: "Fase 3b · cambios de régimen",
     modulo: "src.analysis.regime_change",
     salidas: ["reports/tables/cambios_regimen.csv"],
+  },
+  {
+    nombre: "Fase 3c · actores y composición",
+    modulo: "src.analysis.actors",
+    salidas: [
+      "reports/tables/cambios_regimen_actores.csv",
+      "reports/tables/tono_contrafactual.csv",
+      "reports/tables/tono_ic.csv",
+      "reports/tables/series_actores.csv",
+    ],
+  },
+  {
+    nombre: "Fase 3c · event study de episodios",
+    modulo: "src.analysis.events",
+    salidas: ["reports/tables/eventos_alineacion.csv"],
+  },
+  {
+    nombre: "Fase 3c · bundle editorial",
+    modulo: "src.analysis.episodes",
+    salidas: ["reports/tables/episodios_bundle.json"],
   },
 ];
 

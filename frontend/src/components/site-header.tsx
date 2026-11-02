@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const SECTIONS = [
-  { href: "/", label: "Cambios de tono" },
+  { href: "/", label: "Inicio" },
+  { href: "/episodios", label: "Episodios" },
   { href: "/metricas", label: "Métricas" },
   { href: "/evidencias", label: "Evidencias por tópico" },
   { href: "/metodologia", label: "Metodología" },

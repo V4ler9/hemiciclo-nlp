@@ -430,8 +430,14 @@ def main() -> None:
     events_path = PROJECT_ROOT / str(
         load_config(CONFIG_DIR / "experiment_03.yaml")["events"]["path"]
     )
+    mirror_path = reports_dir / EVENTS_MIRROR
+    if events_path.exists():
+        mirror = mirror_events(events_path, mirror_path)
+    else:
+        # Un clon limpio no trae data/external/; el espejo versionado es la fuente.
+        events_path = mirror_path
+        mirror = mirror_path
     events = load_events(events_path)
-    mirror = mirror_events(events_path, reports_dir / EVENTS_MIRROR)
     relations = build_event_relations(series, events, config)
     relations_path = reports_dir / RELATIONS_FILENAME
     relations.to_csv(relations_path, index=False)

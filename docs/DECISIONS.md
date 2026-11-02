@@ -335,3 +335,50 @@ D-31 detectó correctamente que la resolución de PyPI dejaba la máquina NVIDIA
 - `npm run pipeline` puede ejecutar su `uv sync --all-extras` normal sin desactivar CUDA; `--no-sync` queda únicamente como escape para entornos ya preparados u offline.
 
 Validado en la RTX 3060 Ti: `torch==2.14.0+cu130` y `torch.cuda.is_available() == True`. La rueda CUDA requiere un driver NVIDIA compatible en la máquina que ejecute las fases pesadas.
+
+
+## 2026-11-02 — v2 editorial: actores, episodios y event study
+
+### D-45 · Cierre narrativo: shocks, composición y home guiada
+
+El proyecto se cierra con una tesis verificable y un producto editorial, no con
+más modelado. La tesis es: **la agenda del Congreso cambia a saltos; los saltos
+grandes son shocks externos y cambios de legislatura; el tono cambia por
+composición (PP↓, Vox↑) y por el PP, no por una radicalización uniforme**.
+
+Decisiones:
+
+- **Eventos en dos capas.** `reports/tables/eventos_catalogo.csv` separa 21
+  covariables (elecciones, legislaturas, formación de gobierno, mociones, alarmas
+  COVID, guerra, crisis territorial y Gürtel) de ~10 hitos de contexto
+  (legislativos/judiciales) que explican episodios pero no se testean. El
+  contraste exploratorio de la Fase 3b (±3 meses, 472 pares) se conserva como
+  sensibilidad; el primario es un event study local.
+- **Episodios como unidad.** `reports/tables/eventos_episodios.csv` agrupa los
+  eventos solapados en 7 episodios. La familia pre-especificada
+  (`eventos_hipotesis.csv`) tiene 14 pares: 2 de tono y 12 de tópicos, a dos
+  colas, con BH dentro de cada subfamilia. La ventana es de 6 meses antes y
+  después del mes ancla y la inferencia es una permutación de la fecha ancla.
+- **Actores.** `partidos_mapping.csv` consolida las 50+ etiquetas en 11 familias
+  + Otros. `cambios_regimen_actores.csv` descompone los cambios en
+  intra-partido y composición; `tono_contrafactual.csv` fija la mezcla de
+  partidos del segmento pre-cambio (2015-01 – 2020-05) y `tono_ic.csv` da el IC
+  bootstrap del cambio de 2020-06.
+- **Tono.** Se mantiene `senti_n` para continuidad y se añade el share negativo
+  como métrica robusta de la home (42,1 % → 49,6 %; +7,5 pp; permutación
+  p=0,0005). El 32 % de outliers se excluye de las cuotas, con tasa por partido
+  y sensibilidad.
+- **Producto.** Home editorial de 5 actos + cierre («El Congreso cambia a
+  saltos»), navegación Inicio · Episodios · Métricas · Evidencias · Metodología,
+  timeline explorable de los 45 cambios y API `/home` + endpoints de detalle. La
+  portada anterior se traslada a `/episodios`, donde viven el héroe de tono y las
+  58 tarjetas. El MVP usa 5 episodios: 2016-11, 2018-06, 2020-03, 2020-06 y
+  2022-02. Componentes nuevos: `home-tone`, `episode-timeline`,
+  `actor-composition`, `event-alignment` y `change-explorer`.
+- **Gobernanza.** Las notas de los episodios se redactan con asistencia de LLM y
+  se revisan y firman en `reviewed_by`. El despliegue queda para una fase E
+  opcional; el MVP es local.
+
+Artefactos y módulos nuevos: `src/analysis/actors.py`, `events.py`,
+`episodes.py`, `configs/experiment_04.yaml`, `tests/test_actors.py` y
+`tests/test_events.py`. La estructura se actualiza en el mismo commit (D-14).

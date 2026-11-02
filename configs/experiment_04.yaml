@@ -1,0 +1,39 @@
+# Fase 3c: v2 editorial (eventos en dos capas, actores y episodios).
+# La configuración de la Fase 3b se conserva intacta para no romper los
+# artefactos ni los tests existentes (D-45).
+phase: "3c"
+seed: 42
+
+events_v2:
+  catalog_path: "reports/tables/eventos_catalogo.csv"
+  episodes_path: "reports/tables/eventos_episodios.csv"
+  hypotheses_path: "reports/tables/eventos_hipotesis.csv"
+  alignment_path: "reports/tables/eventos_alineacion.csv"
+  # Ventana local simétrica alrededor del mes ancla del episodio.
+  window_months: 6
+  # Mínimo de meses válidos a cada lado para calcular el contraste local.
+  min_months_side: 4
+  # Permutaciones de la fecha ancla (placebo) y corrección BH por subfamilia.
+  n_permutations: 10000
+  alpha: 0.05
+
+actors:
+  mapping_path: "reports/tables/partidos_mapping.csv"
+  interventions_path: "data/processed/intervenciones_limpias.parquet"
+  assignments_path: "data/processed/intervenciones_topicos.parquet"
+  monthly_series_path: "data/intermediate/series_mensuales.parquet"
+  series_parquet_path: "data/intermediate/series_actores.parquet"
+  series_csv_path: "reports/tables/series_actores.csv"
+  decomposition_path: "reports/tables/cambios_regimen_actores.csv"
+  counterfactual_path: "reports/tables/tono_contrafactual.csv"
+  tone_ci_path: "reports/tables/tono_ic.csv"
+  # Celdas con menos intervenciones se marcan como baja potencia, no se eliminan.
+  min_cell: 10
+  bootstrap_n: 2000
+  # Base del contrafactual global: segmento PELT anterior al cambio de 2020-06.
+  baseline_start: "2015-01"
+  baseline_end: "2020-05"
+
+episodes:
+  narrative_path: "reports/tables/episodios.csv"
+  bundle_path: "reports/tables/episodios_bundle.json"

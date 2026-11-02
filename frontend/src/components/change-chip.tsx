@@ -11,13 +11,16 @@ import { fmtDelta, fmtMonth, intervalLine, statsLine } from "@/lib/format";
 export function ChangeChip({
   change,
   showDate = true,
+  unit = "senti",
 }: {
   change: ResultChange;
   showDate?: boolean;
+  unit?: "pp" | "senti";
 }) {
   const id = useId();
   const stats = statsLine(change);
   const range = intervalLine(change);
+  const delta = unit === "pp" ? `${fmtDelta(change.delta * 100)} pp` : fmtDelta(change.delta);
 
   return (
     <span className="group/tip relative inline-flex items-baseline gap-2">
@@ -31,7 +34,7 @@ export function ChangeChip({
           "focus-visible:outline-foreground focus-visible:outline-offset-2"
         }
       >
-        {fmtDelta(change.delta)}
+        {delta}
       </span>
       <span
         id={id}

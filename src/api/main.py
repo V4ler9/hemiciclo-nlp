@@ -10,7 +10,7 @@ Los directorios de datos e informes se pueden sustituir en los tests mediante
 mensaje explícito en lugar de fallar con un error interno.
 """
 
-# pyright: reportUnusedFunction=false
+# pyright: reportUnusedFunction=false, reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownParameterType=false, reportUnknownLambdaType=false
 # Las funciones-ruta se registran mediante decoradores, no por referencia directa.
 
 from __future__ import annotations
@@ -40,7 +40,9 @@ SENTIMENT_FILES = (
 
 def _records(frame: pd.DataFrame) -> list[dict[str, Any]]:
     """Convierte un DataFrame en registros JSON (fechas ISO, NaN como null)."""
-    payload: list[dict[str, Any]] = json.loads(frame.to_json(orient="records", date_format="iso"))
+    payload: list[dict[str, Any]] = json.loads(
+        frame.to_json(orient="records", date_format="iso") or "[]"
+    )
     return payload
 
 
@@ -54,6 +56,12 @@ def _load_parquet(path: Path) -> pd.DataFrame:
     if not path.exists():
         raise HTTPException(status_code=503, detail=f"Artefacto no disponible: {path.name}")
     return pd.read_parquet(path)
+
+
+def _load_json(path: Path) -> Any:
+    if not path.exists():
+        raise HTTPException(status_code=503, detail=f"Artefacto no disponible: {path.name}")
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _optional_csv(path: Path) -> pd.DataFrame | None:
@@ -257,6 +265,166 @@ def create_app(reports_dir: Path | None = None, data_dir: Path | None = None) ->
             "columns": [str(value) for value in frame.columns],
             "values": [[int(value) for value in row] for row in frame.to_numpy().tolist()],
         }
+
+    @app.get("/home")
+    def home() -> dict[str, Any]:
+        """Bundle curado de la home editorial (D-45)."""
+        meta_payload = meta()
+        counterfactual = _load_csv(tables / "tono_contrafactual.csv")
+        episodes = _load_json(tables / "episodios_bundle.json")
+        actors = _load_csv(tables / "series_actores.csv")
+        alignment = _load_csv(tables / "eventos_alineacion.csv")
+        changes = _load_csv(tables / "cambios_regimen.csv")
+        stats = _load_csv(tables / "cambios_regimen_test.csv")
+        labels = _optional_csv(tables / "topics_labels.csv")
+        frame = changes.merge(stats, on=["serie", "serie_id", "fecha"], how="left")
+        frame = frame.loc[frame["significativo_bh"] == 1].copy()
+        frame["topic_num"] = pd.to_numeric(frame["serie_id"], errors="coerce")
+        if labels is not None:
+            frame = frame.merge(
+                labels.loc[:, ["topic", "label"]],
+                left_on="topic_num",
+                right_on="topic",
+                how="left",
+            )
+        else:
+            frame["label"] = None
+        frame["label"] = frame["label"].fillna("Tono global")
+        frame["impacto"] = (frame["delta"].abs() * frame["tamano_serie"] / frame["n_puntos"]).where(
+            frame["serie"] == "topic"
+        )
+        actors_home = actors.loc[
+            (actors["party_status"] == "Todos") & (actors["party_family"] != "Todos")
+        ]
+        actor_changes = _load_csv(tables / "cambios_regimen_actores.csv")
+        actor_changes = actor_changes.loc[
+            (actor_changes["nivel"] == "partido")
+            & (actor_changes["partido"] != "__residual__")
+            & (actor_changes["significativo_bh"].astype(int) == 1)
+            & (
+                ((actor_changes["serie"] == "topic") & (actor_changes["metrica"] == "cuota_topico"))
+                | (
+                    (actor_changes["serie"] == "tone")
+                    & (actor_changes["metrica"] == "negative_share")
+                )
+            )
+        ]
+        tone_dates = frame.loc[frame["serie"] == "tone", "fecha"]
+        return {
+            "tesis": {
+                "titular": "El Congreso cambia a saltos",
+                "subtitulo": (
+                    "La agenda se mueve por shocks y cambios de legislatura; "
+                    "el tono, por quién habla."
+                ),
+            },
+            "kpis": {
+                "intervenciones": meta_payload["intervenciones"],
+                "topicos": meta_payload["topicos"],
+                "cambios_significativos": len(frame),
+                "fechas": int(frame["fecha"].nunique()),
+                "cambio_tono": str(tone_dates.iloc[0]) if not tone_dates.empty else None,
+            },
+            "tono": _records(counterfactual.sort_values("month")),
+            "episodios": episodes,
+            "actores": _records(actors_home.sort_values(["month", "party_family"])),
+            "actores_cambio": _records(actor_changes.sort_values(["fecha", "partido"])),
+            "eventos": _records(alignment.sort_values(["q", "hipotesis_id"])),
+            "cambios": _records(frame.sort_values("fecha")),
+            "caveats": [
+                "La asociación no es causal: los episodios agrupan eventos que se solapan.",
+                "El 32 % de intervenciones queda fuera de los tópicos (outliers de BERTopic).",
+                "El tono de 6 clases es poco fiable; la home usa el share negativo.",
+            ],
+        }
+
+    @app.get("/episodes")
+    def episodes() -> list[dict[str, Any]]:
+        """Episodios editoriales del MVP con sus fichas y estadísticos."""
+        return _load_json(tables / "episodios_bundle.json")
+
+    @app.get("/episodes/{episode_id}")
+    def episode_detail(episode_id: str) -> dict[str, Any]:
+        """Ficha de un episodio editorial."""
+        payload = _load_json(tables / "episodios_bundle.json")
+        for episode in payload:
+            if episode.get("episodio_id") == episode_id:
+                return episode
+        raise HTTPException(status_code=404, detail=f"Episodio {episode_id} no encontrado")
+
+    @app.get("/actors")
+    def actors(
+        party_family: str | None = Query(default=None),
+        party_status: str | None = Query(default=None),
+    ) -> list[dict[str, Any]]:
+        """Series mensuales por familia de partido y estatus."""
+        frame = _load_csv(tables / "series_actores.csv")
+        if party_family is not None:
+            frame = frame.loc[frame["party_family"] == party_family]
+        if party_status is not None:
+            frame = frame.loc[frame["party_status"] == party_status]
+        return _records(frame.sort_values(["month", "party_family", "party_status"]))
+
+    @app.get("/actors/changes")
+    def actor_changes(
+        serie: str | None = Query(default=None),
+        serie_id: str | None = Query(default=None),
+        metrica: str | None = Query(default=None),
+        nivel: str | None = Query(default=None),
+        significativo_bh: int | None = Query(default=None),
+    ) -> list[dict[str, Any]]:
+        """Descomposición intra-partido/composición por cambio."""
+        frame = _load_csv(tables / "cambios_regimen_actores.csv")
+        if serie is not None:
+            frame = frame.loc[frame["serie"] == serie]
+        if serie_id is not None:
+            frame = frame.loc[frame["serie_id"].astype(str) == serie_id]
+        if metrica is not None:
+            frame = frame.loc[frame["metrica"] == metrica]
+        if nivel is not None:
+            frame = frame.loc[frame["nivel"] == nivel]
+        if significativo_bh is not None:
+            frame = frame.loc[frame["significativo_bh"].astype(int) == significativo_bh]
+        return _records(frame.sort_values(["fecha", "partido"]))
+
+    @app.get("/events/catalog")
+    def events_catalog(capa: str | None = Query(default=None)) -> list[dict[str, Any]]:
+        """Catálogo de eventos de dos capas (covariable/contexto)."""
+        frame = _load_csv(tables / "eventos_catalogo.csv")
+        if capa is not None:
+            frame = frame.loc[frame["capa"] == capa]
+        return _records(frame.sort_values("fecha"))
+
+    @app.get("/events/episodes")
+    def event_episodes() -> list[dict[str, Any]]:
+        """Episodios de eventos usados en el event study."""
+        return _records(_load_csv(tables / "eventos_episodios.csv").sort_values("fecha_ancla"))
+
+    @app.get("/events/alignment")
+    def event_alignment(
+        subfamilia: str | None = Query(default=None),
+        significativo_bh: int | None = Query(default=None),
+        max_q: float | None = Query(default=None),
+    ) -> list[dict[str, Any]]:
+        """Resultados del event study local con permutación y BH."""
+        frame = _load_csv(tables / "eventos_alineacion.csv")
+        if subfamilia is not None:
+            frame = frame.loc[frame["subfamilia"] == subfamilia]
+        if significativo_bh is not None:
+            frame = frame.loc[frame["significativo_bh"].astype(int) == significativo_bh]
+        if max_q is not None:
+            frame = frame.loc[frame["q"].astype(float) <= max_q]
+        return _records(frame.sort_values(["subfamilia", "q", "hipotesis_id"]))
+
+    @app.get("/tone/counterfactual")
+    def tone_counterfactual() -> list[dict[str, Any]]:
+        """Tono real y contrafactual con cuotas de partido fijas."""
+        return _records(_load_csv(tables / "tono_contrafactual.csv").sort_values("month"))
+
+    @app.get("/tone/ci")
+    def tone_ci() -> list[dict[str, Any]]:
+        """IC bootstrap del cambio de tono de 2020-06."""
+        return _records(_load_csv(tables / "tono_ic.csv"))
 
     return app
 

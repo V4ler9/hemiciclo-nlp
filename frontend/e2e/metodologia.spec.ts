@@ -16,7 +16,7 @@ test("metodología: las siete secciones y el resultado nulo están presentes", a
   await expect(page.getByRole("heading", { level: 2, name: /resultado nulo/ })).toBeVisible();
   await expect(page.getByText("Resultado: nulo.")).toBeVisible();
   await expect(page.getByText(/45 de 136/)).toBeVisible();
-  await expect(page.getByText(/0,254/)).toBeVisible();
+  await expect(page.getByText(/0,254/).first()).toBeVisible();
 });
 
 test("metodología: tabla de8 eventos y heatmap del análisis exploratorio", async ({ page }) => {

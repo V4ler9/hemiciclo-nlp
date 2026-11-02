@@ -364,3 +364,270 @@ export async function getEvents(): Promise<EventRow[]> {
 export async function getEventRelations(): Promise<EventRelation[]> {
   return (await apiGet("/events/relations")) as unknown as EventRelation[];
 }
+
+/** KPI de la home editorial (``/home``). */
+export interface HomeKpis {
+  intervenciones: number;
+  topicos: number;
+  cambios_significativos: number;
+  fechas: number;
+  cambio_tono: string | null;
+}
+
+/** Cambio significativo con etiqueta e impacto para el timeline. */
+export interface HomeChange {
+  serie: string;
+  serie_id: string;
+  fecha: string;
+  delta: number;
+  media_antes: number;
+  media_despues: number;
+  tamano_serie: number;
+  n_puntos: number;
+  q: number;
+  p: number;
+  r: number;
+  n: number;
+  significativo_bh: number;
+  label: string;
+  impacto: number | null;
+}
+
+/** Punto mensual del tono real y del contrafactual por composición. */
+export interface ToneCounterfactualPoint {
+  month: string;
+  n: number;
+  neg_share_real: number;
+  neg_share_ajustado: number;
+  senti_n_real: number;
+  senti_n_ajustado: number;
+  brecha_neg: number;
+  brecha_senti: number;
+  base_start: string;
+  base_end: string;
+}
+
+/** Contribución de un partido a un cambio de tópico o de tono. */
+export interface EpisodeActor {
+  partido: string;
+  contribucion: number | null;
+  contribucion_dentro?: number | null;
+  contribucion_composicion?: number | null;
+  n_antes: number | null;
+  n_despues: number | null;
+}
+
+/** Tópico dentro de un episodio editorial. */
+export interface EpisodeTopic {
+  topic: number;
+  label: string;
+  fecha_cambio: string;
+  meses_distancia: number;
+  delta: number;
+  q: number | null;
+  n: number | null;
+  tamano_serie: number | null;
+  significativo_bh: number;
+  direccion: "up" | "down";
+  actores: EpisodeActor[];
+}
+
+/** Cambio de tono dentro de un episodio editorial. */
+export interface EpisodeTone {
+  fecha_cambio: string;
+  delta_serie: number | null;
+  delta_share_negativo: number | null;
+  delta_senti_n: number | null;
+  q: number | null;
+  significativo_bh: number;
+  intervalos: {
+    metrica: string;
+    delta: number | null;
+    ic_inf: number | null;
+    ic_sup: number | null;
+    n_boot: number | null;
+  }[];
+  actores: EpisodeActor[];
+}
+
+/** Evento o hipótesis dentro de un episodio editorial. */
+export interface EpisodeEvent {
+  hipotesis_id?: string;
+  serie?: string;
+  serie_id?: string;
+  metrica?: string;
+  delta?: number | null;
+  q?: number | null;
+  significativo_bh?: number;
+  direccion_esperada?: string;
+  episodio_evento_id?: string;
+  titulo?: string;
+  fecha_ancla?: string;
+  eventos?: string;
+  resumen?: string;
+}
+
+/** Ficha editorial de un episodio. */
+export interface Episode {
+  episodio_id: string;
+  titulo: string;
+  fecha: string;
+  resumen: string;
+  fuente: string;
+  reviewed_by: string;
+  topicos: EpisodeTopic[];
+  tono: EpisodeTone | null;
+  eventos: EpisodeEvent[];
+}
+
+/** Serie mensual de un partido (``/actors``). */
+export interface ActorPoint {
+  month: string;
+  party_family: string;
+  party_status: string;
+  n: number;
+  n_assigned: number;
+  share_all: number | null;
+  share_assigned: number | null;
+  tone_mean: number | null;
+  negative_share: number | null;
+  outlier_rate: number | null;
+  has_session: boolean;
+}
+
+/** Fila del event study (``/events/alignment``). */
+export interface EventAlignmentRow {
+  hipotesis_id: string;
+  episodio_id: string;
+  serie: string;
+  serie_id: string;
+  metrica: string;
+  fecha_ancla: string;
+  ventana_meses: number;
+  n_antes: number;
+  n_despues: number;
+  valor_antes: number;
+  valor_despues: number;
+  delta: number;
+  p: number;
+  q: number;
+  significativo_bh: number;
+  direccion_esperada: string;
+  subfamilia: string;
+  justificacion: string;
+}
+
+/** Bundle completo de la home editorial. */
+export interface HomePayload {
+  tesis: { titular: string; subtitulo: string };
+  kpis: HomeKpis;
+  tono: ToneCounterfactualPoint[];
+  episodios: Episode[];
+  actores: ActorPoint[];
+  actores_cambio: ActorChangeRow[];
+  eventos: EventAlignmentRow[];
+  cambios: HomeChange[];
+  caveats: string[];
+}
+
+/** Bundle de la home (``/home``). */
+export async function getHome(): Promise<HomePayload> {
+  return (await apiGet("/home")) as unknown as HomePayload;
+}
+
+/** Episodios editoriales del MVP (``/episodes``). */
+export async function getEpisodes(): Promise<Episode[]> {
+  return (await apiGet("/episodes")) as unknown as Episode[];
+}
+
+/** Detalle de un episodio editorial (``/episodes/{episode_id}``). */
+export async function getEpisode(episodeId: string): Promise<Episode> {
+  return (await apiGet("/episodes/{episode_id}", undefined, {
+    episode_id: episodeId,
+  })) as unknown as Episode;
+}
+
+/** Series de actores (``/actors``), filtrables por partido y estatus. */
+export async function getActors(
+  partyFamily?: string,
+  partyStatus?: string
+): Promise<ActorPoint[]> {
+  return (await apiGet("/actors", {
+    party_family: partyFamily ?? null,
+    party_status: partyStatus ?? null,
+  })) as unknown as ActorPoint[];
+}
+
+/** Descomposición de actores por cambio (``/actors/changes``). */
+export interface ActorChangeRow {
+  serie: string;
+  serie_id: string;
+  fecha: string;
+  metrica: string;
+  nivel: string;
+  partido: string;
+  estatus: string;
+  n_antes: number;
+  n_despues: number;
+  peso_antes: number | null;
+  peso_despues: number | null;
+  valor_antes: number | null;
+  valor_despues: number | null;
+  delta_total_serie: number;
+  contribucion_dentro: number | null;
+  contribucion_composicion: number | null;
+  residual: number | null;
+  significativo_bh: number;
+  tamano_serie: number;
+}
+
+/** Descomposición intra-partido/composición (``/actors/changes``). */
+export async function getActorChanges(params?: {
+  serie?: string;
+  serieId?: string;
+  metrica?: string;
+  nivel?: string;
+  significativoBh?: number;
+}): Promise<ActorChangeRow[]> {
+  return (await apiGet("/actors/changes", {
+    serie: params?.serie ?? null,
+    serie_id: params?.serieId ?? null,
+    metrica: params?.metrica ?? null,
+    nivel: params?.nivel ?? null,
+    significativo_bh: params?.significativoBh ?? null,
+  })) as unknown as ActorChangeRow[];
+}
+
+/** Resultados del event study (``/events/alignment``). */
+export async function getEventAlignment(params?: {
+  subfamilia?: string;
+  significativoBh?: number;
+  maxQ?: number;
+}): Promise<EventAlignmentRow[]> {
+  return (await apiGet("/events/alignment", {
+    subfamilia: params?.subfamilia ?? null,
+    significativo_bh: params?.significativoBh ?? null,
+    max_q: params?.maxQ ?? null,
+  })) as unknown as EventAlignmentRow[];
+}
+
+/** Tono real y contrafactual (``/tone/counterfactual``). */
+export async function getToneCounterfactual(): Promise<ToneCounterfactualPoint[]> {
+  return (await apiGet("/tone/counterfactual")) as unknown as ToneCounterfactualPoint[];
+}
+
+/** IC bootstrap del cambio de tono (``/tone/ci``). */
+export async function getToneCi(): Promise<
+  { metrica: string; fecha: string; delta: number; ic_inf: number; ic_sup: number; n_boot: number; n_antes: number; n_despues: number }[]
+> {
+  return (await apiGet("/tone/ci")) as unknown as {
+    metrica: string;
+    fecha: string;
+    delta: number;
+    ic_inf: number;
+    ic_sup: number;
+    n_boot: number;
+    n_antes: number;
+    n_despues: number;
+  }[];
+}

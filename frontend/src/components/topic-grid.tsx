@@ -47,7 +47,7 @@ function TopicCardView({ card, onOpen }: { card: TopicCard; onOpen: (card: Topic
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
           {card.changes.map((change) => (
             <li key={change.fecha}>
-              <ChangeChip change={change} />
+              <ChangeChip change={change} unit="pp" />
             </li>
           ))}
         </ul>

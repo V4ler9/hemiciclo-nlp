@@ -6,7 +6,6 @@ import { Chart } from "@/components/charts/chart";
 import type { TopicCard } from "@/lib/changes";
 import { buildTopicDetailOption } from "@/lib/chart-options";
 import {
-  fmtDecimal,
   fmtDelta,
   fmtInt,
   fmtMonth,
@@ -87,9 +86,11 @@ export function TopicDialog({ card, onClose }: { card: TopicCard | null; onClose
                   {card.changes.map((change) => (
                     <tr key={change.fecha} className="border-border/60 border-b">
                       <td className={CELL}>{fmtMonth(change.fecha)}</td>
-                      <td className={`${CELL} font-medium`}>{fmtDelta(change.delta)}</td>
+                      <td className={`${CELL} font-medium`}>
+                        {fmtDelta(change.delta * 100)} pp
+                      </td>
                       <td className={CELL}>
-                        {fmtDecimal(change.mediaAntes)} → {fmtDecimal(change.mediaDespues)}
+                        {fmtQuota(change.mediaAntes)} → {fmtQuota(change.mediaDespues)}
                       </td>
                       <td className={CELL}>{fmtR(change.r)}</td>
                       <td className={CELL}>{fmtP(change.p)}</td>

@@ -618,6 +618,485 @@
           }
         }
       }
+    },
+    "/home": {
+      "get": {
+        "summary": "Home",
+        "description": "Bundle curado de la home editorial (D-45).",
+        "operationId": "home_home_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Home Home Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/episodes": {
+      "get": {
+        "summary": "Episodes",
+        "description": "Episodios editoriales del MVP con sus fichas y estadísticos.",
+        "operationId": "episodes_episodes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Episodes Episodes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/episodes/{episode_id}": {
+      "get": {
+        "summary": "Episode Detail",
+        "description": "Ficha de un episodio editorial.",
+        "operationId": "episode_detail_episodes__episode_id__get",
+        "parameters": [
+          {
+            "name": "episode_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Episode Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Episode Detail Episodes  Episode Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actors": {
+      "get": {
+        "summary": "Actors",
+        "description": "Series mensuales por familia de partido y estatus.",
+        "operationId": "actors_actors_get",
+        "parameters": [
+          {
+            "name": "party_family",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Party Family"
+            }
+          },
+          {
+            "name": "party_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Party Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Actors Actors Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actors/changes": {
+      "get": {
+        "summary": "Actor Changes",
+        "description": "Descomposición intra-partido/composición por cambio.",
+        "operationId": "actor_changes_actors_changes_get",
+        "parameters": [
+          {
+            "name": "serie",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie"
+            }
+          },
+          {
+            "name": "serie_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Serie Id"
+            }
+          },
+          {
+            "name": "metrica",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Metrica"
+            }
+          },
+          {
+            "name": "nivel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nivel"
+            }
+          },
+          {
+            "name": "significativo_bh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Significativo Bh"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Actor Changes Actors Changes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/catalog": {
+      "get": {
+        "summary": "Events Catalog",
+        "description": "Catálogo de eventos de dos capas (covariable/contexto).",
+        "operationId": "events_catalog_events_catalog_get",
+        "parameters": [
+          {
+            "name": "capa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Capa"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Events Catalog Events Catalog Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/episodes": {
+      "get": {
+        "summary": "Event Episodes",
+        "description": "Episodios de eventos usados en el event study.",
+        "operationId": "event_episodes_events_episodes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Event Episodes Events Episodes Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/alignment": {
+      "get": {
+        "summary": "Event Alignment",
+        "description": "Resultados del event study local con permutación y BH.",
+        "operationId": "event_alignment_events_alignment_get",
+        "parameters": [
+          {
+            "name": "subfamilia",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subfamilia"
+            }
+          },
+          {
+            "name": "significativo_bh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Significativo Bh"
+            }
+          },
+          {
+            "name": "max_q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Event Alignment Events Alignment Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tone/counterfactual": {
+      "get": {
+        "summary": "Tone Counterfactual",
+        "description": "Tono real y contrafactual con cuotas de partido fijas.",
+        "operationId": "tone_counterfactual_tone_counterfactual_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Tone Counterfactual Tone Counterfactual Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tone/ci": {
+      "get": {
+        "summary": "Tone Ci",
+        "description": "IC bootstrap del cambio de tono de 2020-06.",
+        "operationId": "tone_ci_tone_ci_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Tone Ci Tone Ci Get"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

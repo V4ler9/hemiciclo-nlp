@@ -1,0 +1,867 @@
+[
+  {
+    "episodio_id": "EP01_2016_11",
+    "eventos": [
+      {
+        "episodio_evento_id": "E2_2016_gobierno",
+        "eventos": "Inicio XI legislatura; Elecciones generales 26-J; Inicio XII legislatura; Investidura de Rajoy",
+        "fecha_ancla": "2016-11-01",
+        "resumen": "La repetición electoral y la investidura de Rajoy cierran un año de bloqueo y cambian la agenda económica.",
+        "titulo": "Formación del Gobierno de Rajoy"
+      },
+      {
+        "delta": -0.2624443748976323,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H02",
+        "metrica": "cuota_topico",
+        "q": 0.0002999700029997,
+        "serie": "topic",
+        "serie_id": "0",
+        "significativo_bh": 1
+      },
+      {
+        "delta": 0.1118995552380578,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H03",
+        "metrica": "cuota_topico",
+        "q": 0.0633536646335366,
+        "serie": "topic",
+        "serie_id": "1",
+        "significativo_bh": 0
+      }
+    ],
+    "fecha": "2016-11-01",
+    "fuente": "ParlaMint-ES; Congreso de los Diputados",
+    "resumen": "La repetición electoral y la investidura de Rajoy cierran un año de bloqueo. En noviembre sube la energía (+10,9 pp) y cambian Comunidad Valenciana y violencia de género. El episodio agrupa la XI legislatura, las elecciones de junio y la XII legislatura; no permite atribuir el cambio solo a la investidura.",
+    "reviewed_by": "",
+    "titulo": "La formación del Gobierno de Rajoy",
+    "tono": null,
+    "topicos": [
+      {
+        "actores": [
+          {
+            "contribucion": 0.008904585581542,
+            "n_antes": 580,
+            "n_despues": 3499,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.0060005598417626005,
+            "n_antes": 368,
+            "n_despues": 2238,
+            "partido": "UP"
+          },
+          {
+            "contribucion": 0.0052760642060479986,
+            "n_antes": 877,
+            "n_despues": 3780,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.0045122598986728,
+            "n_antes": 89,
+            "n_despues": 296,
+            "partido": "BNG"
+          },
+          {
+            "contribucion": 0.0043462114417540006,
+            "n_antes": 319,
+            "n_despues": 1341,
+            "partido": "Otros"
+          }
+        ],
+        "delta": 0.109419,
+        "direccion": "up",
+        "fecha_cambio": "2016-11-01",
+        "label": "Energía y transición energética",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 0.0094054944689889,
+        "significativo_bh": 1,
+        "tamano_serie": 1495,
+        "topic": 1
+      },
+      {
+        "actores": [
+          {
+            "contribucion": -0.0092564298034703,
+            "n_antes": 319,
+            "n_despues": 1341,
+            "partido": "Otros"
+          },
+          {
+            "contribucion": -0.004452627490908,
+            "n_antes": 877,
+            "n_despues": 3780,
+            "partido": "PP"
+          },
+          {
+            "contribucion": -0.0022010996684572,
+            "n_antes": 580,
+            "n_despues": 3499,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": -0.0016408302333591998,
+            "n_antes": 134,
+            "n_despues": 968,
+            "partido": "ERC"
+          },
+          {
+            "contribucion": -0.0010123005647396,
+            "n_antes": 368,
+            "n_despues": 2238,
+            "partido": "UP"
+          }
+        ],
+        "delta": -0.038672,
+        "direccion": "down",
+        "fecha_cambio": "2016-11-01",
+        "label": "Comunidad Valenciana",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 0.0123601756081773,
+        "significativo_bh": 1,
+        "tamano_serie": 223,
+        "topic": 28
+      },
+      {
+        "actores": [
+          {
+            "contribucion": 0.0048591208074485,
+            "n_antes": 877,
+            "n_despues": 3780,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.0047834785764577,
+            "n_antes": 368,
+            "n_despues": 2238,
+            "partido": "UP"
+          },
+          {
+            "contribucion": 0.001849924846803,
+            "n_antes": 67,
+            "n_despues": 1519,
+            "partido": "Cs"
+          },
+          {
+            "contribucion": 0.0015639421740803999,
+            "n_antes": 580,
+            "n_despues": 3499,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.0010983928777893,
+            "n_antes": 134,
+            "n_despues": 968,
+            "partido": "ERC"
+          }
+        ],
+        "delta": 0.011729,
+        "direccion": "up",
+        "fecha_cambio": "2016-11-01",
+        "label": "Violencia de género e igualdad",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 0.0448478430480223,
+        "significativo_bh": 1,
+        "tamano_serie": 466,
+        "topic": 12
+      }
+    ]
+  },
+  {
+    "episodio_id": "EP02_2018_06",
+    "eventos": [
+      {
+        "episodio_evento_id": "E3_2018_mocion",
+        "eventos": "Sentencia del caso Gürtel; Moción de censura de Sánchez",
+        "fecha_ancla": "2018-06-01",
+        "resumen": "La sentencia de Gürtel y la moción de censura inauguran el Gobierno de Sánchez y reabren la agenda social.",
+        "titulo": "Moción de censura de 2018"
+      },
+      {
+        "delta": -0.0155909220783876,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H04",
+        "metrica": "cuota_topico",
+        "q": 0.33992600739926,
+        "serie": "topic",
+        "serie_id": "11",
+        "significativo_bh": 0
+      },
+      {
+        "delta": -0.0633304365697185,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H05",
+        "metrica": "cuota_topico",
+        "q": 0.0813918608139186,
+        "serie": "topic",
+        "serie_id": "15",
+        "significativo_bh": 0
+      }
+    ],
+    "fecha": "2018-06-01",
+    "fuente": "ParlaMint-ES; Congreso de los Diputados",
+    "resumen": "La sentencia de Gürtel y la moción de censura de junio de 2018 cambian el Gobierno. La corrupción ya había caído en septiembre de 2017; tras la moción cae la cuota de pensiones (−7,6 pp). El episodio no separa el efecto de la sentencia del de la moción.",
+    "reviewed_by": "",
+    "titulo": "La moción de censura y el giro social",
+    "tono": null,
+    "topicos": [
+      {
+        "actores": [
+          {
+            "contribucion": -0.012913611494447998,
+            "n_antes": 2482,
+            "n_despues": 2175,
+            "partido": "PP"
+          },
+          {
+            "contribucion": -0.005931114034205901,
+            "n_antes": 1298,
+            "n_despues": 2781,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.0017434830494471,
+            "n_antes": 490,
+            "n_despues": 1170,
+            "partido": "Otros"
+          },
+          {
+            "contribucion": -0.0017060112962702999,
+            "n_antes": 1122,
+            "n_despues": 1484,
+            "partido": "UP"
+          },
+          {
+            "contribucion": -0.0015214771365101,
+            "n_antes": 570,
+            "n_despues": 597,
+            "partido": "JxCat"
+          }
+        ],
+        "delta": -0.075862,
+        "direccion": "down",
+        "fecha_cambio": "2018-06-01",
+        "label": "Pensiones y Seguridad Social",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 0.0123601756081773,
+        "significativo_bh": 1,
+        "tamano_serie": 444,
+        "topic": 15
+      },
+      {
+        "actores": [
+          {
+            "contribucion": -0.010634666866645399,
+            "n_antes": 1603,
+            "n_despues": 3054,
+            "partido": "PP"
+          },
+          {
+            "contribucion": -0.005846448974949,
+            "n_antes": 691,
+            "n_despues": 1915,
+            "partido": "UP"
+          },
+          {
+            "contribucion": -0.0049164341828911,
+            "n_antes": 898,
+            "n_despues": 3181,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": -0.0038479357302943,
+            "n_antes": 400,
+            "n_despues": 1260,
+            "partido": "Otros"
+          },
+          {
+            "contribucion": -0.0028798209451314,
+            "n_antes": 357,
+            "n_despues": 841,
+            "partido": "PNV"
+          }
+        ],
+        "delta": -0.097713,
+        "direccion": "down",
+        "fecha_cambio": "2017-09-01",
+        "label": "Corrupción, transparencia y control",
+        "meses_distancia": 9,
+        "n": 82,
+        "q": 0.0422422025154099,
+        "significativo_bh": 1,
+        "tamano_serie": 486,
+        "topic": 11
+      }
+    ]
+  },
+  {
+    "episodio_id": "EP03_2020_03",
+    "eventos": [
+      {
+        "episodio_evento_id": "E5_2020_covid",
+        "eventos": "Elecciones generales 10-N; Inicio XIV legislatura; Investidura de Sánchez; Inicio del estado de alarma",
+        "fecha_ancla": "2020-03-01",
+        "resumen": "La formación del Gobierno de coalición y la pandemia concentran el mayor cambio temático del periodo.",
+        "titulo": "XIV legislatura y COVID-19"
+      },
+      {
+        "delta": 0.3024165635619036,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H07",
+        "metrica": "cuota_topico",
+        "q": 0.0002999700029997,
+        "serie": "topic",
+        "serie_id": "4",
+        "significativo_bh": 1
+      },
+      {
+        "delta": 0.0888520465951653,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H08",
+        "metrica": "cuota_topico",
+        "q": 0.0002999700029997,
+        "serie": "topic",
+        "serie_id": "18",
+        "significativo_bh": 1
+      },
+      {
+        "delta": 0.0618184840651502,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H09",
+        "metrica": "negative_share",
+        "q": 0.3540645935406459,
+        "serie": "tone",
+        "serie_id": "negative_share",
+        "significativo_bh": 0
+      }
+    ],
+    "fecha": "2020-03-01",
+    "fuente": "ParlaMint-ES; Congreso de los Diputados",
+    "resumen": "La formación del Gobierno de coalición y el inicio de la pandemia concentran el mayor cambio temático: COVID-19 +32 pp y ERTE +8,9 pp en marzo de 2020, con caída del régimen foral. El episodio agrupa las elecciones de noviembre, el inicio de la XIV legislatura, la investidura de enero y el estado de alarma.",
+    "reviewed_by": "",
+    "titulo": "La pandemia entra en el hemiciclo",
+    "tono": null,
+    "topicos": [
+      {
+        "actores": [
+          {
+            "contribucion": 0.02868497928511912,
+            "n_antes": 2295,
+            "n_despues": 1784,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.018609952489835102,
+            "n_antes": 3056,
+            "n_despues": 1601,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.00796521204341697,
+            "n_antes": 1567,
+            "n_despues": 1039,
+            "partido": "UP"
+          },
+          {
+            "contribucion": 0.0068595927116827,
+            "n_antes": 859,
+            "n_despues": 727,
+            "partido": "Cs"
+          },
+          {
+            "contribucion": 0.0066452304394426,
+            "n_antes": 60,
+            "n_despues": 980,
+            "partido": "Vox"
+          }
+        ],
+        "delta": 0.320349,
+        "direccion": "up",
+        "fecha_cambio": "2020-03-01",
+        "label": "COVID-19 y sanidad pública",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 1.4098182817182854e-08,
+        "significativo_bh": 1,
+        "tamano_serie": 838,
+        "topic": 4
+      },
+      {
+        "actores": [
+          {
+            "contribucion": 0.0052292144600966,
+            "n_antes": 3056,
+            "n_despues": 1601,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.004907671051736547,
+            "n_antes": 2295,
+            "n_despues": 1784,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.004089787157828485,
+            "n_antes": 1567,
+            "n_despues": 1039,
+            "partido": "UP"
+          },
+          {
+            "contribucion": 0.003553881477228272,
+            "n_antes": 859,
+            "n_despues": 727,
+            "partido": "Cs"
+          },
+          {
+            "contribucion": 0.002679528403001,
+            "n_antes": 60,
+            "n_despues": 980,
+            "partido": "Vox"
+          }
+        ],
+        "delta": 0.089029,
+        "direccion": "up",
+        "fecha_cambio": "2020-03-01",
+        "label": "ERTE, autónomos y turismo",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 6.301281354792217e-07,
+        "significativo_bh": 1,
+        "tamano_serie": 329,
+        "topic": 18
+      },
+      {
+        "actores": [
+          {
+            "contribucion": -0.0050501309115446,
+            "n_antes": 3056,
+            "n_despues": 1601,
+            "partido": "PP"
+          },
+          {
+            "contribucion": -0.0028780897548398,
+            "n_antes": 725,
+            "n_despues": 473,
+            "partido": "PNV"
+          },
+          {
+            "contribucion": -0.0021109178167327,
+            "n_antes": 247,
+            "n_despues": 355,
+            "partido": "EH Bildu"
+          },
+          {
+            "contribucion": -0.0008017152852180999,
+            "n_antes": 2295,
+            "n_despues": 1784,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.0007671719381072999,
+            "n_antes": 60,
+            "n_despues": 980,
+            "partido": "Vox"
+          }
+        ],
+        "delta": -0.038769,
+        "direccion": "down",
+        "fecha_cambio": "2020-03-01",
+        "label": "Régimen foral de Navarra y País Vasco",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 0.0448478430480223,
+        "significativo_bh": 1,
+        "tamano_serie": 396,
+        "topic": 16
+      }
+    ]
+  },
+  {
+    "episodio_id": "EP04_2020_06",
+    "eventos": [
+      {
+        "episodio_evento_id": "E6_2020_06_alarma",
+        "eventos": "Fin del primer estado de alarma",
+        "fecha_ancla": "2020-06-01",
+        "resumen": "El final de la primera alarma coincide con la caída del tono y el cambio de composición de la Cámara.",
+        "titulo": "Fin de la primera alarma"
+      },
+      {
+        "delta": 0.1048650492034855,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H10",
+        "metrica": "negative_share",
+        "q": 0.2407759224077592,
+        "serie": "tone",
+        "serie_id": "negative_share",
+        "significativo_bh": 0
+      },
+      {
+        "delta": -0.1550620769764157,
+        "direccion_esperada": "down",
+        "hipotesis_id": "H11",
+        "metrica": "cuota_topico",
+        "q": 0.2033796620337966,
+        "serie": "topic",
+        "serie_id": "4",
+        "significativo_bh": 0
+      }
+    ],
+    "fecha": "2020-06-01",
+    "fuente": "ParlaMint-ES; Congreso de los Diputados",
+    "resumen": "El final de la primera alarma coincide con la caída del tono: senti_n −0,20 en la serie mensual y −0,17 en el contraste por intervención; share negativo +7,5 pp. La composición de la Cámara cambia (el PP pierde peso y Vox gana) y el PP reduce su propio tono; el cambio no es una radicalización uniforme.",
+    "reviewed_by": "",
+    "titulo": "El tono cambia cuando cambia quién habla",
+    "tono": {
+      "actores": [
+        {
+          "contribucion": 0.07968054981776629,
+          "contribucion_composicion": 0.0713644982429878,
+          "contribucion_dentro": 0.0083160515747785,
+          "n_antes": 172,
+          "n_despues": 1425,
+          "partido": "Vox"
+        },
+        {
+          "contribucion": 0.0440251941771056,
+          "contribucion_composicion": -0.0303078519496716,
+          "contribucion_dentro": 0.0743330461267772,
+          "n_antes": 4559,
+          "n_despues": 2182,
+          "partido": "PP"
+        },
+        {
+          "contribucion": -0.0386564454790464,
+          "contribucion_composicion": -0.0010431803862533,
+          "contribucion_dentro": -0.0376132650927931,
+          "n_antes": 3545,
+          "n_despues": 2828,
+          "partido": "PSOE"
+        },
+        {
+          "contribucion": -0.036687394806991305,
+          "contribucion_composicion": -0.0141731162483388,
+          "contribucion_dentro": -0.0225142785586525,
+          "n_antes": 2234,
+          "n_despues": 1492,
+          "partido": "UP"
+        },
+        {
+          "contribucion": 0.024638254521016197,
+          "contribucion_composicion": 0.0215576825608266,
+          "contribucion_dentro": 0.0030805719601896,
+          "n_antes": 938,
+          "n_despues": 1469,
+          "partido": "Otros"
+        },
+        {
+          "contribucion": 0.009355095337748,
+          "contribucion_composicion": 0.0124007771309575,
+          "contribucion_dentro": -0.0030456817932095,
+          "n_antes": 152,
+          "n_despues": 373,
+          "partido": "BNG"
+        }
+      ],
+      "delta_senti_n": -0.1724179255438354,
+      "delta_serie": -0.19598,
+      "delta_share_negativo": 0.0749255184361111,
+      "fecha_cambio": "2020-06-01",
+      "intervalos": [
+        {
+          "delta": 0.0749255184361111,
+          "ic_inf": 0.0634631876413063,
+          "ic_sup": 0.0861279643303426,
+          "metrica": "negative_share",
+          "n_boot": 2000
+        },
+        {
+          "delta": -0.1724179255438354,
+          "ic_inf": -0.1975499952293204,
+          "ic_sup": -0.1472853886393929,
+          "metrica": "senti_n",
+          "n_boot": 2000
+        }
+      ],
+      "q": 0.0001004860763162,
+      "significativo_bh": 1
+    },
+    "topicos": [
+      {
+        "actores": [
+          {
+            "contribucion": 0.00290203470821768,
+            "n_antes": 653,
+            "n_despues": 1007,
+            "partido": "Otros"
+          },
+          {
+            "contribucion": 0.0013228560417369597,
+            "n_antes": 1639,
+            "n_despues": 967,
+            "partido": "UP"
+          },
+          {
+            "contribucion": 0.0011490290704354,
+            "n_antes": 890,
+            "n_despues": 696,
+            "partido": "Cs"
+          },
+          {
+            "contribucion": 0.0010930502276499082,
+            "n_antes": 3165,
+            "n_despues": 1492,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.0008043203493048,
+            "n_antes": 673,
+            "n_despues": 429,
+            "partido": "ERC"
+          }
+        ],
+        "delta": 0.014725,
+        "direccion": "up",
+        "fecha_cambio": "2020-06-01",
+        "label": "Ingreso mínimo vital y exclusión social",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 0.0002731696627376,
+        "significativo_bh": 1,
+        "tamano_serie": 118,
+        "topic": 50
+      }
+    ]
+  },
+  {
+    "episodio_id": "EP05_2022_02",
+    "eventos": [
+      {
+        "episodio_evento_id": "E7_2022_guerra",
+        "eventos": "Guerra de Ucrania",
+        "fecha_ancla": "2022-02-01",
+        "resumen": "La invasión de Ucrania desplaza la agenda hacia energía, defensa y precios.",
+        "titulo": "Guerra de Ucrania"
+      },
+      {
+        "delta": 0.0263991714062154,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H12",
+        "metrica": "cuota_topico",
+        "q": 0.0002999700029997,
+        "serie": "topic",
+        "serie_id": "56",
+        "significativo_bh": 1
+      },
+      {
+        "delta": -0.042572346975712,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H13",
+        "metrica": "cuota_topico",
+        "q": 0.5414731254147312,
+        "serie": "topic",
+        "serie_id": "1",
+        "significativo_bh": 0
+      },
+      {
+        "delta": 0.0031944990914707,
+        "direccion_esperada": "up",
+        "hipotesis_id": "H14",
+        "metrica": "cuota_topico",
+        "q": 0.8356164383561644,
+        "serie": "topic",
+        "serie_id": "14",
+        "significativo_bh": 0
+      }
+    ],
+    "fecha": "2022-02-01",
+    "fuente": "ParlaMint-ES; Congreso de los Diputados",
+    "resumen": "La invasión de Ucrania coincide con la subida del tópico de guerra (+2,1 pp en marzo) y de autónomos (+4,1 pp en febrero). La energía ya había subido en julio de 2021 (+10,8 pp); el episodio conecta la guerra con la crisis energética y de precios.",
+    "reviewed_by": "",
+    "titulo": "La guerra y la energía",
+    "tono": null,
+    "topicos": [
+      {
+        "actores": [
+          {
+            "contribucion": 0.00842178839456513,
+            "n_antes": 3630,
+            "n_despues": 449,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.004761469727440684,
+            "n_antes": 4167,
+            "n_despues": 490,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.0030730980526805524,
+            "n_antes": 2299,
+            "n_despues": 307,
+            "partido": "UP"
+          },
+          {
+            "contribucion": 0.0028828828828828,
+            "n_antes": 1355,
+            "n_despues": 231,
+            "partido": "Cs"
+          },
+          {
+            "contribucion": 0.0028828828828828,
+            "n_antes": 1294,
+            "n_despues": 366,
+            "partido": "Otros"
+          }
+        ],
+        "delta": 0.02139,
+        "direccion": "up",
+        "fecha_cambio": "2022-03-01",
+        "label": "Guerra de Ucrania",
+        "meses_distancia": 1,
+        "n": 82,
+        "q": 6.301281354792217e-07,
+        "significativo_bh": 1,
+        "tamano_serie": 100,
+        "topic": 56
+      },
+      {
+        "actores": [
+          {
+            "contribucion": 0.015045129246985601,
+            "n_antes": 3280,
+            "n_despues": 799,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.0101114368054596,
+            "n_antes": 1034,
+            "n_despues": 626,
+            "partido": "Otros"
+          },
+          {
+            "contribucion": 0.009145149817852999,
+            "n_antes": 3800,
+            "n_despues": 857,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.008812633881399,
+            "n_antes": 237,
+            "n_despues": 148,
+            "partido": "BNG"
+          },
+          {
+            "contribucion": 0.0086083178189734,
+            "n_antes": 524,
+            "n_despues": 516,
+            "partido": "Vox"
+          }
+        ],
+        "delta": 0.107594,
+        "direccion": "up",
+        "fecha_cambio": "2021-07-01",
+        "label": "Energía y transición energética",
+        "meses_distancia": 7,
+        "n": 82,
+        "q": 0.000229479294793,
+        "significativo_bh": 1,
+        "tamano_serie": 1495,
+        "topic": 1
+      },
+      {
+        "actores": [
+          {
+            "contribucion": 0.0025970627123858,
+            "n_antes": 1239,
+            "n_despues": 421,
+            "partido": "Otros"
+          },
+          {
+            "contribucion": 0.00179461075977955,
+            "n_antes": 1004,
+            "n_despues": 163,
+            "partido": "JxCat"
+          },
+          {
+            "contribucion": 0.0016490288438773,
+            "n_antes": 4075,
+            "n_despues": 582,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.0010651999672878468,
+            "n_antes": 2232,
+            "n_despues": 374,
+            "partido": "UP"
+          },
+          {
+            "contribucion": 0.00032108086190790004,
+            "n_antes": 697,
+            "n_despues": 343,
+            "partido": "Vox"
+          }
+        ],
+        "delta": 0.040748,
+        "direccion": "up",
+        "fecha_cambio": "2022-02-01",
+        "label": "Autónomos y cotizaciones",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 0.0200357488529664,
+        "significativo_bh": 1,
+        "tamano_serie": 120,
+        "topic": 49
+      },
+      {
+        "actores": [
+          {
+            "contribucion": 0.0054715817523414995,
+            "n_antes": 1239,
+            "n_despues": 421,
+            "partido": "Otros"
+          },
+          {
+            "contribucion": 0.0047563788684113996,
+            "n_antes": 3545,
+            "n_despues": 534,
+            "partido": "PSOE"
+          },
+          {
+            "contribucion": 0.0012401985089665999,
+            "n_antes": 697,
+            "n_despues": 343,
+            "partido": "Vox"
+          },
+          {
+            "contribucion": 0.0009049097384972,
+            "n_antes": 4075,
+            "n_despues": 582,
+            "partido": "PP"
+          },
+          {
+            "contribucion": 0.0008754931127207035,
+            "n_antes": 930,
+            "n_despues": 172,
+            "partido": "ERC"
+          }
+        ],
+        "delta": 0.009981,
+        "direccion": "up",
+        "fecha_cambio": "2022-02-01",
+        "label": "Despoblación y mundo rural",
+        "meses_distancia": 0,
+        "n": 82,
+        "q": 0.0044468337734628,
+        "significativo_bh": 1,
+        "tamano_serie": 161,
+        "topic": 37
+      }
+    ]
+  }
+]

@@ -2,6 +2,21 @@ import { HEATMAP_LOG_EPS } from "@/lib/constants";
 import type { HeatmapData, ResultChange, TimelinePoint, TopicCard } from "@/lib/changes";
 import type { ChartOption } from "@/lib/echarts";
 import type { EventsView } from "@/lib/events";
+import type {
+  ActorChangeRow,
+  ActorPoint,
+  EventAlignmentRow,
+  HomeChange,
+  ToneCounterfactualPoint,
+} from "@/lib/api";
+import {
+  CHANGE_TYPE_COLORS,
+  FAMILY_COLORS,
+  alignmentColor,
+  changeType,
+  hypothesisLabel,
+  topActorForChange,
+} from "@/lib/home";
 import {
   fmtDecimal,
   fmtDelta,
@@ -492,4 +507,348 @@ export function buildEventsOption(view: EventsView): ChartOption {
       },
     ],
   };
+}
+
+/** Opción del acto de tono: share negativo real frente al contrafactual. */
+function quarterLabel(month: string): string {
+  const year = month.slice(0, 4);
+  const quarter = Math.floor((Number(month.slice(5, 7)) - 1) / 3) + 1;
+  return `${year} Q${quarter}`;
+}
+
+function quarterAxis(data: string[]) {
+  return {
+    type: "category" as const,
+    data,
+    axisLine: { lineStyle: { color: RULE } },
+    axisTick: { show: false },
+    axisLabel: {
+      ...AXIS_LABEL,
+      interval: 3,
+      formatter: (value: string) => value.slice(0, 4),
+    },
+  };
+}
+
+function smoothQuarterly(
+  values: (number | null)[],
+  weights: number[]
+): (number | null)[] {
+  return values.map((_, index) => {
+    let weighted = 0;
+    let total = 0;
+    for (const position of [index - 1, index, index + 1]) {
+      const value = values[position];
+      const weight = weights[position] ?? 0;
+      if (value !== null && value !== undefined && weight > 0) {
+        weighted += value * weight;
+        total += weight;
+      }
+    }
+    return total > 0 ? weighted / total : null;
+  });
+}
+
+export function buildToneCompositionOption(points: ToneCounterfactualPoint[]): ChartOption {
+  const quarters = new Map<string, { n: number; real: number; adjusted: number }>();
+  for (const point of points) {
+    const key = quarterLabel(point.month);
+    const bucket = quarters.get(key) ?? { n: 0, real: 0, adjusted: 0 };
+    bucket.n += point.n;
+    bucket.real += point.neg_share_real * point.n;
+    bucket.adjusted += point.neg_share_ajustado * point.n;
+    quarters.set(key, bucket);
+  }
+  const labels = [...quarters.keys()].sort();
+  const weights = labels.map((key) => quarters.get(key)?.n ?? 0);
+  const rawReal = labels.map((key) => {
+    const bucket = quarters.get(key);
+    return bucket && bucket.n > 0 ? bucket.real / bucket.n : null;
+  });
+  const rawAdjusted = labels.map((key) => {
+    const bucket = quarters.get(key);
+    return bucket && bucket.n > 0 ? bucket.adjusted / bucket.n : null;
+  });
+  const realData = smoothQuarterly(rawReal, weights);
+  const adjustedData = smoothQuarterly(rawAdjusted, weights);
+  const maxValue = Math.max(
+    ...realData.filter((value): value is number => value !== null),
+    ...adjustedData.filter((value): value is number => value !== null),
+    0.5
+  );
+  const upper = Math.ceil(maxValue * 10) / 10;
+  return {
+    animation: false,
+    grid: { left: 52, right: 24, top: 36, bottom: 52 },
+    legend: {
+      data: ["Share negativo real", "Contrafactual (cuotas pre-2020-06)"],
+      bottom: 0,
+      textStyle: AXIS_LABEL,
+      itemWidth: 18,
+      itemHeight: 8,
+    },
+    xAxis: quarterAxis(labels),
+    yAxis: {
+      type: "value",
+      min: 0,
+      max: upper,
+      axisLabel: {
+        ...AXIS_LABEL,
+        formatter: (value: number) => `${Math.round(value * 100)} %`,
+      },
+      splitLine: { lineStyle: { color: "#e4e4e7", type: "dashed" } },
+    },
+    tooltip: {
+      trigger: "axis",
+      borderColor: RULE,
+      backgroundColor: "#ffffff",
+      textStyle: { color: INK, fontSize: 12 },
+      formatter: (params: unknown) => {
+        const list = (Array.isArray(params) ? params : [params]) as TooltipEntry[];
+        const month = list[0]?.axisValue ?? "";
+        const real = list.find((entry) => entry.seriesName === "Share negativo real")?.value;
+        const adjusted = list.find(
+          (entry) => entry.seriesName === "Contrafactual (cuotas pre-2020-06)"
+        )?.value;
+        const realValue = typeof real === "number" ? real : Number.NaN;
+        const adjustedValue = typeof adjusted === "number" ? adjusted : Number.NaN;
+        return [
+          month,
+          `Real: ${fmtQuota(realValue)}`,
+          `Ajustado: ${fmtQuota(adjustedValue)}`,
+          `Brecha: ${fmtDelta((realValue - adjustedValue) * 100)} pp`,
+        ].join("<br/>");
+      },
+    },
+    series: [
+      {
+        type: "line",
+        name: "Share negativo real",
+        data: realData,
+        showSymbol: false,
+        lineStyle: { width: 2, color: INK },
+        itemStyle: { color: INK },
+        markLine: {
+          silent: true,
+          symbol: ["none", "none"],
+          lineStyle: { type: "dashed", color: "#a1a1aa", width: 1 },
+          label: {
+            position: "insideEndTop",
+            formatter: "2020 Q2",
+            color: "#71717a",
+            fontSize: 11,
+          },
+          data: [{ xAxis: "2020 Q2" }],
+        },
+      },
+      {
+        type: "line",
+        name: "Contrafactual (cuotas pre-2020-06)",
+        data: adjustedData,
+        showSymbol: false,
+        lineStyle: { width: 1.5, color: "#71717a", type: "dashed" },
+        itemStyle: { color: "#71717a" },
+      },
+    ],
+  };
+}
+
+/** Opción del acto de actores: cuota de intervenciones de PP, PSOE y Vox. */
+export function buildActorShareOption(points: ActorPoint[], families: string[]): ChartOption {
+  const months = [...new Set(points.map((point) => point.month.slice(0, 10)))].sort();
+  const labels = months.map((month) => fmtMonth(month));
+  const byFamily = new Map<string, Map<string, { share: number; n: number }>>();
+  for (const point of points) {
+    if (!families.includes(point.party_family)) continue;
+    const month = point.month.slice(0, 10);
+    const bucket = byFamily.get(point.party_family) ?? new Map<string, { share: number; n: number }>();
+    if (point.share_all !== null) bucket.set(month, { share: point.share_all, n: point.n });
+    byFamily.set(point.party_family, bucket);
+  }
+  return {
+    animation: false,
+    grid: { left: 52, right: 24, top: 28, bottom: 52 },
+    legend: {
+      data: families,
+      bottom: 0,
+      textStyle: AXIS_LABEL,
+      itemWidth: 18,
+      itemHeight: 8,
+    },
+    xAxis: temporalAxis(labels),
+    yAxis: {
+      type: "value",
+      min: 0,
+      axisLabel: {
+        ...AXIS_LABEL,
+        formatter: (value: number) => `${Math.round(value * 100)} %`,
+      },
+      splitLine: { lineStyle: { color: "#e4e4e7", type: "dashed" } },
+    },
+    tooltip: {
+      trigger: "axis",
+      borderColor: RULE,
+      backgroundColor: "#ffffff",
+      textStyle: { color: INK, fontSize: 12 },
+      formatter: (params: unknown) => {
+        const list = (Array.isArray(params) ? params : [params]) as TooltipEntry[];
+        const lines = [list[0]?.axisValue ?? ""];
+        for (const entry of list) {
+          if (typeof entry.value === "number") {
+            lines.push(`${entry.seriesName ?? ""}: ${fmtQuota(entry.value)}`);
+          }
+        }
+        return lines.join("<br/>");
+      },
+    },
+    series: families.map((family) => {
+      const values = byFamily.get(family) ?? new Map<string, { share: number; n: number }>();
+      const data = months.map((month, index) => {
+        const window = [
+          months[index - 3],
+          months[index - 2],
+          months[index - 1],
+          month,
+          months[index + 1],
+          months[index + 2],
+          months[index + 3],
+        ].filter((candidate): candidate is string => Boolean(candidate));
+        const present = window
+          .map((candidate) => values.get(candidate))
+          .filter((value): value is { share: number; n: number } => Boolean(value));
+        const total = present.reduce((sum, value) => sum + value.n, 0);
+        return total > 0
+          ? present.reduce((sum, value) => sum + value.share * value.n, 0) / total
+          : null;
+      });
+      return {
+        type: "line",
+        name: family,
+        data,
+        showSymbol: false,
+        lineStyle: { width: 2, color: FAMILY_COLORS[family] ?? "#52525b" },
+        itemStyle: { color: FAMILY_COLORS[family] ?? "#52525b" },
+      };
+    }),
+  };
+}
+
+/** Opción del event study: delta de cada hipótesis, rojo si supera BH. */
+export function buildEventAlignmentOption(rows: EventAlignmentRow[]): ChartOption {
+  const sorted = [...rows].sort((a, b) => a.delta - b.delta);
+  return {
+    animation: false,
+    grid: { left: 236, right: 72, top: 16, bottom: 28 },
+    xAxis: {
+      type: "value",
+      axisLabel: {
+        ...AXIS_LABEL,
+        formatter: (value: number) => `${Math.round(value * 100)} pp`,
+      },
+      splitLine: { lineStyle: { color: "#e4e4e7", type: "dashed" } },
+    },
+    yAxis: {
+      type: "category",
+      data: sorted.map((row) => hypothesisLabel(row)),
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { ...AXIS_LABEL, width: 220, overflow: "truncate" },
+    },
+    tooltip: {
+      trigger: "item",
+      borderColor: RULE,
+      backgroundColor: "#ffffff",
+      textStyle: { color: INK, fontSize: 12 },
+      formatter: (params: unknown) => {
+        const item = params as { data?: { row?: EventAlignmentRow } };
+        const row = item.data?.row;
+        if (!row) return "";
+        return [
+          hypothesisLabel(row),
+          `Δ = ${fmtQuota(row.delta)}`,
+          `q = ${fmtP(row.q)} · n = ${row.n_antes + row.n_despues}`,
+          row.significativo_bh === 1 ? "Supera BH (q < 0,05)" : "No supera BH",
+        ].join("<br/>");
+      },
+    },
+    series: [
+      {
+        type: "bar",
+        data: sorted.map((row) => ({
+          value: row.delta,
+          itemStyle: { color: alignmentColor(row) },
+          row,
+        })),
+        barMaxWidth: 14,
+        label: {
+          show: true,
+          position: "right",
+          color: INK,
+          fontSize: 11,
+          formatter: (params: unknown) => {
+            const item = params as { value?: number };
+            return `${fmtDelta((item.value ?? 0) * 100)} pp`;
+          },
+        },
+      },
+    ],
+  } as ChartOption;
+}
+
+/** Opción del explorador final: fecha, impacto y tipo de cada cambio de tópico. */
+export function buildChangeTimelineOption(
+  changes: HomeChange[],
+  actorIndex: Map<string, ActorChangeRow[]>
+): ChartOption {
+  const topics = changes.filter((change) => change.serie === "topic" && change.impacto !== null);
+  const maxImpact = Math.max(...topics.map((change) => change.impacto ?? 0), 0.001);
+  return {
+    animation: false,
+    grid: { left: 56, right: 24, top: 24, bottom: 36 },
+    xAxis: {
+      type: "time",
+      axisLabel: AXIS_LABEL,
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: "value",
+      name: "interv./mes desplazadas",
+      nameTextStyle: AXIS_LABEL,
+      axisLabel: AXIS_LABEL,
+      splitLine: { lineStyle: { color: "#e4e4e7", type: "dashed" } },
+    },
+    tooltip: {
+      trigger: "item",
+      borderColor: RULE,
+      backgroundColor: "#ffffff",
+      textStyle: { color: INK, fontSize: 12 },
+      formatter: (params: unknown) => {
+        const item = params as { data?: { change?: HomeChange; top?: string } };
+        const change = item.data?.change;
+        if (!change) return "";
+        return [
+          `<b>${change.label}</b>`,
+          `${fmtMonth(change.fecha)} · Δ ${fmtDelta(change.delta * 100)} pp`,
+          `q = ${fmtP(change.q)} · impacto = ${fmtDecimal(change.impacto ?? 0, 2)} interv./mes`,
+          `Actor principal: ${item.data?.top ?? "—"}`,
+        ].join("<br/>");
+      },
+    },
+    series: [
+      {
+        type: "scatter",
+        data: topics.map((change) => {
+          const top = topActorForChange(change, actorIndex);
+          const type = changeType(change);
+          return {
+            value: [change.fecha, change.impacto ?? 0],
+            symbolSize: 8 + 18 * Math.sqrt((change.impacto ?? 0) / maxImpact),
+            itemStyle: { color: CHANGE_TYPE_COLORS[type], opacity: 0.85 },
+            change,
+            top: top?.partido ?? "—",
+          };
+        }),
+      },
+    ],
+  } as ChartOption;
 }

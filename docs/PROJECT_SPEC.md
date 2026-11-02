@@ -55,7 +55,9 @@ Se excluyen: `Speaker_name`, `Speaker_ID` (solo muestreo y control de calidad), 
    - **Series temporales:** agregación mensual de cuota relativa por tópico y tono medio (con sensibilidad ponderada por longitud).
    - **Cambios de régimen:** PELT sobre las series mensuales (coste l2; penalización por criterio tipo BIC y análisis de sensibilidad).
    - **Eventos:** Spearman exploratorio con `data/external/eventos.csv` (ventana ±3 meses), corrección por comparaciones múltiples (Benjamini-Hochberg) y redacción no causal; figuras y tablas en `reports/`.
-5. **Producto:** API FastAPI (JSON precalculado) + panel web Next.js + Docker local (el dashboard Streamlit original se retira en D-42).
+
+   La **v2 editorial (D-45)** añade una capa de cierre sobre lo anterior: catálogo de eventos en dos capas (covariables y contexto), 7 episodios de eventos, event study local de 6 meses con permutación y BH sobre 14 hipótesis pre-especificadas, y descomposición de los 45 cambios en actores (partido × estatus, con el agregado por partido como principal y el estatus como auditoría). El contraste exploratorio de la v1 se conserva como sensibilidad. Artefactos: `eventos_catalogo.csv`, `eventos_episodios.csv`, `eventos_hipotesis.csv`, `eventos_alineacion.csv`, `partidos_mapping.csv`, `series_actores.csv`, `cambios_regimen_actores.csv`, `tono_contrafactual.csv`, `tono_ic.csv` y `episodios_bundle.json`.
+5. **Producto:** API FastAPI (JSON precalculado) + panel web Next.js + Docker local (el dashboard Streamlit original se retira en D-42). La v2 añade la home editorial «El Congreso cambia a saltos» (cinco actos), `/home`, fichas de episodios, capa de actores y explorador final; las 58 tarjetas viven en `/episodios`.
 6. **Cierre:** tests end-to-end, pre-commit y reproducibilidad documentada.
 
 La «Fase 4: Métricas» del canvas queda absorbida por 3a (coherencia, diversidad, ARI/NMI, F1) y 3b (Spearman), según D-21.

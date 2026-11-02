@@ -14,9 +14,9 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "hemiciclo-nlp · El tono del debate",
+  title: "hemiciclo-nlp · El Congreso cambia a saltos",
   description:
-    "Evolución temática y tonal del Congreso de los Diputados (2015-2023): cambios de régimen, métricas y justificación.",
+    "Agenda y tono del Congreso de los Diputados (2015-2023): episodios, cambios de régimen, actores y event study.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

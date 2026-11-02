@@ -1,0 +1,15 @@
+hipotesis_id,episodio_id,serie,serie_id,metrica,direccion_esperada,subfamilia,justificacion
+H01,E1_2015_12,topic,0,cuota_topico,up,topicos,Las elecciones de 2015 deberían aumentar la confrontación política.
+H02,E2_2016_gobierno,topic,0,cuota_topico,up,topicos,La formación del Gobierno de Rajoy debería sostener la confrontación.
+H03,E2_2016_gobierno,topic,1,cuota_topico,up,topicos,La investidura de Rajoy coincide con la subida de la energía.
+H04,E3_2018_mocion,topic,11,cuota_topico,up,topicos,La moción de censura se centra en la corrupción.
+H05,E3_2018_mocion,topic,15,cuota_topico,up,topicos,El nuevo Gobierno promete revertir la reforma de pensiones.
+H06,E4_2019_04,topic,0,cuota_topico,up,topicos,La campaña de abril aumenta la confrontación política.
+H07,E5_2020_covid,topic,4,cuota_topico,up,topicos,La pandemia dispara el tópico sanitario.
+H08,E5_2020_covid,topic,18,cuota_topico,up,topicos,Los ERTE y el turismo entran en la agenda.
+H09,E5_2020_covid,tone,negative_share,negative_share,up,tone,La COVID aumenta el share negativo.
+H10,E6_2020_06_alarma,tone,negative_share,negative_share,up,tone,El final de la alarma coincide con el cambio de tono.
+H11,E6_2020_06_alarma,topic,4,cuota_topico,down,topicos,El tópico COVID pierde saliencia tras la alarma.
+H12,E7_2022_guerra,topic,56,cuota_topico,up,topicos,La guerra entra en la agenda.
+H13,E7_2022_guerra,topic,1,cuota_topico,up,topicos,La guerra dispara la energía.
+H14,E7_2022_guerra,topic,14,cuota_topico,up,topicos,La guerra afecta a agricultura y pesca.

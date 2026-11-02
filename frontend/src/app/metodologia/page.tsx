@@ -2,27 +2,32 @@ import { ApiErrorNotice, type ApiFailure } from "@/components/api-error";
 import { EventsHeatmap } from "@/components/events-heatmap";
 import {
   ApiError,
+  type EventAlignmentRow,
   type EventRow,
+  getEventAlignment,
   getEventRelations,
   getEvents,
   getTopics,
   isDynamicUsage,
 } from "@/lib/api";
 import { buildEventsView, type EventsView } from "@/lib/events";
-import { fmtMonth } from "@/lib/format";
+import { fmtDelta, fmtMonth, fmtP } from "@/lib/format";
+import { hypothesisLabel } from "@/lib/home";
 
 interface MethodBundle {
   events: EventRow[];
   view: EventsView;
+  alignment: EventAlignmentRow[];
 }
 
 async function loadMethod(): Promise<MethodBundle> {
-  const [events, relations, topics] = await Promise.all([
+  const [events, relations, topics, alignment] = await Promise.all([
     getEvents(),
     getEventRelations(),
     getTopics(),
+    getEventAlignment(),
   ]);
-  return { events, view: buildEventsView(relations, events, topics) };
+  return { events, view: buildEventsView(relations, events, topics), alignment };
 }
 
 function DocSection({
@@ -209,6 +214,71 @@ export default async function MetodologiaPage() {
           estadísticos; las tablas completas, la sensibilidad de la penalización y el criterio de
           potencia (10 meses con 5 o más intervenciones del tópico) están en Métricas.
         </P>
+      </DocSection>
+
+      <DocSection id="actores-v2-heading" title="Actores y composición (v2)">
+        <P>
+          Las 50+ etiquetas de partido se consolidan en <strong>11 familias + Otros</strong> con un
+          mapeo versionado (<code className="font-mono">partidos_mapping.csv</code>). Para cada uno
+          de los 45 cambios significativos, una descomposición <em>shift-share</em> separa el delta
+          en componente intra-partido (cambia el tono o la cuota dentro del partido) y componente de
+          composición (cambia el peso del partido en la Cámara). El nivel de partido es el principal;
+          el cruce partido × estatus queda como auditoría, porque el cambio de Gobierno de 2018 y la
+          XIV legislatura lo contaminan.
+        </P>
+        <P>
+          En 2020-06 el share negativo sube <strong>+7,5 pp</strong> (IC bootstrap 95 % [6,3; 8,6]).
+          Vox aporta <strong>+8,0 pp</strong>, casi todo por composición; el PP aporta{" "}
+          <strong>+4,4 pp</strong>, sobre todo por su propio endurecimiento; PSOE y UP moderan y
+          restan. <strong>No es una radicalización uniforme</strong>: es un cambio de mezcla con un
+          PP más negativo.
+        </P>
+        <Note>
+          Limitación: la composición de la XIV legislatura empieza en 2019-12, no en 2020-06. El
+          episodio no separa el efecto pandemia del cambio de Cámara; la descomposición y el
+          contrafactual están en <code className="font-mono">cambios_regimen_actores.csv</code> y{" "}
+          <code className="font-mono">tono_contrafactual.csv</code>.
+        </Note>
+      </DocSection>
+
+      <DocSection id="event-study-v2-heading" title="Event study de episodios (v2)">
+        <P>
+          La v2 sustituye el contraste exploratorio de 472 pares por un <strong>event study local
+          sobre 7 episodios</strong>. La unidad es el episodio, no el evento suelto, para no atribuir
+          cambios a eventos que se solapan. La ventana es de 6 meses antes y después del mes ancla;
+          la inferencia es una permutación de la fecha ancla (placebo) y la corrección es
+          Benjamini-Hochberg dentro de dos subfamilias: tono (2 hipótesis) y tópicos (12). Las 14
+          hipótesis están pre-especificadas en{" "}
+          <code className="font-mono">eventos_hipotesis.csv</code>.
+        </P>
+        <P>
+          <strong>Resultado: 4 de 14 superan BH.</strong> La formación del Gobierno de Rajoy coincide
+          con una <em>caída</em> de la confrontación; la COVID dispara sanidad y ERTE; la guerra
+          dispara el tópico de Ucrania. Las elecciones de 2015 y 2019-04 no muestran un efecto
+          consistente; el episodio de 2016 se testea como formación de Gobierno y el de 2019-11 se
+          agrupa con la XIV legislatura y la COVID. Las dos hipótesis de tono no superan el placebo
+          local (q = 0,24): su evidencia robusta es el contraste de segmentos completos y la
+          descomposición de actores, no el event study.
+        </P>
+        {bundle && bundle.alignment.length > 0 && (
+          <ul className="max-w-3xl space-y-2 text-sm">
+            {bundle.alignment
+              .filter((row) => row.significativo_bh === 1)
+              .map((row) => (
+                <li key={row.hipotesis_id} className="border-border border-l-2 pl-3">
+                  <span className="text-foreground font-medium">{hypothesisLabel(row)}</span>{" "}
+                  <span className="text-muted-foreground tabular-nums">
+                    Δ {fmtDelta(row.delta)} · q = {fmtP(row.q)}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        )}
+        <Note>
+          El contraste de la v1 (±3 meses, 472 pares, mínimo q = 0,254) se conserva abajo como
+          sensibilidad. La diferencia entre ambos resultados es de diseño —unidad, ventana y familia
+          pre-especificada—, no de datos. Ningún contraste se presenta como causal.
+        </Note>
       </DocSection>
 
       {bundle ? (

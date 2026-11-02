@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
+﻿import { expect, test } from "@playwright/test";
 
-test("portada: héroe, tres fichas y rejilla con58 tarjetas", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("El tono del debate");
+test("episodios: héroe, tres fichas y rejilla con 58 tarjetas", async ({ page }) => {
+  await page.goto("/episodios");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Episodios y cambios");
   await expect(
     page.getByRole("heading", { name: "Cambios de tono detectados", exact: true })
   ).toBeVisible();
@@ -14,8 +14,8 @@ test("portada: héroe, tres fichas y rejilla con58 tarjetas", async ({ page }) =
   await expect(page.locator('[aria-label^="Cuota mensual del tópico"]')).toHaveCount(58);
 });
 
-test("portada: el filtro de baja potencia oculta exactamente12 tarjetas", async ({ page }) => {
-  await page.goto("/");
+test("episodios: el filtro de baja potencia oculta exactamente 12 tarjetas", async ({ page }) => {
+  await page.goto("/episodios");
   const charts = page.locator('[aria-label^="Cuota mensual del tópico"]');
   await expect(charts).toHaveCount(58, { timeout: 20_000 });
   await page.getByLabel(/Ocultar baja potencia/).check();
@@ -24,10 +24,10 @@ test("portada: el filtro de baja potencia oculta exactamente12 tarjetas", async 
   await expect(charts).toHaveCount(58);
 });
 
-test("portada: el delta muestra r, p, n e intervalo al pasar el ratón y al enfocar", async ({
+test("episodios: el delta muestra r, p, n e intervalo al pasar el ratón y al enfocar", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/episodios");
   const chip = page.locator('span[tabindex="0"]').first();
   await expect(chip).toBeVisible();
   const tooltipId = await chip.getAttribute("aria-describedby");
@@ -48,10 +48,10 @@ test("portada: el delta muestra r, p, n e intervalo al pasar el ratón y al enfo
   await expect(page.locator(`[id="${secondId}"]`)).toHaveCSS("opacity", "1");
 });
 
-test("portada: el diálogo amplía el subgráfico con su tabla de respaldo (sin q)", async ({
+test("episodios: el diálogo amplía el subgráfico con su tabla de respaldo (sin q)", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/episodios");
   const trigger = page.locator('[aria-label^="Ampliar gráfico de"]').first();
   await expect(trigger).toBeVisible();
   await trigger.click();
@@ -69,8 +69,8 @@ test("portada: el diálogo amplía el subgráfico con su tabla de respaldo (sin 
   await expect(dialog).toBeHidden();
 });
 
-test("portada: el diálogo enlaza con Evidencias vía ?topico=", async ({ page }) => {
-  await page.goto("/");
+test("episodios: el diálogo enlaza con Evidencias vía ?topico=", async ({ page }) => {
+  await page.goto("/episodios");
   await page.locator('[aria-label^="Ampliar gráfico de"]').first().click();
   const link = page.getByRole("dialog").getByRole("link", { name: /Ver evidencias/ });
   await link.click();

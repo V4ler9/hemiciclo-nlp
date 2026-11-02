@@ -183,6 +183,132 @@ def _fixtures(root: Path) -> tuple[Path, Path]:
             "has_session": [True, True, True, True],
         }
     ).to_parquet(data / "intermediate" / "series_mensuales.parquet", index=False)
+    pd.DataFrame(
+        {
+            "month": pd.to_datetime(["2020-01-01", "2020-01-01", "2020-02-01", "2020-02-01"]),
+            "party_family": ["PP", "Vox", "PP", "Vox"],
+            "party_status": ["Todos", "Todos", "Todos", "Todos"],
+            "n": [10, 5, 12, 6],
+            "n_assigned": [8, 4, 9, 5],
+            "share_all": [0.5, 0.25, 0.5, 0.25],
+            "share_assigned": [0.5, 0.25, 0.5, 0.25],
+            "tone_mean": [2.0, 1.0, 2.1, 1.1],
+            "negative_share": [0.3, 0.6, 0.32, 0.62],
+            "outlier_rate": [0.2, 0.2, 0.25, 0.17],
+            "has_session": [True, True, True, True],
+        }
+    ).to_csv(tables / "series_actores.csv", index=False)
+    pd.DataFrame(
+        {
+            "serie": ["topic", "topic"],
+            "serie_id": ["0", "0"],
+            "fecha": ["2020-01-01", "2020-01-01"],
+            "metrica": ["cuota_topico", "cuota_topico"],
+            "nivel": ["partido", "partido"],
+            "partido": ["PP", "__residual__"],
+            "estatus": ["Todos", "__residual__"],
+            "n_antes": [5, 0],
+            "n_despues": [6, 0],
+            "peso_antes": [0.5, float("nan")],
+            "peso_despues": [0.6, float("nan")],
+            "valor_antes": [0.2, float("nan")],
+            "valor_despues": [0.3, float("nan")],
+            "delta_total_serie": [0.1, 0.1],
+            "contribucion_dentro": [0.06, 0.04],
+            "contribucion_composicion": [0.0, 0.0],
+            "residual": [0.04, 0.04],
+            "significativo_bh": [1, 1],
+            "tamano_serie": [100, 100],
+        }
+    ).to_csv(tables / "cambios_regimen_actores.csv", index=False)
+    pd.DataFrame(
+        {
+            "month": pd.to_datetime(["2020-01-01", "2020-02-01"]),
+            "n": [20, 22],
+            "neg_share_real": [0.4, 0.5],
+            "neg_share_ajustado": [0.35, 0.42],
+            "senti_n_real": [2.0, 2.1],
+            "senti_n_ajustado": [2.1, 2.2],
+            "brecha_neg": [0.05, 0.08],
+            "brecha_senti": [-0.1, -0.1],
+            "base_start": ["2015-01", "2015-01"],
+            "base_end": ["2019-11", "2019-11"],
+        }
+    ).to_csv(tables / "tono_contrafactual.csv", index=False)
+    pd.DataFrame(
+        {
+            "metrica": ["negative_share", "senti_n"],
+            "fecha": ["2020-02-01", "2020-02-01"],
+            "delta": [0.1, 0.2],
+            "ic_inf": [0.05, 0.1],
+            "ic_sup": [0.15, 0.3],
+            "n_boot": [100, 100],
+            "n_antes": [10, 10],
+            "n_despues": [12, 12],
+        }
+    ).to_csv(tables / "tono_ic.csv", index=False)
+    pd.DataFrame(
+        {
+            "evento": ["Evento A", "Evento B"],
+            "fecha": ["2020-01-15", "2020-03-15"],
+            "capa": ["covariable", "contexto"],
+            "tipo": ["prueba", "contexto"],
+            "subtipo": ["x", "y"],
+            "episodio": ["E1", ""],
+            "fuente": ["sintética", "sintética"],
+            "notas": ["", ""],
+        }
+    ).to_csv(tables / "eventos_catalogo.csv", index=False)
+    pd.DataFrame(
+        {
+            "episodio_id": ["E1"],
+            "titulo": ["Episodio A"],
+            "fecha_ancla": ["2020-01-01"],
+            "fecha_inicio": ["2020-01-15"],
+            "fecha_fin": ["2020-01-15"],
+            "eventos": ["Evento A"],
+            "resumen": ["Resumen"],
+            "fuente": ["sintética"],
+        }
+    ).to_csv(tables / "eventos_episodios.csv", index=False)
+    pd.DataFrame(
+        {
+            "hipotesis_id": ["H01"],
+            "episodio_id": ["E1"],
+            "serie": ["topic"],
+            "serie_id": ["0"],
+            "metrica": ["cuota_topico"],
+            "fecha_ancla": ["2020-01-01"],
+            "ventana_meses": [6],
+            "n_antes": [5],
+            "n_despues": [5],
+            "valor_antes": [0.4],
+            "valor_despues": [0.5],
+            "delta": [0.1],
+            "p": [0.01],
+            "q": [0.04],
+            "significativo_bh": [1],
+            "direccion_esperada": ["up"],
+            "subfamilia": ["topicos"],
+            "justificacion": ["Prueba"],
+        }
+    ).to_csv(tables / "eventos_alineacion.csv", index=False)
+    bundle = [
+        {
+            "episodio_id": "EP01",
+            "titulo": "Episodio editorial",
+            "fecha": "2020-01-01",
+            "resumen": "Resumen editorial",
+            "fuente": "sintética",
+            "reviewed_by": "",
+            "topicos": [],
+            "tono": None,
+            "eventos": [],
+        }
+    ]
+    (tables / "episodios_bundle.json").write_text(
+        json.dumps(bundle, ensure_ascii=False), encoding="utf-8"
+    )
     return reports, data
 
 
@@ -295,6 +421,50 @@ def test_cors_permite_el_origen_del_frontend(tmp_path: Path) -> None:
     assert "access-control-allow-origin" not in denied.headers
 
 
+def test_home_bundle(client: Any) -> None:
+    payload = client.get("/home").json()
+    assert payload["tesis"]["titular"] == "El Congreso cambia a saltos"
+    assert payload["kpis"]["cambios_significativos"] == 2
+    assert payload["kpis"]["fechas"] == 2
+    assert payload["kpis"]["cambio_tono"] == "2020-02-01"
+    assert len(payload["episodios"]) == 1
+    assert len(payload["tono"]) == 2
+    assert len(payload["eventos"]) == 1
+    assert len(payload["caveats"]) == 3
+    assert payload["cambios"][0]["impacto"] == pytest.approx(1.0)
+    assert payload["cambios"][1]["impacto"] is None
+
+
+def test_episodes_y_detalle(client: Any) -> None:
+    assert client.get("/episodes").json()[0]["episodio_id"] == "EP01"
+    assert client.get("/episodes/EP01").json()["titulo"] == "Episodio editorial"
+    assert client.get("/episodes/NOPE").status_code == 404
+
+
+def test_actores_y_descomposicion(client: Any) -> None:
+    actors = client.get("/actors", params={"party_family": "PP"}).json()
+    assert len(actors) == 2
+    assert all(row["party_family"] == "PP" for row in actors)
+    changes = client.get("/actors/changes", params={"serie": "topic"}).json()
+    assert len(changes) == 2
+    assert changes[0]["partido"] in {"PP", "__residual__"}
+
+
+def test_eventos_catalogo_episodios_y_alineacion(client: Any) -> None:
+    catalog = client.get("/events/catalog", params={"capa": "covariable"}).json()
+    assert len(catalog) == 1
+    assert catalog[0]["evento"] == "Evento A"
+    assert len(client.get("/events/episodes").json()) == 1
+    alignment = client.get("/events/alignment", params={"subfamilia": "topicos"}).json()
+    assert alignment[0]["hipotesis_id"] == "H01"
+    assert client.get("/events/alignment", params={"max_q": 0.03}).json() == []
+
+
+def test_tono_contrafactual_e_ic(client: Any) -> None:
+    assert len(client.get("/tone/counterfactual").json()) == 2
+    assert len(client.get("/tone/ci").json()) == 2
+
+
 def test_export_openapi_expone_todos_los_endpoints(tmp_path: Path) -> None:
     from src.api.openapi import export_openapi
 
@@ -315,5 +485,15 @@ def test_export_openapi_expone_todos_los_endpoints(tmp_path: Path) -> None:
         "/sensitivity",
         "/sentiment",
         "/sentiment/confusion/{level}",
+        "/home",
+        "/episodes",
+        "/episodes/{episode_id}",
+        "/actors",
+        "/actors/changes",
+        "/events/catalog",
+        "/events/episodes",
+        "/events/alignment",
+        "/tone/counterfactual",
+        "/tone/ci",
     }
     assert expected == set(schema["paths"])
