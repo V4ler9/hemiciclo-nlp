@@ -1,0 +1,1 @@
+Uploaded file image.png. Its bytes are not stored in the filesystem. Call `read_file` on this path to get its extracted text content.
